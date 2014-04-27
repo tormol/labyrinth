@@ -1,4 +1,4 @@
-package Spis;
+package spis;
 
 import static java.awt.Color.*;
 import java.awt.Point;
