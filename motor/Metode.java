@@ -105,6 +105,7 @@ public class Metode {
 	}
 
 
+	/**Utfører metoden*/
 	public void kall(Rute rute, Enhet enhet) {
 		for (Operasjon op : operasjoner)
 			op.utfør(rute, enhet);

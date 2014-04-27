@@ -13,8 +13,8 @@ public abstract class Fiende extends Enhet implements Runnable {
 	private boolean pause = false;
 	private final Thread tråd;
 
-	protected Fiende(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
-		super("Fiende", fil);
+	protected Fiende(String navn, String fil, Rute start, int ventStart, int ventRaskere, int ventMin) {
+		super(navn, fil);
 		vent = ventStart;
 		this.ventRaskere = ventRaskere;
 		this.ventMin = ventMin + ventRaskere;
@@ -102,7 +102,7 @@ public abstract class Fiende extends Enhet implements Runnable {
 	/**Pro/ver aa flytte i tilfeldig retnig*/
 	public static class Vanlig extends Fiende {
 		public Vanlig(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
-			super(start, fil, ventStart, ventRaskere, ventMin);
+			super("fiende vanlig", fil, start, ventStart, ventRaskere, ventMin);
 		}
 
 		@Override//Fiende
@@ -118,7 +118,7 @@ public abstract class Fiende extends Enhet implements Runnable {
 	/**Pro/ver aa flytte i tilfeldig retning, kan flytte til solide ruter.*/
 	public static class Spøkelse extends Fiende {
 		public Spøkelse(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
-			super(start, fil, ventStart, ventRaskere, ventMin);
+			super("fil spøkelse", fil, start, ventStart, ventRaskere, ventMin);
 		}
 
 		@Override//Fiende
@@ -134,7 +134,7 @@ public abstract class Fiende extends Enhet implements Runnable {
 	/**Flytter mot spilleren, en akse om gangen.*/
 	public static class Målrettet extends Fiende {
 		public Målrettet(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
-			super(start, fil, ventStart, ventRaskere, ventMin);
+			super("fil målrettet", fil, start, ventStart, ventRaskere, ventMin);
 		}
 
 		@Override//Fiende
