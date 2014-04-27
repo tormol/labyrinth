@@ -26,16 +26,16 @@ public class Labyrint {
 		}
 
 		new Spiller(l+"spiller.png", new Spiller.FlyttTil(){public void flyttTil(Spiller spiller) {
-			if (spiller.rute.isType("utgang")) {
-				spiller.rute.flyttFra(true);
+			if (spiller.rute().isType("utgang")) {
+				spiller.rute().flyttFra(true);
 				Vindu.vant();
 			}
-			else if (spiller.rute.isType("hammer")) {
-				spiller.rute.setType("gang");
+			else if (spiller.rute().isType("hammer")) {
+				spiller.rute().setType("gang");
 				spiller.hammer(5000);
 			}
-			else if (spiller.rute.isType("godbit")) {
-				spiller.rute.setType("gang");
+			else if (spiller.rute().isType("godbit")) {
+				spiller.rute().setType("gang");
 				if (Brett.alle("godbit").isEmpty())
 					Vindu.vant();
 			}

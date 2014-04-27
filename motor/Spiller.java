@@ -10,7 +10,7 @@ public class Spiller extends Enhet implements KeyListener {
 	private static Rute finnStart() {
 		LinkedList<Rute> startpunkt = new LinkedList<Rute>();
 		for (Rute rute : Brett.alle("start")) {
-			if (rute.enhet == null)
+			if (rute.enhet() == null)
 				startpunkt.add(rute);
 			//gjør feltene rundt synlige
 			Brett.fjernDis(rute.pos());
@@ -30,10 +30,10 @@ public class Spiller extends Enhet implements KeyListener {
 
 	public Spiller(String fil, Rute start, FlyttTil flyttTil) {
 		super("Spiller", fil);
-		rute = start;
+		flyttTil(start);
 		this.flyttTil = flyttTil;
 		if (start!=null)
-			rute.flyttTil(this, false);
+			rute().flyttTil(this, false);
 		Vindu.vindu.addKeyListener(this);
 	}
 	public Spiller(String fil, FlyttTil flyttTil) {
@@ -52,15 +52,15 @@ public class Spiller extends Enhet implements KeyListener {
 		if (pause)
 			return;
 		this.retning = retning;
-		final Point nyPos = retning.flytt(rute.pos());
+		final Point nyPos = retning.flytt(rute().pos());
 		
 		final Rute til = Brett.get(nyPos);
 		final Spiller denne = this;
 		if (til.kanFlytteTil(denne, true))
 			SwingUtilities.invokeLater(new Runnable(){public void run() {
-				rute.flyttFra(true);
-				rute=til;
-				rute.flyttTil(denne, true);
+				rute().flyttFra(true);
+				flyttTil(til);
+				rute().flyttTil(denne, true);
 				Brett.fjernDis(nyPos);
 				if (flyttTil != null)
 					flyttTil.flyttTil(denne);
@@ -111,15 +111,20 @@ public class Spiller extends Enhet implements KeyListener {
 			Vindu.tapte();
 	}
 	@Override
+	/**@super*/
 	public void pause(boolean pause) {
 		this.pause = pause;
 	}
+
 	@Override
+	/**Fjerner KeyListener
+	 * @super*/
 	public void fjern() {
 		Vindu.vindu.removeKeyListener(this);
 		super.fjern();
 	}
 
+	/**Lar programmer kjo/re egen kode naar spilleren flytter til et felt.*/
 	public static interface FlyttTil {
 		void flyttTil(Spiller spiller);
 	}

@@ -150,8 +150,8 @@ public class Metode {
 		public void utfør(Rute rute, Enhet enhet) {
 			if (pos != null)
 				rute = Brett.get(pos);
-			if (rute.enhet != null)
-				enhet = rute.enhet;
+			if (rute.enhet() != null)
+				enhet = rute.enhet();
 			if (rute.metode != null)
 				rute.metode.kall(rute, enhet);
 		}

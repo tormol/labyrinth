@@ -28,8 +28,8 @@ public class Spis {
 		spiller = new Spiller("spis/spiller.png", null, new Spiller.FlyttTil(){
 			int fiender = 1;
 			public void flyttTil(Spiller spiller) {
-				if (spiller.rute.isType("godbit")) {
-					spiller.rute.setType("gang");
+				if (spiller.rute().isType("godbit")) {
+					spiller.rute().setType("gang");
 					if (Brett.alle("godbit").isEmpty())
 						if (fiender == MAKS_FIENDER)
 							Vindu.vant();
@@ -59,16 +59,16 @@ public class Spis {
 			for (Enhet e : Enhet.enheter)
 				if (e instanceof Fiende) {
 					p = e.rute().pos();
-					while ((p.x<5 && p.y<5) || Brett.get(p).enhet != null)
+					while ((p.x<5 && p.y<5) || Brett.get(p).enhet() != null)
 						p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
 					e.flytt( p );
-					((Fiende)e).vent = 1000 - i*100;
+					((Fiende)e).setVent(1000 - i*100);
 					i++;
 				}
 			spiller.flytt(new Point(1, 1));
 			do {
 				p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
-			} while ((p.x<5 && p.y<5) || Brett.get(p).enhet != null);
+			} while ((p.x<5 && p.y<5) || Brett.get(p).enhet() != null);
 			new Fiende.Vanlig(Brett.get(p), "spis/fiende.png", 1000-100*(fiender-1), 5, 0);
 			Enhet.pauseAlle(false);
 		}});

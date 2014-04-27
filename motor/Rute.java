@@ -17,9 +17,9 @@ public class Rute extends javax.swing.JPanel {
 	/**For knapper, plater og teleportører: Hva som skjer når knappen trykkes.*/
 	public Metode metode;
 	/**Spiller i ruten.*/
-	public Enhet enhet = null;
+	private Enhet enhet = null;
 	/**Om spilleren kan se dette feltet.*/
-	boolean synlig = false;
+	private boolean synlig = false;
 
 	public Rute(Type t, Point p) {
 		type = t;
@@ -32,8 +32,9 @@ public class Rute extends javax.swing.JPanel {
 			vis();//Vis alle utganger fra start
 	}
 
+	/**Sjekker om enheten er solid, hvis trigger==true kan den kalle en Metode*/
 	public boolean kanFlytteTil(Enhet enhet, boolean trigger) {
-		if (type.type("knapp")  &&  trigger)
+		if (trigger && type.type("knapp"))
 			metode.kall(this, enhet);
 		return !type.solid;
 	}
@@ -100,5 +101,9 @@ public class Rute extends javax.swing.JPanel {
 		if (posisjon==null)
 			new Point();//no-op
 		return new Point(posisjon);
+	}
+
+	public Enhet enhet() {
+		return enhet;
 	}
 }

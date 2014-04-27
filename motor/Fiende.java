@@ -6,9 +6,9 @@ public abstract class Fiende extends Enhet implements Runnable {
 	static final ThreadGroup trådGruppe = new ThreadGroup("Fiender");
 
 
-	public int vent;
-	final int ventRaskere;
-	final int ventMin;
+	private int vent;
+	public final int ventRaskere;
+	public final int ventMin;
 	private boolean stopp = false;
 	private boolean pause = false;
 	private final Thread tråd;
@@ -18,8 +18,8 @@ public abstract class Fiende extends Enhet implements Runnable {
 		vent = ventStart;
 		this.ventRaskere = ventRaskere;
 		this.ventMin = ventMin + ventRaskere;
-		rute = start;
-		rute.flyttTil(this, false);
+		flyttTil(start);
+		rute().flyttTil(this, false);
 		tråd = new Thread(trådGruppe, this, "Fiende");
 		tråd.setName("Fiende");
 		tråd.setDaemon(true);
@@ -47,6 +47,7 @@ public abstract class Fiende extends Enhet implements Runnable {
 
 	abstract protected Point finnRute();
 
+	/**Unngaar try/catch rundt hver Thread.sleep(), avbryter pause hvis den blir avsluttet.*/
 	private void sov(long millisekunder) {
 		try {
 			Thread.sleep(millisekunder);
@@ -55,7 +56,7 @@ public abstract class Fiende extends Enhet implements Runnable {
 		}
 	}
 
-	
+	/**Blir kallt fra Rute hvis en annen enhet pro/ver aa flytte til dennes rute.*/
 	public void truffet(Enhet enhet) {
 		if (enhet instanceof Fiende)
 			fjern();
@@ -63,12 +64,14 @@ public abstract class Fiende extends Enhet implements Runnable {
 			enhet.truffet(this);
 	}
 
+	/**setter pause*/
 	public void pause(boolean pause) {
-		if (pause)
-			this.pause = true;
-		else
+		if (!pause)
 			tråd.interrupt();
+		this.pause = pause;
 	}
+
+	/**stopper traaden, og veenter til den avsluttes*/
 	public void fjern() {
 		stopp = true;
 		try {
@@ -82,6 +85,21 @@ public abstract class Fiende extends Enhet implements Runnable {
 	}
 
 
+	/**@return this.vent*/
+	public int getVent() {
+		return vent;
+	}
+
+	/**@param vent kan ikke vaere negativ.*/
+	public void setVent(int vent) {
+		if (vent < 0)
+			throw new IllegalArgumentException("vent er negativ.");
+		this.vent = vent;
+	}
+
+
+
+	/**Pro/ver aa flytte i tilfeldig retnig*/
 	public static class Vanlig extends Fiende {
 		public Vanlig(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
@@ -90,13 +108,14 @@ public abstract class Fiende extends Enhet implements Runnable {
 		@Override//Fiende
 		protected Point finnRute() {
 			retning = Retning.retning( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Rute til = Brett.get( retning.flytt( rute.pos() ) );
-			if (til.kanFlytteTil(this, false)  &&  !(til.enhet instanceof Fiende))
+			final Rute til = Brett.get( retning.flytt( rute().pos() ) );
+			if (til.kanFlytteTil(this, false)  &&  !(til.enhet() instanceof Fiende))
 				return til.pos();
 			return null;
 		}
 	}
 
+	/**Pro/ver aa flytte i tilfeldig retning, kan flytte til solide ruter.*/
 	public static class Spøkelse extends Fiende {
 		public Spøkelse(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
@@ -105,13 +124,14 @@ public abstract class Fiende extends Enhet implements Runnable {
 		@Override//Fiende
 		protected Point finnRute() {
 			retning = Retning.retning( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Rute til = Brett.get( retning.flytt( rute.pos() ) );
-			if (!til.isType("utenfor")  &&  !(til.enhet instanceof Fiende))
+			final Rute til = Brett.get( retning.flytt( rute().pos() ) );
+			if (!til.isType("utenfor")  &&  !(til.enhet() instanceof Fiende))
 				return til.pos();
 			return null;
 		}
 	}
 
+	/**Flytter mot spilleren, en akse om gangen.*/
 	public static class Målrettet extends Fiende {
 		public Målrettet(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
@@ -122,11 +142,11 @@ public abstract class Fiende extends Enhet implements Runnable {
 		 * */
 		protected Point finnRute() {
 			Point avstand = new Point();
-			Point pos = rute.pos();
+			Point pos = rute().pos();
 			for (Enhet e : Enhet.enheter)
 				if (e instanceof Spiller) {
-					avstand.x = e.rute.pos().x - pos.x;
-					avstand.y = e.rute.pos().y - pos.y;
+					avstand.x = e.rute().pos().x - pos.x;
+					avstand.y = e.rute().pos().y - pos.y;
 					break;
 				}
 			Point ret = new Point( (int)Math.signum(avstand.x), (int)Math.signum(avstand.y));
@@ -144,7 +164,7 @@ public abstract class Fiende extends Enhet implements Runnable {
 					continue;
 				Rute rute = Brett.get(pos.x+p.x, pos.y+p.y);
 				if (rute.kanFlytteTil(this, false)
-				 && !(rute.enhet instanceof Fiende))
+				 && !(rute.enhet() instanceof Fiende))
 					return rute.pos();
 			}
 			return null;

@@ -21,10 +21,10 @@ public abstract class Enhet {
 	}
 
 
-	public Rute rute;
+	private Rute rute;
 	protected String navn="Ukjent mob";
 	public final BufferedImage figur;
-	public Retning retning = Retning.NORD;
+	protected Retning retning = Retning.NORD;
 
 	public abstract void truffet(Enhet enhet);
 	public abstract void pause(boolean pause);
@@ -65,10 +65,21 @@ public abstract class Enhet {
 		g.drawImage(op.filter(figur, null), 0, 0, bredde, høyde, null);
 	}
 
+	/**Flytter fra rute, fjerner fra Enhet.enheter.*/
 	public void fjern() {
 		if (rute != null)
 			rute.flyttFra(false);
 		enheter.remove(this);
+	}
+
+
+	public void flyttTil(Rute rute) {
+		this.rute = rute;
+	}
+
+
+	public void setRute(Rute rute) {
+		this.rute = rute;
 	}
 
 

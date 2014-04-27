@@ -1,6 +1,8 @@
 *.class
 bin/
+[Tt]humbs.db
 
+##https://github.com/github/gitignore
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
