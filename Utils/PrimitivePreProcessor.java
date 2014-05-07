@@ -6,8 +6,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -68,14 +68,14 @@ public class PrimitivePreProcessor {
 			) {
 			String line;
 			while ((line = src.readLine()) != null  &&  line.startsWith("//"))
-				words.add( line.substring(2) );
+				words.parse( line.substring(2) );
 			while (line != null  &&  line.isEmpty())
 				line = src.readLine();
 
 			if (words.isEmpty())
 				System.err.println(f+": no variables, skipping.");
 			else if (clean) {
-				for (String className : words.classNames()) {
+				for (String className : words.classNames) {
 					File file = javaFile(f, className);
 					System.out.println(file);
 					if (file.exists())
@@ -86,7 +86,7 @@ public class PrimitivePreProcessor {
 			else if (line==null)
 				System.err.println(f+": no body, skipping.");
 			else {
-				for (String cn : words.classNames()) 
+				for (String cn : words.classNames) 
 					to.add( new Writer( javaFile(f, cn) )
 						.writeln("//Generated from " + f.getName()) );
 
@@ -109,33 +109,14 @@ public class PrimitivePreProcessor {
 	}
 
 
-	static class Variable implements Iterable<String> {
-		public final String name;
-		private final String[] value;
-		public Variable(String name, String[] values) {
-			this.name=name;
-			value=values;
-		}
-		public String get(int index) {
-			return value[index];
-		}
-		public int size() {
-			return value.length;
-		}
-		@Override//Iterable
-		public Iterator<String> iterator() {
-			return Arrays.asList(value).iterator();
-		}
-	}
-
-
 	@SuppressWarnings("serial")
-	static class WordList extends ArrayList<Variable> {
+	static class WordList extends HashMap<String, String[]> {
+		public String[] classNames = null;
 		public WordList() {
 			super(ARRAYLIST_LENGTHT);
 		}
 
-		public void add(String line) throws AnError {
+		public void parse(String line) throws AnError {
 			if (line.startsWith("&")) {
 				Matcher m = Pattern.compile("^&\\s*(\\w[\\w\\.\\d]*)\\s*=\\s*(.*)$").matcher(line);
 				if (!m.matches())
@@ -148,20 +129,17 @@ public class PrimitivePreProcessor {
 						if (!v[i].matches("\\w+"))
 							throw new AnError(false, "%s is not a valid className.", v[i]);
 					}
+					classNames = v;
 				} else {
-					int size = classNames().length;
+					int size = classNames.length;
 					if (v.length == size)
 						for (int i=0; i<v.length; i++)
 							v[i] = v[i].trim().replaceAll("\\*", name);
 					else 
 						throw new AnError(false, "The variable %s does not have %d values.", name, size);
 				}
-				add(new Variable(name, v));
+				put(name, v);
 			}
-		}
-
-		String[] classNames() {
-			return get(0).value;
 		}
 
 		Replacer replacer(String text) {
@@ -171,18 +149,18 @@ public class PrimitivePreProcessor {
 
 
 	static class Replacer {
-		public final String text;
+		public final char[] text;
 		private SortedSet<Part> parts = new TreeSet<>();
 		/**Fills in variables*/
 		public Replacer(WordList words, String text) {
-			this.text = text;
-			for (Variable v : words) {
+			this.text = text.toCharArray();
+			for (Entry<String, String[]> v : words.entrySet()) {
 				int start, end = 0;
-				while ((start = text.indexOf(v.name, end))  !=  -1) {
-					end = start + v.name.length();
+				while ((start = text.indexOf(v.getKey(), end))  !=  -1) {
+					end = start + v.getKey().length();
 					if (isWord(start-1, text)  ||  isWord(end, text))
 						continue;
-					parts.add(new Part(start, v, end)); //automatically sorted
+					parts.add(new Part(start, v.getValue(), v.getKey().length())); //automatically sorted
 				}
 			}
 		}
@@ -196,27 +174,28 @@ public class PrimitivePreProcessor {
 		}
 
 		public String replace(int index) {
-			StringBuilder str = new StringBuilder(text.length());
+			StringBuilder str = new StringBuilder(text.length);
 			int prev = 0;
 			for (Part p : parts) {
-				str.append(text.substring(prev, p.start));
-				str.append(p.var.get(index));
-				prev = p.end;
+				str.append(text, prev, p.start-prev);
+				str.append(p.var[index]);
+				prev = p.start + p.length;
 			}
+			str.append(text, prev, text.length-prev);
 			return str.toString();
 		}
 
 		private static class Part implements Comparable<Part> {
-			public final int start, end;
-			public final Variable var;
-			public Part(int start, Variable v, int end) {
+			public final int start, length;
+			public final String[] var;
+			public Part(int start, String[] v, int length) {
 				this.start = start;
 				this.var = v;
-				this.end = end;
+				this.length = length;
 			}
 			@Override//Comparable
 			public int compareTo(Part p) {
-				return start-p.start;
+				return start - p.start;
 			}
 		}
 	}
@@ -252,7 +231,7 @@ public class PrimitivePreProcessor {
 		}
 		@Override//AutoCloseable
 		public void close() throws AnError {
-			AnError err = new AnError(false, null);
+			AnError err = new AnError(false, "");
 			for (Writer w : this)
 				try {
 					w.close();
@@ -260,7 +239,7 @@ public class PrimitivePreProcessor {
 					System.err.format("Closing file \"%s\" failed.\n", w.file);
 					err.addSuppressed(e);
 				}
-			if (err.getSuppressed().length == 0)
+			if (err.getSuppressed().length > 0)
 				throw new AnError(err, "Error closing some files");
 		}
 	}
