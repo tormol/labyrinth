@@ -8,8 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -78,7 +76,7 @@ public class PrimitivePreProcessor {
 				System.err.println(f+": no variables, skipping.");
 			else if (clean) {
 				for (String className : words.classNames()) {
-					File file = new File(f.getParentFile(), className + ".java");
+					File file = javaFile(f, className);
 					System.out.println(file);
 					if (file.exists())
 						if (!file.delete())
@@ -88,14 +86,14 @@ public class PrimitivePreProcessor {
 			else if (line==null)
 				System.err.println(f+": no body, skipping.");
 			else {
-				for (int i=0; i<words.classNames().length; i++)
-					to.add( new JavaFile(f.getParent(), i, words.classNames()[i]) )
-							.open().writeln("//Generated from " + f.getName());
+				for (String cn : words.classNames()) 
+					to.add( new Writer( javaFile(f, cn) )
+						.writeln("//Generated from " + f.getName()) );
 
 				do {//the last lire read from  
 					Replacer r = words.replacer(line);
-					for (JavaFile jf : to)
-						jf.writeln(r );
+					for (int i=0; i<to.size(); i++)
+						to.get(i).writeln(r.replace(i));
 				} while ((line = src.readLine()) != null);
 			}
 		} catch (FileNotFoundException e) {
@@ -131,8 +129,8 @@ public class PrimitivePreProcessor {
 	}
 
 
+	@SuppressWarnings("serial")
 	static class WordList extends ArrayList<Variable> {
-		private static final long serialVersionUID = 1L;
 		public WordList() {
 			super(ARRAYLIST_LENGTHT);
 		}
@@ -171,6 +169,7 @@ public class PrimitivePreProcessor {
 		}
 	}
 
+
 	static class Replacer {
 		public final String text;
 		private SortedSet<Part> parts = new TreeSet<>();
@@ -207,7 +206,7 @@ public class PrimitivePreProcessor {
 			return str.toString();
 		}
 
-		private class Part implements Comparable<Part> {
+		private static class Part implements Comparable<Part> {
 			public final int start, end;
 			public final Variable var;
 			public Part(int start, Variable v, int end) {
@@ -223,62 +222,46 @@ public class PrimitivePreProcessor {
 	}
 
 
-	static class JavaFile {
-		public BufferedWriter writer = null;
+	public static File javaFile(File path, String className) {
+		if (path.isFile())
+			path = path.getParentFile();
+		return new File(path, className + ".java");
+	}
+
+
+	static class Writer extends BufferedWriter {
 		public final File file;
-		public final int index;
-		JavaFile(String path, int index, String className) {
-			this.index = index;
-			file = new File(path, className + ".java");
+		Writer(File file) throws IOException {
+			super(new FileWriter(file));
+			this.file = file;
 			if (!(append_new && file.exists()))
 				System.out.println(file);
 		}
-		JavaFile open() throws IOException {
-			writer = new BufferedWriter(new FileWriter(file));
-			return this;
-		}
-		JavaFile writeln(String s) throws IOException {
-			writer.write(s);
-			writer.newLine();
-			return this;
-		}
-		JavaFile writeln(Replacer r) throws IOException {
-			writeln(r.replace(index));
+		Writer writeln(String s) throws IOException {
+			write(s);
+			newLine();
 			return this;
 		}
 	}
 
 
-	static class FileList implements AutoCloseable, Iterable<JavaFile> {
-		List<JavaFile> files = new ArrayList<>(ARRAYLIST_LENGTHT);
-		public FileList()
-			{}
-		public JavaFile add(JavaFile jf) {
-			files.add(jf);
-			return jf;
-		}
-		@Override//Iterable
-		public Iterator<JavaFile> iterator() {
-			return files.iterator();
+	@SuppressWarnings("serial")
+	static class FileList extends ArrayList<Writer> implements AutoCloseable {
+		public FileList() {
+			super(ARRAYLIST_LENGTHT);
 		}
 		@Override//AutoCloseable
 		public void close() throws AnError {
-			LinkedList<IOException> ioe = new LinkedList<>();
-			for (JavaFile jf : files)
-				if (jf.writer != null)
-					try {
-						jf.writer.close();
-						jf.writer = null;
-					} catch (IOException e) {
-						System.err.format("Closing file \"%s\" failed.\n", jf.file);
-						ioe.add(e);
-					}
-			if (!ioe.isEmpty()) {
-				AnError master = new AnError(false, "Error closing some files");
-				for (IOException e : ioe)
-					master.addSuppressed(e);
-				throw master;
-			}
+			AnError err = new AnError(false, null);
+			for (Writer w : this)
+				try {
+					w.close();
+				} catch (IOException e) {
+					System.err.format("Closing file \"%s\" failed.\n", w.file);
+					err.addSuppressed(e);
+				}
+			if (err.getSuppressed().length == 0)
+				throw new AnError(err, "Error closing some files");
 		}
 	}
 
