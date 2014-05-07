@@ -37,9 +37,9 @@ public class Fil {
 	public static void lesInn(String sti) {
 		//Holder linjer i filen.
 		LinkedList<String> fil = new LinkedList<String>();
-		try (BufferedReader filLeser= new BufferedReader(new FileReader(sti))) {
+		try (BufferedReader filLesynsvidde= new BufferedReader(new FileReader(sti))) {
 			String linje;
-			while ((linje = filLeser.readLine()) != null)
+			while ((linje = filLesynsvidde.readLine()) != null)
 				fil.add(linje);
 		} catch (FileNotFoundException e) {
 			throw feil("Filen \"%s\" finnes ikke.", sti);
