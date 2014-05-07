@@ -23,7 +23,8 @@ public class PrimitivePreProcessor {
 		clean = false,//remove generated files instead of writing them
 		append_new = true;//only write new files
 
-	static String help =
+	static final int ARRAYLIST_LENGTHT = 10;
+	static final String help =
 	"Generate java files based on other files.\n" +
 	"Syntax:\n"+
 	"//&class = classname1,classname2,...\t\t//the first var is used for filenames\n" +
@@ -31,7 +32,7 @@ public class PrimitivePreProcessor {
 	"//comment that will not appear in generated files\n" +
 	"//&name = *1, *2, ...\t\t(glob: name1, name2, ...)\n" +
 	"import something\t\t(this line and everything after is written to the generated files)\n";
-	static String version =
+	static final String version =
 	"PrimitivePreProcessor v1\n" +
 	"Copyright Torbjørn Birch Moltu\n" +
 	"GPL version 2";
@@ -62,21 +63,21 @@ public class PrimitivePreProcessor {
 
 
 	static void replaceFile(File f) throws AnError {
-		ArrayList<Variable> words = new ArrayList<Variable>(10);
+		WordList words = new WordList();
 		try (
 				BufferedReader src = new BufferedReader(new FileReader(f));
 				FileList to = new FileList()
 			) {
 			String line;
 			while ((line = src.readLine()) != null  &&  line.startsWith("//"))
-				parse_variable_line( words, line.substring(2) );
+				words.add( line.substring(2) );
 			while (line != null  &&  line.isEmpty())
 				line = src.readLine();
 
 			if (words.isEmpty())
 				System.err.println(f+": no variables, skipping.");
 			else if (clean) {
-				for (String className : words.get(0)) {
+				for (String className : words.classNames()) {
 					File file = new File(f.getParentFile(), className + ".java");
 					System.out.println(file);
 					if (file.exists())
@@ -87,15 +88,14 @@ public class PrimitivePreProcessor {
 			else if (line==null)
 				System.err.println(f+": no body, skipping.");
 			else {
-				Variable classNames = words.get(0);
-				for (int i=0; i<classNames.size(); i++)
-					to.add( new JavaFile(f.getParent(), i, classNames) )
+				for (int i=0; i<words.classNames().length; i++)
+					to.add( new JavaFile(f.getParent(), i, words.classNames()[i]) )
 							.open().writeln("//Generated from " + f.getName());
 
 				do {//the last lire read from  
-					SortedSet<Part> parts = parse_body(line, words);
+					Replacer r = words.replacer(line);
 					for (JavaFile jf : to)
-						jf.writeln(line, parts);
+						jf.writeln(r );
 				} while ((line = src.readLine()) != null);
 			}
 		} catch (FileNotFoundException e) {
@@ -108,59 +108,6 @@ public class PrimitivePreProcessor {
 		} catch (IOException e) {
 			throw new AnError(true, e.getMessage());
 		}
-	}
-
-
-	static void parse_variable_line(List<Variable> variables, String line) throws AnError {
-		if (line.startsWith("&")) {
-			Matcher m = Pattern.compile("^&\\s*(\\w[\\w\\.\\d]*)\\s*=\\s*(.*)$").matcher(line);
-			if (!m.matches())
-				throw new AnError(false, "Invalid variable line: %s", line);
-			String name = m.group(1);
-			String[] v = m.group(2).split(",");
-			if (variables.isEmpty()) {
-				for (int i=0; i<v.length; i++) {
-					v[i] = v[i].trim();
-					if (!v[i].matches("\\w+"))
-						throw new AnError(false, "%s is not a valid className.", v[i]);
-				}
-			} else {
-				int size = variables.get(0).size();
-				if (v.length == size)
-					for (int i=0; i<v.length; i++)
-						v[i] = v[i].trim().replaceAll("\\*", name);
-				else 
-					throw new AnError(false, "The variable %s does not have %d values.", name, size);
-			}
-			variables.add(new Variable(name, v));
-		}
-	}
-
-
-	/**Fills in variables*/
-	static SortedSet<Part> parse_body(String text, List<Variable> variables) {
-		SortedSet<Part> parts = new TreeSet<>();
-		for (Variable v : variables) {
-			int start, end = 0;
-			while ((start = text.indexOf(v.name, end))  !=  -1) {
-				end = start + v.name.length();
-				if (isWord(text, start-1)  ||  isWord(text, end))
-					continue;
-				parts.add(new Part(start, v, end)); //automatically sorted
-			}
-		}
-		return parts;
-	}
-
-
-	/**Is index a valid index of str, and does charAt(index) match the regex "[A-Z_a-z]"?*/
-	static boolean isWord(String str, int index) {
-		if (index<0 || index>=str.length())
-			return false;
-		char c = str.charAt(index);
-		return ((c>='0' && c<='9')  ||  (c>='a' && c<='z')  ||  (c>='A' && c<='Z')  ||  c=='_');
-		//ascii table: 0-9<A-Z<_<a-z
-		//return (c>='A' && c<='z'  && (c<='Z' || c=='_' || c>='A'));
 	}
 
 
@@ -184,17 +131,94 @@ public class PrimitivePreProcessor {
 	}
 
 
-	static class Part implements Comparable<Part> {
-		public final int start, end;
-		public final Variable var;
-		public Part(int start, Variable v, int end) {
-			this.start = start;
-			this.var = v;
-			this.end = end;
+	static class WordList extends ArrayList<Variable> {
+		private static final long serialVersionUID = 1L;
+		public WordList() {
+			super(ARRAYLIST_LENGTHT);
 		}
-		@Override//Comparable
-		public int compareTo(Part p) {
-			return start-p.start;
+
+		public void add(String line) throws AnError {
+			if (line.startsWith("&")) {
+				Matcher m = Pattern.compile("^&\\s*(\\w[\\w\\.\\d]*)\\s*=\\s*(.*)$").matcher(line);
+				if (!m.matches())
+					throw new AnError(false, "Invalid variable line: %s", line);
+				String name = m.group(1);
+				String[] v = m.group(2).split(",");
+				if (isEmpty()) {
+					for (int i=0; i<v.length; i++) {
+						v[i] = v[i].trim();
+						if (!v[i].matches("\\w+"))
+							throw new AnError(false, "%s is not a valid className.", v[i]);
+					}
+				} else {
+					int size = classNames().length;
+					if (v.length == size)
+						for (int i=0; i<v.length; i++)
+							v[i] = v[i].trim().replaceAll("\\*", name);
+					else 
+						throw new AnError(false, "The variable %s does not have %d values.", name, size);
+				}
+				add(new Variable(name, v));
+			}
+		}
+
+		String[] classNames() {
+			return get(0).value;
+		}
+
+		Replacer replacer(String text) {
+			return new Replacer(this, text);
+		}
+	}
+
+	static class Replacer {
+		public final String text;
+		private SortedSet<Part> parts = new TreeSet<>();
+		/**Fills in variables*/
+		public Replacer(WordList words, String text) {
+			this.text = text;
+			for (Variable v : words) {
+				int start, end = 0;
+				while ((start = text.indexOf(v.name, end))  !=  -1) {
+					end = start + v.name.length();
+					if (isWord(start-1, text)  ||  isWord(end, text))
+						continue;
+					parts.add(new Part(start, v, end)); //automatically sorted
+				}
+			}
+		}
+
+		/**Is index a valid index of str, and does charAt(index) match the regex "[A-Z_a-z]"?*/
+		private boolean isWord(int index, String str) {
+			if (index<0 || index>=str.length())
+				return false;
+			final char c = str.charAt(index);
+			return ((c>='0' && c<='9')  ||  (c>='a' && c<='z')  ||  (c>='A' && c<='Z')  ||  c=='_');
+		}
+
+		public String replace(int index) {
+			StringBuilder str = new StringBuilder(text.length());
+			int prev = 0;
+			for (Part p : parts) {
+				str.append(text.substring(prev, p.start));
+				str.append(p.var.get(index));
+				prev = p.end;
+			}
+			return str.toString();
+		}
+
+		private class Part implements Comparable<Part> {
+			public final int start, end;
+			public final Variable var;
+			public Part(int start, Variable v, int end) {
+				this.start = start;
+				this.var = v;
+				this.end = end;
+			}
+			@Override//Comparable
+			public int compareTo(Part p) {
+				return start-p.start;
+			}
 		}
 	}
 
@@ -203,9 +227,9 @@ public class PrimitivePreProcessor {
 		public BufferedWriter writer = null;
 		public final File file;
 		public final int index;
-		JavaFile(String path, int index, Variable classNames) {
+		JavaFile(String path, int index, String className) {
 			this.index = index;
-			file = new File(path, classNames.get(index) + ".java");
+			file = new File(path, className + ".java");
 			if (!(append_new && file.exists()))
 				System.out.println(file);
 		}
@@ -218,20 +242,15 @@ public class PrimitivePreProcessor {
 			writer.newLine();
 			return this;
 		}
-		JavaFile writeln(String line, SortedSet<Part> parts) throws IOException {
-			int prev = 0;
-			for (Part p : parts) {
-				writer.write(line.substring(prev, p.start) + p.var.get(index));
-				prev = p.end;
-			}
-			writeln(line.substring(prev));
+		JavaFile writeln(Replacer r) throws IOException {
+			writeln(r.replace(index));
 			return this;
 		}
 	}
 
 
 	static class FileList implements AutoCloseable, Iterable<JavaFile> {
-		ArrayList<JavaFile> files = new ArrayList<>(10);
+		List<JavaFile> files = new ArrayList<>(ARRAYLIST_LENGTHT);
 		public FileList()
 			{}
 		public JavaFile add(JavaFile jf) {
