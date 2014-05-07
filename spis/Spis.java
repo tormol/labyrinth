@@ -1,16 +1,8 @@
 package spis;
-
 import static java.awt.Color.*;
-import java.awt.Point;
-
 import javax.swing.SwingUtilities;
-
-import motor.Brett;
-import motor.Enhet;
-import motor.Fiende;
-import motor.Spiller;
-import motor.Type;
-import motor.Vindu;
+import tbm.util.geom.Point;
+import motor.*;
 
 
 public class Spis {

@@ -1,13 +1,12 @@
 package motor;
 import javax.swing.JPanel;
-
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.Point;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import tbm.util.geom.Point;
+
 
 /**Originalt var denne ikke statisk, men siden jeg aldri vil trenge mer enn en instans, og den brukes overalt ble det tungvindt å sende den ene instansen rundt til alle metoder.
  * Holder alle rutene på skjermen.*/

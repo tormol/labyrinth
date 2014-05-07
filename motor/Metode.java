@@ -1,6 +1,6 @@
 package motor;
+import tbm.util.geom.Point;
 import java.awt.Dimension;
-import java.awt.Point;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;

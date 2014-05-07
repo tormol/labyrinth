@@ -2,7 +2,8 @@ package motor;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Point;
+
+import tbm.util.geom.Point;
 
 
 public class Rute extends javax.swing.JPanel {

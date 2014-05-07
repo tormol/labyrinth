@@ -1,10 +1,7 @@
 package motor;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
-
-
 import java.awt.Graphics;
-import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -12,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import tbm.util.geom.Point;
+
 
 public abstract class Enhet {
 	public static final List<Enhet> enheter = new LinkedList<Enhet>();
@@ -88,18 +87,18 @@ public abstract class Enhet {
 		NORD(0), ØST(Math.PI/2), SØR(Math.PI), VEST(-Math.PI/2);
 		/**hvor mye bildet må roteres.*/
 		public final double theta;
-		private Retning(double vinkel) {
-			this.theta = vinkel;
+		private Retning(double theta) {
+			this.theta = theta;
 		}
 		/**Flytt p ett hakk i retning*/
 		public Point flytt(Point p) {
 			switch (this) {
-			  case NORD: p.y--; break;
-			  case ØST:  p.x++; break;
-			  case SØR:  p.y++; break;
-			  case VEST: p.x--; break;
+			  case NORD: return p.add(0, -1);
+			  case ØST:  return p.add(+1, 0);
+			  case SØR:  return p.add(0, +1);
+			  case VEST: return p.add(-1, 0);
+			  default: throw new AssertionError("Unknown direction " + this);
 			}
-			return p;
 		}
 		/**Returner den retningen verdi er lik*/
 		public static Retning retning(int verdi, int nord, int øst, int sør, int vest) {

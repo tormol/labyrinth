@@ -1,7 +1,7 @@
 package motor;
 import static java.awt.event.KeyEvent.*; 
 import javax.swing.SwingUtilities;
-import java.awt.Point;
+import tbm.util.geom.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.LinkedList;

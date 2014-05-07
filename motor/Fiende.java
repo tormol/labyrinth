@@ -1,6 +1,5 @@
 package motor;
-import java.awt.Point;
-
+import tbm.util.geom.Point;
 
 public abstract class Fiende extends Enhet implements Runnable {
 	static final ThreadGroup trådGruppe = new ThreadGroup("Fiender");
@@ -145,8 +144,7 @@ public abstract class Fiende extends Enhet implements Runnable {
 			Point pos = rute().pos();
 			for (Enhet e : Enhet.enheter)
 				if (e instanceof Spiller) {
-					avstand.x = e.rute().pos().x - pos.x;
-					avstand.y = e.rute().pos().y - pos.y;
+					avstand = rute().pos().diff(pos);
 					break;
 				}
 			Point ret = new Point( (int)Math.signum(avstand.x), (int)Math.signum(avstand.y));
@@ -160,7 +158,7 @@ public abstract class Fiende extends Enhet implements Runnable {
 			}
 
 			for (Point p : alternativ) {
-				if (p.distance(0, 0) == 0)
+				if (p.equals(0, 0))
 					continue;
 				Rute rute = Brett.get(pos.x+p.x, pos.y+p.y);
 				if (rute.kanFlytteTil(this, false)
