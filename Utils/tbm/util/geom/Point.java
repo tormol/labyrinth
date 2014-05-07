@@ -82,6 +82,8 @@ public class Point implements Serializable, Cloneable {
 	}}
 
 	/***/
+	public boolean equals(int x, int y) {return (this.x==x && this.y==y);}
+	/***/
 	public String toString() {return x+", "+y;}
 	/***/
 	public String toString(char o, char c) {return Helper.toString(o, this, c);}

@@ -1,5 +1,6 @@
 #generated files
-tbm/util/geom/FPoint.java
+#/tbm/util/geom/.gitignore
+*.ignore
 
 ##https://github.com/github/gitignore
 ##annet
