@@ -30,7 +30,7 @@ public class Point implements Serializable, Cloneable {
 	public Point add(Axis a, int value) {switch (a) {
 		case X: return add(x+value, y);
 		case Y: return add(x, value+y);
-		default: throw new AssertionError();
+		default: throw new AssertionError("Unhandled Axis "+a.toString());
 	}}
 
 	/***/
@@ -70,7 +70,7 @@ public class Point implements Serializable, Cloneable {
 	public int get(Axis a) {switch (a) {
 		case X: return x;
 		case Y: return y;
-		default: throw new AssertionError();
+		default: throw new AssertionError("Unhandled Axis "+a.toString());
 	}}
 
 	public Point withX(int x) {return new Point(x, this.y);}
@@ -78,11 +78,11 @@ public class Point implements Serializable, Cloneable {
 	public Point with(Axis a, int v) {switch (a) {
 		case X: return new Point(v, y);
 		case Y: return new Point(x, v);
-		default: throw new AssertionError();
+		default: throw new AssertionError("Unhandled Axis "+a.toString());
 	}}
 
 	/***/
-	public String toString() {return Helper.toString(this);}
+	public String toString() {return x+", "+y;}
 	/***/
 	public String toString(char o, char c) {return Helper.toString(o, this, c);}
 	/***/

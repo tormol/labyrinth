@@ -28,8 +28,8 @@ public class Helper {
 	public static String toString(char o, Point2D p, char c) {
 		return Helper.toString(o, new Point(p), c);
 	}
-	public static String toString(char o, Point p, char c) {
-		String str = (p==null ? "null" : p.x+", "+p.y);
+	public static String toString(char o, Object p, char c) {
+		String str = (p==null ? "null" : p.toString());
 		if (o=='\0' && c=='\0')
 			return str;
 		return o+str+c;
@@ -37,7 +37,7 @@ public class Helper {
 	public static String toString(Point2D p) {
 		return Helper.toString(new Point(p));
 	}
-	public static String toString(Point p) {
+	public static String toString(Object p) {
 		return toString('\0', p, '\0');
 	}
 }
