@@ -1,0 +1,60 @@
+package tbm.util.geom;
+
+import java.awt.geom.Point2D;
+
+/***/
+public class PointM extends java.awt.Point {
+	public PointM() {
+		super();
+	}
+	public PointM(int x, int y) {
+		super(x, y);
+	}
+	public PointM(java.awt.Point p) {
+		super(p);
+	}
+	public PointM(Point2D p) {
+		super((int)p.getX(), (int)p.getY());
+	}
+	public PointM(String str) throws Point.PointFormatException {
+		super();
+		PointM p = Point.parsePoint(str);
+		if (p==null)
+			throw new PointFormatException("Point is null, but a constructor cannot return null, use Point.parsePoint() when [null] is expected.");
+		x=p.x;
+		y=p.y;
+	}
+
+	public int get(Axis axis) {
+		switch (axis) {
+		  case X: return this.x;
+		  case Y: return this.y;
+		  default: throw new AssertionError("...");
+		}
+	}
+
+	public void set(Axis axis, int value) {
+		switch (axis) {
+		  case X: this.x = value;
+		  case Y: this.y = value;
+		  default: throw new AssertionError("...");
+		}
+	}
+	
+	public void set(java.awt.Point p) {
+		this.x=p.x;
+		this.y=p.y;
+	}
+	public void set(int x, int y) {
+		this.x=x;
+		this.y=y;
+	}
+	public void set(String str) {
+		set(Point.parsePoint(str));
+	}
+
+
+
+
+	private static final long serialVersionUID = 1L;
+}
