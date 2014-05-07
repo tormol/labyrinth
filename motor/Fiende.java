@@ -2,7 +2,7 @@ package motor;
 import tbm.util.geom.Point;
 
 public abstract class Fiende extends Enhet implements Runnable {
-	static final ThreadGroup trådGruppe = new ThreadGroup("Fiender");
+	static final ThreadGroup threadGroup = new ThreadGroup("Fiender");
 
 
 	private int vent;
@@ -12,14 +12,18 @@ public abstract class Fiende extends Enhet implements Runnable {
 	private boolean pause = false;
 	private final Thread tråd;
 
+	/**called from run()
+	 *@return where the unit should move to*/
+	abstract protected Point finnRute();
+
 	protected Fiende(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
 		super("Fiende", fil);
 		vent = ventStart;
 		this.ventRaskere = ventRaskere;
 		this.ventMin = ventMin + ventRaskere;
-		flyttTil(start);
+		setRute(start);
 		rute().flyttTil(this, false);
-		tråd = new Thread(trådGruppe, this, "Fiende");
+		tråd = new Thread(threadGroup, this, "Fiende");
 		tråd.setName("Fiende");
 		tråd.setDaemon(true);
 		tråd.start();
@@ -44,9 +48,8 @@ public abstract class Fiende extends Enhet implements Runnable {
 		}
 	}
 
-	abstract protected Point finnRute();
-
-	/**Unngaar try/catch rundt hver Thread.sleep(), avbryter pause hvis den blir avsluttet.*/
+	/**To avoid try/catch around every Thread.sleep().
+	 *Ends pause if it is interrupted.*/
 	private void sov(long millisekunder) {
 		try {
 			Thread.sleep(millisekunder);
@@ -55,7 +58,6 @@ public abstract class Fiende extends Enhet implements Runnable {
 		}
 	}
 
-	/**Blir kallt fra Rute hvis en annen enhet pro/ver aa flytte til dennes rute.*/
 	public void truffet(Enhet enhet) {
 		if (enhet instanceof Fiende)
 			fjern();
@@ -70,14 +72,14 @@ public abstract class Fiende extends Enhet implements Runnable {
 		this.pause = pause;
 	}
 
-	/**stopper traaden, og veenter til den avsluttes*/
+	/**Tells the thread to stop, and waits for it.*/
 	public void fjern() {
 		stopp = true;
 		try {
 			tråd.interrupt();
 			tråd.join();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
+			System.err.println("Error interrupting Fiende: " + navn);
 			e.printStackTrace();
 		}
 		super.fjern();

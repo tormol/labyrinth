@@ -25,7 +25,10 @@ public abstract class Enhet {
 	public final BufferedImage figur;
 	protected Retning retning = Retning.NORD;
 
+	/**Is called from Rute if another unit tries to move to this units rute.
+	 *@param enhet the unit that is trying to move.*/
 	public abstract void truffet(Enhet enhet);
+	/**Make the unit stop/start.*/
 	public abstract void pause(boolean pause);
 
 	protected Enhet(String navn, String figur) {
@@ -38,6 +41,7 @@ public abstract class Enhet {
 		enheter.add(this);
 	}
 
+	/**Move from current tile to tile with pos.*/
 	public void flytt(final Point pos) {
 		final Enhet denne = this;
 		SwingUtilities.invokeLater(new Runnable(){public void run() {
@@ -56,6 +60,7 @@ public abstract class Enhet {
 		return rute;
 	}
 
+	/**Draw the unit's image.*/
 	public void tegn(Graphics g, int bredde, int høyde) {
 		//Roterer figur etter retning
 		AffineTransform transform = new AffineTransform();
@@ -72,12 +77,8 @@ public abstract class Enhet {
 	}
 
 
-	public void flyttTil(Rute rute) {
-		this.rute = rute;
-	}
-
-
-	public void setRute(Rute rute) {
+	/**It's really simple*/
+	protected void setRute(Rute rute) {
 		this.rute = rute;
 	}
 
@@ -90,15 +91,9 @@ public abstract class Enhet {
 		private Retning(double theta) {
 			this.theta = theta;
 		}
-		/**Flytt p ett hakk i retning*/
+		/**Flytt p en rute i retning*/
 		public Point flytt(Point p) {
-			switch (this) {
-			  case NORD: return p.add(0, -1);
-			  case ØST:  return p.add(+1, 0);
-			  case SØR:  return p.add(0, +1);
-			  case VEST: return p.add(-1, 0);
-			  default: throw new AssertionError("Unknown direction " + this);
-			}
+			return p.move(this, ØST, VEST, SØR, NORD);
 		}
 		/**Returner den retningen verdi er lik*/
 		public static Retning retning(int verdi, int nord, int øst, int sør, int vest) {

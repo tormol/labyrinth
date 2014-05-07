@@ -30,7 +30,7 @@ public class Spiller extends Enhet implements KeyListener {
 
 	public Spiller(String fil, Rute start, FlyttTil flyttTil) {
 		super("Spiller", fil);
-		flyttTil(start);
+		setRute(start);
 		this.flyttTil = flyttTil;
 		if (start!=null)
 			rute().flyttTil(this, false);
@@ -59,7 +59,7 @@ public class Spiller extends Enhet implements KeyListener {
 		if (til.kanFlytteTil(denne, true))
 			SwingUtilities.invokeLater(new Runnable(){public void run() {
 				rute().flyttFra(true);
-				flyttTil(til);
+				setRute(til);
 				rute().flyttTil(denne, true);
 				Brett.fjernDis(nyPos);
 				if (flyttTil != null)
@@ -76,6 +76,9 @@ public class Spiller extends Enhet implements KeyListener {
 		{}//brukes ikke
 
 
+	/**With an hammer, its the enemies who lose.
+	 * Note that the hammer is invisible (TODO)
+	 *@param millisekunder how long the hammer last*/
 	public synchronized void hammer(final int millisekunder) {
 		if (hammer)
 			throw Vindu.feil("Spilleren har allerede en hammer.");
