@@ -187,4 +187,8 @@ public class Method {
 			enhet.move(pos);
 		}
 	}
+
+	enum parameter {
+		POINT, STRING, ITEGER;
+	}
 }
