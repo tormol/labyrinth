@@ -6,7 +6,7 @@ import java.awt.Graphics;
 import tbm.util.geom.Point;
 
 
-public class Rute extends javax.swing.JPanel {
+public class Tile extends javax.swing.JPanel {
 	private static final long serialVersionUID = 1L;
 	/**Fargen til felter man ikke har sett.*/
 	public static final Color dis = Color.LIGHT_GRAY;
@@ -16,13 +16,13 @@ public class Rute extends javax.swing.JPanel {
 	/***/
 	private final Point posisjon;
 	/**For knapper, plater og teleportører: Hva som skjer når knappen trykkes.*/
-	public Metode metode;
+	public Method metode;
 	/**Spiller i ruten.*/
-	private Enhet enhet = null;
+	private Mob enhet = null;
 	/**Om spilleren kan se dette feltet.*/
 	private boolean synlig = false;
 
-	public Rute(Type t, Point p) {
+	public Tile(Type t, Point p) {
 		type = t;
 		posisjon = p;
 		setBackground(dis);
@@ -34,13 +34,13 @@ public class Rute extends javax.swing.JPanel {
 	}
 
 	/**Sjekker om enheten er solid, hvis trigger==true kan den kalle en Metode*/
-	public boolean kanFlytteTil(Enhet enhet, boolean trigger) {
+	public boolean kanFlytteTil(Mob enhet, boolean trigger) {
 		if (trigger && type.type("knapp"))
 			metode.kall(this, enhet);
 		return !type.solid;
 	}
 
-	public Rute flyttTil(Enhet enhet, boolean trigger) {
+	public Tile flyttTil(Mob enhet, boolean trigger) {
 		if (type.metode && trigger)
 			metode.kall(this, enhet);
 		//den som flytter til kan sjekke hva som er her før den flytter,
@@ -52,8 +52,8 @@ public class Rute extends javax.swing.JPanel {
 		return this;
 	}
 
-	public Enhet flyttFra(boolean trigger) {
-		Enhet enhet = this.enhet;
+	public Mob flyttFra(boolean trigger) {
+		Mob enhet = this.enhet;
 		this.enhet = null;
 		repaint();
 		return enhet;
@@ -90,7 +90,7 @@ public class Rute extends javax.swing.JPanel {
 		setType(Type.t(type));
 	}
 	public synchronized void setType(final Type type) {
-		final Rute denne = this;
+		final Tile denne = this;
 		denne.type = type;
 		if (synlig)
 			denne.setBackground(denne.type.farge);
@@ -104,7 +104,7 @@ public class Rute extends javax.swing.JPanel {
 		return new Point(posisjon);
 	}
 
-	public Enhet enhet() {
+	public Mob enhet() {
 		return enhet;
 	}
 }

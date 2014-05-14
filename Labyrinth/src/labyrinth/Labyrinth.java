@@ -3,9 +3,9 @@ import static java.awt.Color.*;
 import java.io.File;
 import labyrinth.engine.*;
 
-public class Labyrint {
+public class Labyrinth {
 	public static void main(String[] args) {
-		Vindu.start("Labyrint");
+		Window.start("Labyrint");
 		String l = "res/";
 		Type.add("vegg",   true,  false, l+"wall.png",   BLACK,  "#");
 		Type.add("gang",   false, false, l+"floor.png",  WHITE,  " ");
@@ -19,18 +19,18 @@ public class Labyrint {
 		Type.add("hammer", false, false, l+"hammer.png", WHITE,  "^");
 
 		if (args.length == 1)
-			Fil.lesInn(new File(args[0]));
+			MapFile.lesInn(new File(args[0]));
 		else //Vis en filåpner
-			Fil.lesInn(Fil.velg("maps"));
-		for (Rute fiende : Brett.alle("fiende")) {
+			MapFile.lesInn(MapFile.velg("maps"));
+		for (Tile fiende : TileMap.alle("fiende")) {
 			fiende.setType("gang");
-			new Fiende.Vanlig(fiende, l+"enemy.png", 600, 0, 600); 
+			new Enemy.Vanlig(fiende, l+"enemy.png", 600, 0, 600); 
 		}
 
-		new Spiller(l+"player.png", new Spiller.FlyttTil(){public void flyttTil(Spiller spiller) {
+		new Player(l+"player.png", new Player.FlyttTil(){public void flyttTil(Player spiller) {
 			if (spiller.rute().isType("utgang")) {
 				spiller.rute().flyttFra(true);
-				Vindu.vant();
+				Window.vant();
 			}
 			else if (spiller.rute().isType("hammer")) {
 				spiller.rute().setType("gang");
@@ -38,10 +38,10 @@ public class Labyrint {
 			}
 			else if (spiller.rute().isType("godbit")) {
 				spiller.rute().setType("gang");
-				if (Brett.alle("godbit").isEmpty())
-					Vindu.vant();
+				if (TileMap.alle("godbit").isEmpty())
+					Window.vant();
 			}
 		}});
-		Vindu.vis();
+		Window.vis();
 	}
 }

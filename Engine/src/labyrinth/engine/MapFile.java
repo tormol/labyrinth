@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 
-public class Fil {
+public class MapFile {
 	/**Brukes av feil()
 	 *-1 betyr at det ikke leses noen fil, og Fil.feil() vil ikke vise noe linjenummer.*/
 	public static int linje = -1;
@@ -21,7 +21,7 @@ public class Fil {
 	}
 	/**Viser en */
 	public static File velg(String sti) {
-		FileDialog fd = new FileDialog(Vindu.vindu, Vindu.vindu.getTitle()+" - Velg fil", FileDialog.LOAD);
+		FileDialog fd = new FileDialog(Window.vindu, Window.vindu.getTitle()+" - Velg fil", FileDialog.LOAD);
 		fd.setDirectory(new File("./"+sti).getAbsolutePath());
 		fd.setFile("*.txt");
 		fd.setVisible(true);
@@ -47,13 +47,13 @@ public class Fil {
 		} catch (IOException e) {
 			throw feil("Feil under lesing av fil \"%s\"", sti);
 		}
-		Fil.linje = 1;
+		MapFile.linje = 1;
 
 		Queue<char[]> brett = new LinkedList<char[]>();
 		while (!fil.isEmpty() && !fil.getFirst().isEmpty())
 			brett.add(fil.removeFirst().toCharArray());
-		Brett.start(brett);
-		Fil.linje++;
+		TileMap.start(brett);
+		MapFile.linje++;
 
 		while (!fil.isEmpty()) {
 			String linje = fil.removeFirst().trim();
@@ -61,34 +61,34 @@ public class Fil {
 				continue;
 			while (linje.endsWith("\\") && !fil.isEmpty()) {
 				linje = linje.substring(0, -1) + fil.removeFirst().trim();
-				Fil.linje++;
+				MapFile.linje++;
 			}
 			if (linje.startsWith("$"))
-				Konstant.add(linje);
+				Constant.add(linje);
 			else
-				Metode.add( Konstant.fyllInn(linje) );
-			Fil.linje++;
+				Method.add( Constant.fyllInn(linje) );
+			MapFile.linje++;
 		}
 
-		String synsvidde = Konstant.get("synsvidde");
+		String synsvidde = Constant.get("synsvidde");
 		if (synsvidde != null) {
 			synsvidde = synsvidde.trim();
 			if (synsvidde.equals("av"))
 				synsvidde = "0";
 			try {
-				Brett.synsvidde( Integer.parseInt(synsvidde) );
+				TileMap.synsvidde( Integer.parseInt(synsvidde) );
 			} catch (NumberFormatException e) {
 				throw feil("Konstanten $synsvidde er ikke et tall\n%s", synsvidde);
 			}
 		}
 		
-		Brett.finnMetoder();
+		TileMap.finnMetoder();
 	}
 
 	/**Legger til linjenummer før feilmeldingen.*/
-	public static Vindu.FeilMelding feil(String f, Object... a) {
+	public static Window.FeilMelding feil(String f, Object... a) {
 		if (linje == -1)
-			return Vindu.feil( String.format(f, a) );
-		return Vindu.feil("Linje %d: %s", linje, String.format(f, a));
+			return Window.feil( String.format(f, a) );
+		return Window.feil("Linje %d: %s", linje, String.format(f, a));
 	}
 }

@@ -5,7 +5,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
-public class Vindu {
+public class Window {
 	public static JFrame vindu = null;
 	private static JLabel tekst = new JLabel();
 	public static void start(String vinduTittel) {
@@ -20,7 +20,7 @@ public class Vindu {
 			));
 		tekst.setEnabled(false);
 		vindu.getContentPane().add(tekst);
-		vindu.getContentPane().add(Brett.panel);
+		vindu.getContentPane().add(TileMap.panel);
 		vindu.setFocusable(true);
 		vindu.requestFocus();
 		vindu.pack();
@@ -50,7 +50,7 @@ public class Vindu {
 	}
 
 	public static void slutt(String tekst) {
-		for (Enhet e :Enhet.enheter)
+		for (Mob e :Mob.enheter)
 			e.pause(true);
 		JOptionPane.showMessageDialog(vindu,
 				tekst, vindu.getTitle(), JOptionPane.PLAIN_MESSAGE

@@ -6,64 +6,64 @@ import tbm.util.geom.Point;
 import labyrinth.engine.*;
 
 
-public class Spis {
+public class Eat {
 	public static final int GODBITER = 5;
 	public static final int MAKS_FIENDER = 10;
-	static Spiller spiller;
+	static Player spiller;
 
 	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
-		Vindu.start("Labyrint");
+		Window.start("Labyrint");
 		Type.add("gang",   false, false, null, BLACK,  " ");
 		Type.add("godbit", false, false, "res/dot.png", BLACK, ".");
 
-		Brett.start(10, 10);
-		Brett.synsvidde(0);
-		spiller = new Spiller("res/player.png", null, new Spiller.FlyttTil(){
+		TileMap.start(10, 10);
+		TileMap.synsvidde(0);
+		spiller = new Player("res/player.png", null, new Player.FlyttTil(){
 			int fiender = 1;
-			public void flyttTil(Spiller spiller) {
+			public void flyttTil(Player spiller) {
 				if (spiller.rute().isType("godbit")) {
 					spiller.rute().setType("gang");
-					if (Brett.alle("godbit").isEmpty())
+					if (TileMap.alle("godbit").isEmpty())
 						if (fiender == MAKS_FIENDER)
-							Vindu.vant();
+							Window.vant();
 						else {
 							fiender++;
-							Spis.start(fiender);
+							Eat.start(fiender);
 						}
 				}
 			}
 		});
 		start(1);
-		Vindu.vis();
+		Window.vis();
 	}
 
 	static void start(final int fiender) {
 		SwingUtilities.invokeLater(new Runnable() {public void run() {
-			Vindu.setTekst("Nivå "+fiender);
-			Enhet.pauseAlle(true);
+			Window.setTekst("Nivå "+fiender);
+			Mob.pauseAlle(true);
 			Point p;
 			for (int i=0; i<GODBITER; i++) {
 				do {
 					p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
-				} while (Brett.get(p).isType("godbit"));
-				Brett.get(p).setType("godbit");
+				} while (TileMap.get(p).isType("godbit"));
+				TileMap.get(p).setType("godbit");
 			}
 			int i=0;
-			for (Enhet e : Enhet.enheter)
-				if (e instanceof Fiende) {
+			for (Mob e : Mob.enheter)
+				if (e instanceof Enemy) {
 					p = e.rute().pos();
-					while ((p.x<5 && p.y<5) || Brett.get(p).enhet() != null)
+					while ((p.x<5 && p.y<5) || TileMap.get(p).enhet() != null)
 						p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
 					e.flytt( p );
-					((Fiende)e).setVent(1000 - i*100);
+					((Enemy)e).setVent(1000 - i*100);
 					i++;
 				}
 			spiller.flytt(new Point(1, 1));
 			do {
 				p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
-			} while ((p.x<5 && p.y<5) || Brett.get(p).enhet() != null);
-			new Fiende.Vanlig(Brett.get(p), "res/enemy.png", 1000-100*(fiender-1), 5, 0);
-			Enhet.pauseAlle(false);
+			} while ((p.x<5 && p.y<5) || TileMap.get(p).enhet() != null);
+			new Enemy.Vanlig(TileMap.get(p), "res/enemy.png", 1000-100*(fiender-1), 5, 0);
+			Mob.pauseAlle(false);
 		}});
 	}
 }

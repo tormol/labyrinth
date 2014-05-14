@@ -1,7 +1,7 @@
 package labyrinth.engine;
 import tbm.util.geom.Point;
 
-public abstract class Fiende extends Enhet implements Runnable {
+public abstract class Enemy extends Mob implements Runnable {
 	static final ThreadGroup threadGroup = new ThreadGroup("Fiender");
 
 
@@ -16,7 +16,7 @@ public abstract class Fiende extends Enhet implements Runnable {
 	 *@return where the unit should move to*/
 	abstract protected Point finnRute();
 
-	protected Fiende(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
+	protected Enemy(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
 		super("Fiende", fil);
 		vent = ventStart;
 		this.ventRaskere = ventRaskere;
@@ -58,8 +58,8 @@ public abstract class Fiende extends Enhet implements Runnable {
 		}
 	}
 
-	public void truffet(Enhet enhet) {
-		if (enhet instanceof Fiende)
+	public void truffet(Mob enhet) {
+		if (enhet instanceof Enemy)
 			fjern();
 		else
 			enhet.truffet(this);
@@ -101,40 +101,40 @@ public abstract class Fiende extends Enhet implements Runnable {
 
 
 	/**Pro/ver aa flytte i tilfeldig retnig*/
-	public static class Vanlig extends Fiende {
-		public Vanlig(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
+	public static class Vanlig extends Enemy {
+		public Vanlig(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
 		}
 
 		@Override//Fiende
 		protected Point finnRute() {
 			retning = Retning.retning( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Rute til = Brett.get( retning.flytt( rute().pos() ) );
-			if (til.kanFlytteTil(this, false)  &&  !(til.enhet() instanceof Fiende))
+			final Tile til = TileMap.get( retning.flytt( rute().pos() ) );
+			if (til.kanFlytteTil(this, false)  &&  !(til.enhet() instanceof Enemy))
 				return til.pos();
 			return null;
 		}
 	}
 
 	/**Pro/ver aa flytte i tilfeldig retning, kan flytte til solide ruter.*/
-	public static class Spøkelse extends Fiende {
-		public Spøkelse(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
+	public static class Spøkelse extends Enemy {
+		public Spøkelse(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
 		}
 
 		@Override//Fiende
 		protected Point finnRute() {
 			retning = Retning.retning( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Rute til = Brett.get( retning.flytt( rute().pos() ) );
-			if (!til.isType("utenfor")  &&  !(til.enhet() instanceof Fiende))
+			final Tile til = TileMap.get( retning.flytt( rute().pos() ) );
+			if (!til.isType("utenfor")  &&  !(til.enhet() instanceof Enemy))
 				return til.pos();
 			return null;
 		}
 	}
 
 	/**Flytter mot spilleren, en akse om gangen.*/
-	public static class Målrettet extends Fiende {
-		public Målrettet(Rute start, String fil, int ventStart, int ventRaskere, int ventMin) {
+	public static class Målrettet extends Enemy {
+		public Målrettet(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
 		}
 
@@ -144,8 +144,8 @@ public abstract class Fiende extends Enhet implements Runnable {
 		protected Point finnRute() {
 			Point avstand = new Point();
 			Point pos = rute().pos();
-			for (Enhet e : Enhet.enheter)
-				if (e instanceof Spiller) {
+			for (Mob e : Mob.enheter)
+				if (e instanceof Player) {
 					avstand = rute().pos().diff(pos);
 					break;
 				}
@@ -162,9 +162,9 @@ public abstract class Fiende extends Enhet implements Runnable {
 			for (Point p : alternativ) {
 				if (p.equals(0, 0))
 					continue;
-				Rute rute = Brett.get(pos.x+p.x, pos.y+p.y);
+				Tile rute = TileMap.get(pos.x+p.x, pos.y+p.y);
 				if (rute.kanFlytteTil(this, false)
-				 && !(rute.enhet() instanceof Fiende))
+				 && !(rute.enhet() instanceof Enemy))
 					return rute.pos();
 			}
 			return null;

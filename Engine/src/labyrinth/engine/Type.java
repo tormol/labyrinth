@@ -30,7 +30,7 @@ public class Type {
 	public static Type t(char tegn) {
 		Type type = get(tegn);
 		if (type == null)
-			throw Vindu.feil("Ukjent type '%c'", tegn);
+			throw Window.feil("Ukjent type '%c'", tegn);
 		return type;
 	}
 	/**Returnerer den første typen med navn nanv
@@ -38,7 +38,7 @@ public class Type {
 	public static Type t(String navn) {
 		Type type = get(navn);
 		if (type == null)
-			throw Vindu.feil("Ukjent type \"%s\"", navn);
+			throw Window.feil("Ukjent type \"%s\"", navn);
 		return type;
 	}
 
@@ -74,7 +74,7 @@ public class Type {
 			try {
 				bilde = ImageIO.read(new File(bildefil));
 			} catch (IOException e) {
-				throw Vindu.feil(
+				throw Window.feil(
 						"Feil under lasting av bildefil \"%s\" til RuteType %s:\n"
 						+"Det kan skyldes at working directory ikke er satt til pakkeNavnet\n"+"%s",
 						bildefil, navn, e.getMessage()

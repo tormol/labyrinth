@@ -6,19 +6,19 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.LinkedList;
 
-public class Spiller extends Enhet implements KeyListener {
-	private static Rute finnStart() {
-		LinkedList<Rute> startpunkt = new LinkedList<Rute>();
-		for (Rute rute : Brett.alle("start")) {
+public class Player extends Mob implements KeyListener {
+	private static Tile finnStart() {
+		LinkedList<Tile> startpunkt = new LinkedList<Tile>();
+		for (Tile rute : TileMap.alle("start")) {
 			if (rute.enhet() == null)
 				startpunkt.add(rute);
 			//gjør feltene rundt synlige
-			Brett.fjernDis(rute.pos());
+			TileMap.fjernDis(rute.pos());
 		}
 		if (startpunkt.size() > 1)
-			throw Vindu.feil("Brettet har mer enn ett startpunkt.");
+			throw Window.feil("Brettet har mer enn ett startpunkt.");
 		if (startpunkt.size() == 0)
-			throw Vindu.feil("Brettet mangler startpunkt.");
+			throw Window.feil("Brettet mangler startpunkt.");
 		return startpunkt.getFirst();
 	}
 
@@ -28,16 +28,16 @@ public class Spiller extends Enhet implements KeyListener {
 	/**Med en hammer er det fiendene som taper*/
 	protected boolean hammer = false;
 
-	public Spiller(String fil, Rute start, FlyttTil flyttTil) {
+	public Player(String fil, Tile start, FlyttTil flyttTil) {
 		super("Spiller", fil);
 		setRute(start);
 		this.flyttTil = flyttTil;
 		if (start!=null)
 			rute().flyttTil(this, false);
-		Vindu.vindu.addKeyListener(this);
+		Window.vindu.addKeyListener(this);
 	}
-	public Spiller(String fil, FlyttTil flyttTil) {
-		this(fil, Spiller.finnStart(), flyttTil);
+	public Player(String fil, FlyttTil flyttTil) {
+		this(fil, Player.finnStart(), flyttTil);
 	}
 
 
@@ -46,7 +46,7 @@ public class Spiller extends Enhet implements KeyListener {
 		Retning retning = Retning.retning(e.getKeyCode(), VK_UP, VK_RIGHT, VK_DOWN, VK_LEFT);
 		if (retning==null) {
 			if (e.getKeyCode() == VK_ESCAPE)
-				Enhet.pauseAlle(!pause);
+				Mob.pauseAlle(!pause);
 			return;
 		}
 		if (pause)
@@ -54,14 +54,14 @@ public class Spiller extends Enhet implements KeyListener {
 		this.retning = retning;
 		final Point nyPos = retning.flytt(rute().pos());
 		
-		final Rute til = Brett.get(nyPos);
-		final Spiller denne = this;
+		final Tile til = TileMap.get(nyPos);
+		final Player denne = this;
 		if (til.kanFlytteTil(denne, true))
 			SwingUtilities.invokeLater(new Runnable(){public void run() {
 				rute().flyttFra(true);
 				setRute(til);
 				rute().flyttTil(denne, true);
-				Brett.fjernDis(nyPos);
+				TileMap.fjernDis(nyPos);
 				if (flyttTil != null)
 					flyttTil.flyttTil(denne);
 			}});
@@ -81,7 +81,7 @@ public class Spiller extends Enhet implements KeyListener {
 	 *@param millisekunder how long the hammer last*/
 	public synchronized void hammer(final int millisekunder) {
 		if (hammer)
-			throw Vindu.feil("Spilleren har allerede en hammer.");
+			throw Window.feil("Spilleren har allerede en hammer.");
 		hammer = true;
 		Thread t = new Thread(new Runnable(){public void run(){
 			try {
@@ -101,17 +101,17 @@ public class Spiller extends Enhet implements KeyListener {
 		super.flytt(pos);
 		if (pos != null)
 			SwingUtilities.invokeLater(new Runnable(){public void run() {
-				Brett.fjernDis(pos);
+				TileMap.fjernDis(pos);
 			}});
 	}
 
 
 	@Override
-	public void truffet(Enhet enhet) {
+	public void truffet(Mob enhet) {
 		if (hammer)
 			enhet.fjern();
 		else
-			Vindu.tapte();
+			Window.tapte();
 	}
 	@Override
 	/**@super*/
@@ -123,12 +123,12 @@ public class Spiller extends Enhet implements KeyListener {
 	/**Fjerner KeyListener
 	 * @super*/
 	public void fjern() {
-		Vindu.vindu.removeKeyListener(this);
+		Window.vindu.removeKeyListener(this);
 		super.fjern();
 	}
 
 	/**Lar programmer kjo/re egen kode naar spilleren flytter til et felt.*/
 	public static interface FlyttTil {
-		void flyttTil(Spiller spiller);
+		void flyttTil(Player spiller);
 	}
 }

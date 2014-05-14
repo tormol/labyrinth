@@ -12,43 +12,43 @@ import java.util.List;
 import tbm.util.geom.Point;
 
 
-public abstract class Enhet {
-	public static final List<Enhet> enheter = new LinkedList<Enhet>();
+public abstract class Mob {
+	public static final List<Mob> enheter = new LinkedList<Mob>();
 	public static void pauseAlle(boolean pause) {
-		for (Enhet enhet : Enhet.enheter)
+		for (Mob enhet : Mob.enheter)
 			enhet.pause(pause);
 	}
 
 
-	private Rute rute;
+	private Tile rute;
 	protected String navn="Ukjent mob";
 	public final BufferedImage figur;
 	protected Retning retning = Retning.NORD;
 
 	/**Is called from Rute if another unit tries to move to this units rute.
 	 *@param enhet the unit that is trying to move.*/
-	public abstract void truffet(Enhet enhet);
+	public abstract void truffet(Mob enhet);
 	/**Make the unit stop/start.*/
 	public abstract void pause(boolean pause);
 
-	protected Enhet(String navn, String figur) {
+	protected Mob(String navn, String figur) {
 		this.navn = navn;
 		try {
 			this.figur = ImageIO.read(new File(figur));
 		} catch (IOException e) {
-			throw Vindu.feil("Feil under lasting av bilde til %s: %s", navn, figur);
+			throw Window.feil("Feil under lasting av bilde til %s: %s", navn, figur);
 		}
 		enheter.add(this);
 	}
 
 	/**Move from current tile to tile with pos.*/
 	public void flytt(final Point pos) {
-		final Enhet denne = this;
+		final Mob denne = this;
 		SwingUtilities.invokeLater(new Runnable(){public void run() {
 			if (rute != null)
 				rute.flyttFra(false);
 			if (pos != null)
-				rute = Brett.get(pos).flyttTil(denne, false);
+				rute = TileMap.get(pos).flyttTil(denne, false);
 		}});
 	}
 
@@ -56,7 +56,7 @@ public abstract class Enhet {
 		return navn;
 	}
 
-	public Rute rute() {
+	public Tile rute() {
 		return rute;
 	}
 
@@ -78,7 +78,7 @@ public abstract class Enhet {
 
 
 	/**It's really simple*/
-	protected void setRute(Rute rute) {
+	protected void setRute(Tile rute) {
 		this.rute = rute;
 	}
 
