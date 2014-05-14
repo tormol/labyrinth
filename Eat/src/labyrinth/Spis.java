@@ -1,8 +1,9 @@
-package spis;
+package labyrinth;
 import static java.awt.Color.*;
+import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
 import tbm.util.geom.Point;
-import motor.*;
+import labyrinth.engine.*;
 
 
 public class Spis {
@@ -10,14 +11,14 @@ public class Spis {
 	public static final int MAKS_FIENDER = 10;
 	static Spiller spiller;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
 		Vindu.start("Labyrint");
 		Type.add("gang",   false, false, null, BLACK,  " ");
-		Type.add("godbit", false, false, "spis/godbit.png", BLACK, ".");
+		Type.add("godbit", false, false, "res/dot.png", BLACK, ".");
 
 		Brett.start(10, 10);
 		Brett.synsvidde(0);
-		spiller = new Spiller("spis/spiller.png", null, new Spiller.FlyttTil(){
+		spiller = new Spiller("res/player.png", null, new Spiller.FlyttTil(){
 			int fiender = 1;
 			public void flyttTil(Spiller spiller) {
 				if (spiller.rute().isType("godbit")) {
@@ -61,7 +62,7 @@ public class Spis {
 			do {
 				p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
 			} while ((p.x<5 && p.y<5) || Brett.get(p).enhet() != null);
-			new Fiende.Vanlig(Brett.get(p), "spis/fiende.png", 1000-100*(fiender-1), 5, 0);
+			new Fiende.Vanlig(Brett.get(p), "res/enemy.png", 1000-100*(fiender-1), 5, 0);
 			Enhet.pauseAlle(false);
 		}});
 	}

@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -87,7 +87,7 @@ public class Rute extends javax.swing.JPanel {
 		return this.type.type(type);
 	}
 	public void setType(String type) {
-		setType(Type._(type));
+		setType(Type.t(type));
 	}
 	public synchronized void setType(final Type type) {
 		final Rute denne = this;

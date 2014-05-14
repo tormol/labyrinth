@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -27,7 +27,7 @@ public class Type {
 
 	/**Returnerer den første typen som har tegnet tegn
 	 * Gir en feilmelding hvis den ikke finner noen.*/
-	public static Type _(char tegn) {
+	public static Type t(char tegn) {
 		Type type = get(tegn);
 		if (type == null)
 			throw Vindu.feil("Ukjent type '%c'", tegn);
@@ -35,7 +35,7 @@ public class Type {
 	}
 	/**Returnerer den første typen med navn nanv
 	 * Gir en feilmelding hvis den ikke finner noen.*/
-	public static Type _(String navn) {
+	public static Type t(String navn) {
 		Type type = get(navn);
 		if (type == null)
 			throw Vindu.feil("Ukjent type \"%s\"", navn);

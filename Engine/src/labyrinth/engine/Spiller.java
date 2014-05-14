@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 import static java.awt.event.KeyEvent.*; 
 import javax.swing.SwingUtilities;
 import tbm.util.geom.Point;

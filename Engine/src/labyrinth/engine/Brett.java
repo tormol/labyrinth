@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -71,7 +71,7 @@ public class Brett {
 	public static Rute get(int x, int y) {
 		if (y < 0  ||  y >= brett.length  ||  x < 0  ||  x >= brett[0].length)
 			//På denne måten slipper jeg å sjekke om jeg er utenfor brettet andre steder.
-			return new Rute(Type._("utenfor"), null);
+			return new Rute(Type.t("utenfor"), null);
 		return brett[y][x];
 	}
 
@@ -103,7 +103,7 @@ public class Brett {
 	}
 
 	public static Queue<Rute> alle(String type) {
-		return alle(Type._(type));
+		return alle(Type.t(type));
 	}
 	/**Returnerer alle ruter av typen*/
 	public static Queue<Rute> alle(Type type) {

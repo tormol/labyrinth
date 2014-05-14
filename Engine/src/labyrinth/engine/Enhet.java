@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
 import java.awt.Graphics;

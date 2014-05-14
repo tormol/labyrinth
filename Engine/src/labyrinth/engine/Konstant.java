@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;

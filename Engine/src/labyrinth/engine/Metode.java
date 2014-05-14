@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 import tbm.util.geom.Point;
 import java.awt.Dimension;
 import java.util.HashMap;
@@ -122,7 +122,7 @@ public class Metode {
 		public final String metode;
 		public Sett(Point pos, char tegn) {
 			this.pos = pos;
-			type = Type._(tegn);
+			type = Type.t(tegn);
 			if (type.metode)
 				metode = String.valueOf(tegn);
 			else

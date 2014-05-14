@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 
 import java.awt.FileDialog;
 import java.io.BufferedReader;
@@ -16,25 +16,26 @@ public class Fil {
 	public static int linje = -1;
 
 	
-	public static String velg() {
+	public static File velg() {
 		return velg("");
 	}
 	/**Viser en */
-	public static String velg(String sti) {
+	public static File velg(String sti) {
 		FileDialog fd = new FileDialog(Vindu.vindu, Vindu.vindu.getTitle()+" - Velg fil", FileDialog.LOAD);
 		fd.setDirectory(new File("./"+sti).getAbsolutePath());
 		fd.setFile("*.txt");
 		fd.setVisible(true);
-		sti = new File(fd.getDirectory(), fd.getFile()).getAbsolutePath();
-		if (sti == null)
+		System.out.format("%s %s\n", fd.getDirectory(), fd.getFile());
+		String file = fd.getFile();
+		if (file == null)
 			throw feil("Ingen fil ble valgt");
-		return sti;
+		return new File(fd.getDirectory(), file);
 	}
 
 
 	/**leser en fil og setter opp Brett, konstanter og metoder
 	 * TODO: UTF-8*/
-	public static void lesInn(String sti) {
+	public static void lesInn(File sti) {
 		//Holder linjer i filen.
 		LinkedList<String> fil = new LinkedList<String>();
 		try (BufferedReader filLesynsvidde= new BufferedReader(new FileReader(sti))) {

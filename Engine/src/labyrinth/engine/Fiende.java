@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 import tbm.util.geom.Point;
 
 public abstract class Fiende extends Enhet implements Runnable {

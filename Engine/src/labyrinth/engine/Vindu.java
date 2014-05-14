@@ -1,4 +1,4 @@
-package motor;
+package labyrinth.engine;
 
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
