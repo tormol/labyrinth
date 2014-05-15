@@ -1,5 +1,6 @@
 package labyrinth.engine;
 import tbm.util.geom.Point;
+import tbm.util.geom.Direction;
 
 public abstract class Enemy extends Mob implements Runnable {
 	static final ThreadGroup threadGroup = new ThreadGroup("Fiender");
@@ -108,8 +109,8 @@ public abstract class Enemy extends Mob implements Runnable {
 
 		@Override//Fiende
 		protected Point finnRute() {
-			retning = Retning.retning( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Tile til = TileMap.get( retning.flytt( rute().pos() ) );
+			retning = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
+			final Tile til = TileMap.get( rute().pos().move(retning) );
 			if (til.kanFlytteTil(this, false)  &&  !(til.enhet() instanceof Enemy))
 				return til.pos();
 			return null;
@@ -124,8 +125,8 @@ public abstract class Enemy extends Mob implements Runnable {
 
 		@Override//Fiende
 		protected Point finnRute() {
-			retning = Retning.retning( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Tile til = TileMap.get( retning.flytt( rute().pos() ) );
+			retning = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
+			final Tile til = TileMap.get( rute().pos().move(retning) );
 			if (!til.isType("utenfor")  &&  !(til.enhet() instanceof Enemy))
 				return til.pos();
 			return null;
@@ -152,10 +153,10 @@ public abstract class Enemy extends Mob implements Runnable {
 			Point ret = new Point( (int)Math.signum(avstand.x), (int)Math.signum(avstand.y));
 			Point[] alternativ;
 			if (Math.abs(avstand.x) > Math.abs(avstand.y)) {
-				retning = Retning.retning( ret.x,  0, 1, 0, -1);
+				retning = Direction.d( ret.x,  0, 0, -1, 1);
 				alternativ = new Point[]{ new Point(0, ret.y),  new Point(ret.x, 0)};
 			} else {
-				retning = Retning.retning( ret.y,  -1, 0, 1, 0);
+				retning = Direction.d( ret.y,  -1, 1, 0, 0);
 				alternativ = new Point[]{ new Point(ret.x, 0),  new Point(0, ret.y)};
 			}
 
