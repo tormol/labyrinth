@@ -1,7 +1,7 @@
 package tbm.util;
 
-public class calc { 
-	public calc() {
+public class Calc { 
+	public Calc() {
 		
 	}
 

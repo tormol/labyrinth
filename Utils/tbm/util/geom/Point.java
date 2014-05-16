@@ -62,17 +62,20 @@ public class Point implements Serializable, Cloneable {
 	/***/
 	public <T> Point move(T direction, T xa, T xs, T ya, T ys) {return move(direction, xa, xs, ya, ys, 1);}
 	/***/
-	public <T> Point move(T direction, T xa, T xs, T ya, T ys, int n) {
-		Direction d = Direction.d(direction, xa, xs, ya, ys);
-		if (d==null)
-			return this;
-		return move(d, n);
-	}
+	public <T> Point move(T direction, T xa, T xs, T ya, T ys, int n) {return move( Direction.d(direction, xa, xs, ya, ys),  n);}
 
 	/***/
 	public Point negate() {return new Point(-x, -y);}
 	/***/
+	public Point sign() {return new Point((int)signum(x), (int)signum(y));}
+	/***/
 	public Point times(int n) {return new Point(x*n, y*n);}
+	/***/
+	public Point times(Point p) {return new Point(x*p.x, y*p.y);}
+	/***/
+	public Point mask(Axis a) {return times(new Point(a));}
+	/***/
+	public Point mask(Direction d) {return times(new Point(d));}
 
 	/***/
 	public Point diff(int x, int y) {return move(-x, -y);}
@@ -87,8 +90,6 @@ public class Point implements Serializable, Cloneable {
 	public int movesTo(Point p) {return movesTo(p.x, p.y);}
 	/***/
 	public double abs() {return sqrt(x*x + y*y);}
-	/***/
-	public Point unit() {return new Point((int)signum(x), (int)signum(y));}
 
 
 	public int getX() {return x;}
@@ -131,6 +132,6 @@ public class Point implements Serializable, Cloneable {
 	@Deprecated	public Point add(Axis a, int value) {return move(a, value);}
 	@Deprecated	public int flyttAvstand(int x, int y) {return movesTo(x, y);}
 	@Deprecated	public int flyttAvstand(Point p) {return movesTo(p);}
-	@Deprecated	public Point enhet() {return unit();}
+	@Deprecated	public Point enhet() {return sign();}
 	private static final long serialVersionUID = 1L;
 }
