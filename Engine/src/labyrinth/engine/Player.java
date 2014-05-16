@@ -56,7 +56,11 @@ public class Player extends Mob implements KeyListener {
 		if (pause)
 			return;
 		this.retning = retning;
-		final Point nyPos = rute().pos().add(retning.point);
+		LoS.triangle(rute().pos(), retning, 2, new LoS.Action() {public boolean action(Tile t) {
+			t.vis();
+			return false;
+		}});
+		final Point nyPos = rute().pos().move(retning);
 		
 		final Tile til = TileMap.get(nyPos);
 		if (til.kanFlytteTil(this, true)) {
@@ -64,13 +68,10 @@ public class Player extends Mob implements KeyListener {
 			rute().flyttFra(true);
 			setRute(til);
 			rute().flyttTil(this, true);
-			LoS.tunnel(nyPos, retning, 2, new LoS.Action() {public boolean action(Tile t) {
-				t.vis();
-				return false;
-			}});
 			if (flyttTil != null)
 				flyttTil.flyttTil(this);
-		}
+		} else
+			rute().repaint();
 	}
 
 
