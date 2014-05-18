@@ -20,24 +20,24 @@ public class Labyrinth {
 
 		if (args.length == 1)
 			MapFile.lesInn(new File(args[0]));
-		else //Vis en filåpner
+		else //show a fileChooser
 			MapFile.lesInn(MapFile.velg("maps"));
-		for (Tile fiende : TileMap.alle("fiende")) {
-			fiende.setType("gang");
-			new Enemy.Vanlig(fiende, l+"enemy.png", 600, 0, 600); 
+		for (Tile enemy : TileMap.alle("fiende")) {
+			enemy.setType("gang");
+			new Enemy.Vanlig(enemy, l+"enemy.png", 600, 0, 600); 
 		}
 
-		new Player(l+"player.png", new Player.FlyttTil(){public void flyttTil(Player spiller) {
-			if (spiller.rute().isType("utgang")) {
-				spiller.rute().flyttFra(true);
+		new Player(l+"player.png", new Player.FlyttTil(){public void flyttTil(Player player) {
+			if (player.rute().isType("utgang")) {
+				player.rute().flyttFra(true);
 				Window.vant();
 			}
-			else if (spiller.rute().isType("hammer")) {
-				spiller.rute().setType("gang");
-				spiller.hammer(5000);
+			else if (player.rute().isType("hammer")) {
+				player.rute().setType("gang");
+				player.hammer(5000);
 			}
-			else if (spiller.rute().isType("godbit")) {
-				spiller.rute().setType("gang");
+			else if (player.rute().isType("godbit")) {
+				player.rute().setType("gang");
 				if (TileMap.alle("godbit").isEmpty())
 					Window.vant();
 			}
