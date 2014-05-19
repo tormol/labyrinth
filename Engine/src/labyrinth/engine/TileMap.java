@@ -17,7 +17,7 @@ public class TileMap {
 	/**Panelet som inneholder rutene*/
 	public static final JPanel panel = new JPanel(); 
 	/**Er en linket liste*/
-	private static FinnMetode finnMetode = null;
+	private static FindMethod findMethod = null;
 	
 
 	/**Empty map*/
@@ -29,32 +29,32 @@ public class TileMap {
 		start(map);
 	}
 	/***/
-	public static void start(String[] linjer) {
-		char[][] tegn = new char[linjer.length][];
-		for (int i=0; i<tegn.length; i++)
-			tegn[i] = linjer[i].toCharArray();
-		start(tegn);
+	public static void start(String[] lines) {
+		char[][] symbol = new char[lines.length][];
+		for (int i=0; i<symbol.length; i++)
+			symbol[i] = lines[i].toCharArray();
+		start(symbol);
 	}
-	public static void start(Queue<char[]> tegn) {
-		start(tegn.toArray(new char[tegn.size()][]));
+	public static void start(Queue<char[]> symbol) {
+		start(symbol.toArray(new char[symbol.size()][]));
 	}
 	public static void start(char[][] tegn) {
-		Type.add("utenfor", true, false, null, Color.CYAN, "");
-		int kolonner = tegn[0].length;
-		map = new Tile[tegn.length][kolonner];
+		Type.add("outside", true, false, null, Color.CYAN, "");
+		int collumns = tegn[0].length;
+		map = new Tile[tegn.length][collumns];
 		panel.setLayout(new GridLayout( map.length, map[0].length));
 
 		//lager Ruter
-		for (int y=0;  y<map.length;  y++, MapFile.linje++) {
-			if (tegn[y].length != kolonner)
-				throw MapFile.feil("lengden passynsvidde ikke med resten.");
+		for (int y=0;  y<map.length;  y++, MapFile.line++) {
+			if (tegn[y].length != collumns)
+				throw MapFile.error("lengden passynsvidde ikke med resten.");
 			for (int x=0; x<map[0].length; x++) {
 				Type type = Type.get(tegn[y][x]);
 				if (type == null)
-					throw MapFile.feil("Kolonne %d: Ugyldig tegn '%c'", x, tegn[y][x]);
+					throw MapFile.error("Kolonne %d: Ugyldig tegn '%c'", x, tegn[y][x]);
 				map[y][x] = new Tile(type, new Point(x, y));
-				if (type.metode)
-					finnMetode = new FinnMetode(tegn[y][x], map[y][x], finnMetode);
+				if (type.method)
+					findMethod = new FindMethod(tegn[y][x], map[y][x], findMethod);
 				panel.add(map[y][x]);
 			}
 		}
@@ -71,21 +71,21 @@ public class TileMap {
 	public static Tile get(int x, int y) {
 		if (y < 0  ||  y >= map.length  ||  x < 0  ||  x >= map[0].length)
 			//På denne måten slipper jeg å sjekke om jeg er utenfor brettet andre steder.
-			return new Tile(Type.t("utenfor"), null);
+			return new Tile(Type.t("outside"), null);
 		return map[y][x];
 	}
 
-	public static Dimension dimensjoner() {
+	public static Dimension dimesions() {
 		return new Dimension(map[0].length, map.length);
 	}
 	/**Returnerer hvor mange ruter det er på brettet.*/
-	public static int antallRuter() {
+	public static int numberOfTiles() {
 		return map[0].length * map.length;
 	}
 
 	/**Returnerer alle rutene på brettet*/
-	public static Tile[] alle() {
-		Tile[] all = new Tile[antallRuter()];
+	public static Tile[] all() {
+		Tile[] all = new Tile[numberOfTiles()];
 		int pos=0;
 		for (Tile[] row : map) {
 			System.arraycopy(row, 0, all, pos, row.length);
@@ -94,59 +94,59 @@ public class TileMap {
 		return all;
 	}
 
-	public static Queue<Tile> alle(String type) {
-		return alle(Type.t(type));
+	public static Queue<Tile> all(String type) {
+		return all(Type.t(type));
 	}
 	/**Returnerer alle ruter av typen*/
-	public static Queue<Tile> alle(Type type) {
-		ArrayDeque<Tile> tiles = new ArrayDeque<Tile>(antallRuter());
+	public static Queue<Tile> all(Type type) {
+		ArrayDeque<Tile> tiles = new ArrayDeque<Tile>(numberOfTiles());
 		for (Tile[] row : map)
 			for (Tile t : row)
 				if (t.getType() == type)
 					tiles.add(t);
-		//TODO: ruter.trim();
 		return tiles;
 	}
 
 	public static void visible(Iterable<Tile> tiles) {
 		for (Tile t : tiles)
-			t.vis();
+			t.visible();
 	}
 
 	/**Metode trenger å vite størrelsen på brettet for å sjekke at koordinater er gyldige, Brett trenger Metode for å lage ruter med metorer
 	 * Løsning: start brett, les inn metoder, legg metoder irutene med finnMetoder()*/
-	public static void finnMetoder() {
-		for (; finnMetode != null;  finnMetode = finnMetode.neste)
-			finnMetode.rute.metode = Method.get( String.valueOf(finnMetode.metode) );
+	public static void findMethods() {
+		for (; findMethod != null;  findMethod = findMethod.next)
+			findMethod.tile.method = Method.get( String.valueOf(findMethod.method) );
 	}
 
 	@Deprecated/**Hvor mange felt spilleren ser i hver retning. 0=ser alle*/
 	private static int synsvidde = 2;
+	@Deprecated
 	/**Gjør alle ruter i et kvadrat med radius Brett.synsvidde sentrert på p synlige
 	 * Må kalles fra SwingUtilities.invokeLater()*/
-	public static void fjernDis(Point p) {
+	public static void removeShroud(Point p) {
 		for (int x=p.x-synsvidde; x<=p.x+synsvidde; x++)
 			for (int y=p.y-synsvidde; y<=p.y+synsvidde; y++)
-				get(x, y).vis();
+				get(x, y).visible();
 	}
 	@Deprecated
 	public static void synsvidde(int synsvidde) {
 		if (synsvidde<0)
-			throw MapFile.feil("Brett.synsvidde kan ikke være negativ");
+			throw MapFile.error("Brett.synsvidde kan ikke være negativ");
 		TileMap.synsvidde = synsvidde;
 		if (synsvidde==0)
-			for (Tile rute : alle())
-				rute.vis();
+			for (Tile rute : all())
+				rute.visible();
 	}
 }
 
 /**For å legge metoder til ruter i labyrinten før metodene er lest inn.*/
-class FinnMetode {
+class FindMethod {
 	/**Linket liste*/
-	public final FinnMetode neste;
-	public final char metode;
-	public final Tile rute;
-	public FinnMetode(char metode, Tile rute, FinnMetode neste) {
-		this.metode = metode;	this.rute = rute;	this.neste = neste;
+	public final FindMethod next;
+	public final char method;
+	public final Tile tile;
+	public FindMethod(char method, Tile tile, FindMethod ext) {
+		this.method = method;	this.tile = tile;	this.next = ext;
 	}
 }

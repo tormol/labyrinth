@@ -16,72 +16,72 @@ import tbm.util.geom.Point;
 
 
 public abstract class Mob {
-	public static final List<Mob> enheter = new LinkedList<Mob>();
-	public static void pauseAlle(boolean pause) {
-		for (Mob enhet : Mob.enheter)
+	public static final List<Mob> mobs = new LinkedList<Mob>();
+	public static void pauseAll(boolean pause) {
+		for (Mob enhet : Mob.mobs)
 			enhet.pause(pause);
 	}
 
 
-	private Tile rute;
-	protected String navn="Ukjent mob";
-	public final BufferedImage figur;
-	protected Direction retning = Direction.NORTH;
+	private Tile tile;
+	protected String name="Unknown mob";
+	public final BufferedImage image;
+	protected Direction direction = Direction.NORTH;
 
 	/**Is called from Rute if another unit tries to move to this units rute.
-	 *@param enhet the unit that is trying to move.*/
-	public abstract void truffet(Mob enhet);
+	 *@param mob the unit that is trying to move.*/
+	public abstract void hit(Mob mob);
 	/**Make the unit stop/start.*/
 	public abstract void pause(boolean pause);
 
-	protected Mob(String navn, String figur) {
-		this.navn = navn;
+	protected Mob(String name, String imagePath) {
+		this.name = name;
 		try {
-			this.figur = ImageIO.read(new File(figur));
+			this.image = ImageIO.read(new File(imagePath));
 		} catch (IOException e) {
-			throw Window.feil("Feil under lasting av bilde til %s: %s", navn, figur);
+			throw Window.error("Feil under lasting av bilde til %s: %s", name, imagePath);
 		}
-		enheter.add(this);
+		mobs.add(this);
 	}
 
 	/**Move from current tile to tile with pos.*/
-	public void flytt(final Point pos) {
-		final Mob denne = this;
+	public void move(final Point pos) {
+		final Mob _this = this;
 		SwingUtilities.invokeLater(new Runnable(){public void run() {
-			if (rute != null)
-				rute.flyttFra(false);
+			if (tile != null)
+				tile.moveFrom(false);
 			if (pos != null)
-				rute = TileMap.get(pos).flyttTil(denne, false);
+				tile = TileMap.get(pos).moveTo(_this, false);
 		}});
 	}
 
-	public String navn() {
-		return navn;
+	public String name() {
+		return name;
 	}
 
-	public Tile rute() {
-		return rute;
+	public Tile tile() {
+		return tile;
 	}
 
 	/**Draw the unit's image.*/
-	public void tegn(Graphics g, int bredde, int høyde) {
+	public void draw(Graphics g, int bredde, int høyde) {
 		//Roterer figur etter retning
 		AffineTransform transform = new AffineTransform();
-		transform.rotate(retning.theta, bredde/2, høyde/2);
+		transform.rotate(direction.theta, bredde/2, høyde/2);
 		AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
-		g.drawImage(op.filter(figur, null), 0, 0, bredde, høyde, null);
+		g.drawImage(op.filter(image, null), 0, 0, bredde, høyde, null);
 	}
 
 	/**Flytter fra rute, fjerner fra Enhet.enheter.*/
-	public void fjern() {
-		if (rute != null)
-			rute.flyttFra(false);
-		enheter.remove(this);
+	public void remove() {
+		if (tile != null)
+			tile.moveFrom(false);
+		mobs.remove(this);
 	}
 
 
 	/**It's really simple*/
-	protected void setRute(Tile rute) {
-		this.rute = rute;
+	protected void setTile(Tile tile) {
+		this.tile = tile;
 	}
 }

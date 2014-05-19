@@ -5,43 +5,43 @@ import labyrinth.engine.*;
 
 public class Labyrinth {
 	public static void main(String[] args) {
-		Window.start("Labyrint");
+		Window.start("Labyrinth");
 		String l = "res/";
-		Type.add("vegg",   true,  false, l+"wall.png",   BLACK,  "#");
-		Type.add("gang",   false, false, l+"floor.png",  WHITE,  " ");
-		Type.add("utgang", false, false, l+"exit.png", MAGENTA,  "-");
+		Type.add("wall",   true , false, l+"wall.png",   BLACK,  "#");
+		Type.add("floor",  false, false, l+"floor.png",  WHITE,  " ");
+		Type.add("exit",   false, false, l+"exit.png", MAGENTA,  "-");
 		Type.add("start",  false, false, l+"start.png",  GREEN,  "*");
-		Type.add("knapp",  true,  true,  l+"button.png",   RED,  "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-		Type.add("plate",  false, true,  l+"plate.png", ORANGE,  "abcdefghijklmnopqrstuvwxyz");
-		Type.add("portal", false, true,  l+"portal.png",  BLUE,  "0123456789");
-		Type.add("godbit", false, false, l+"dot.png",   YELLOW,  ".");
-		Type.add("fiende", false, false, null,           WHITE,  "!");
+		Type.add("button", true , true , l+"button.png",   RED,  "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+		Type.add("plate",  false, true , l+"plate.png", ORANGE,  "abcdefghijklmnopqrstuvwxyz");
+		Type.add("portal", false, true , l+"portal.png",  BLUE,  "0123456789");
+		Type.add("dot",    false, false, l+"dot.png",   YELLOW,  ".");
+		Type.add("enemy",  false, false, null,           WHITE,  "!");
 		Type.add("hammer", false, false, l+"hammer.png", WHITE,  "^");
 
 		if (args.length == 1)
-			MapFile.lesInn(new File(args[0]));
+			MapFile.read(new File(args[0]));
 		else //show a fileChooser
-			MapFile.lesInn(MapFile.velg("maps"));
-		for (Tile enemy : TileMap.alle("fiende")) {
-			enemy.setType("gang");
-			new Enemy.Vanlig(enemy, l+"enemy.png", 600, 0, 600); 
+			MapFile.read(MapFile.choose("maps/"));
+		for (Tile enemy : TileMap.all("enemy")) {
+			enemy.setType("floor");
+			new Enemy.Normal(enemy, l+"enemy.png", 600, 0, 600); 
 		}
 
-		new Player(l+"player.png", new Player.FlyttTil(){public void flyttTil(Player player) {
-			if (player.rute().isType("utgang")) {
-				player.rute().flyttFra(true);
-				Window.vant();
+		new Player(l+"player.png", new Player.MoveTo(){public void moveTo(Player player) {
+			if (player.tile().isType("exit")) {
+				player.tile().moveFrom(true);
+				Window.won();
 			}
-			else if (player.rute().isType("hammer")) {
-				player.rute().setType("gang");
+			else if (player.tile().isType("hammer")) {
+				player.tile().setType("floor");
 				player.hammer(5000);
 			}
-			else if (player.rute().isType("godbit")) {
-				player.rute().setType("gang");
-				if (TileMap.alle("godbit").isEmpty())
-					Window.vant();
+			else if (player.tile().isType("dot")) {
+				player.tile().setType("floor");
+				if (TileMap.all("dot").isEmpty())
+					Window.won();
 			}
 		}});
-		Window.vis();
+		Window.display();
 	}
 }

@@ -11,63 +11,63 @@ import java.awt.event.KeyListener;
 import java.util.LinkedList;
 
 public class Player extends Mob implements KeyListener {
-	private static Tile finnStart() {
+	private static Tile findStart() {
 		LinkedList<Tile> startpunkt = new LinkedList<Tile>();
-		for (Tile rute : TileMap.alle("start")) {
-			if (rute.enhet() == null)
-				startpunkt.add(rute);
+		for (Tile tile : TileMap.all("start")) {
+			if (tile.mob() == null)
+				startpunkt.add(tile);
 			//gjør feltene rundt synlige
-			TileMap.fjernDis(rute.pos());
+			TileMap.removeShroud(tile.pos());
 		}
 		if (startpunkt.size() > 1)
-			throw Window.feil("Brettet har mer enn ett startpunkt.");
+			throw Window.error("Brettet har mer enn ett startpunkt.");
 		if (startpunkt.size() == 0)
-			throw Window.feil("Brettet mangler startpunkt.");
+			throw Window.error("Brettet mangler startpunkt.");
 		return startpunkt.getFirst();
 	}
 
 
-	public final FlyttTil flyttTil;
+	public final MoveTo flyttTil;
 	private boolean pause = false;
 	/**Med en hammer er det fiendene som taper*/
 	protected boolean hammer = false;
 
-	public Player(String fil, Tile start, FlyttTil flyttTil) {
-		super("Spiller", fil);
-		setRute(start);
+	public Player(String fil, Tile start, MoveTo flyttTil) {
+		super("Player", fil);
+		setTile(start);
 		this.flyttTil = flyttTil;
 		if (start!=null)
-			rute().flyttTil(this, false);
-		Window.vindu.addKeyListener(this);
+			tile().moveTo(this, false);
+		Window.window.addKeyListener(this);
 	}
-	public Player(String fil, FlyttTil flyttTil) {
-		this(fil, Player.finnStart(), flyttTil);
+	public Player(String fil, MoveTo flyttTil) {
+		this(fil, Player.findStart(), flyttTil);
 	}
 
 
 	@Override//KeyListener
 	public void keyPressed(KeyEvent e) {
-		Direction retning = Direction.d(e.getKeyCode(), VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT);
-		if (retning==null || pause) {
+		Direction direction = Direction.d(e.getKeyCode(), VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT);
+		if (direction==null || pause) {
 			if (e.getKeyCode() == VK_ESCAPE)
-				Mob.pauseAlle(!pause);
+				Mob.pauseAll(!pause);
 			return;
 		}
-		this.retning = retning;
-		final Point nyPos = rute().pos().move(retning);
+		this.direction = direction;
+		final Point newPos = tile().pos().move(direction);
 		
-		final Tile til = TileMap.get(nyPos);
-		if (til.kanFlytteTil(this, true)) {
+		final Tile to = TileMap.get(newPos);
+		if (to.canMoveTo(this, true)) {
 			//is called from the eventqueue
-			rute().flyttFra(true);
-			setRute(til);
-			rute().flyttTil(this, true);
+			tile().moveFrom(true);
+			setTile(to);
+			tile().moveTo(this, true);
 			if (flyttTil != null)
-				flyttTil.flyttTil(this);
+				flyttTil.moveTo(this);
 		} else
-			rute().repaint();
-		LoS.triangle(rute().pos(), retning, new LoS.Action() {public void action(Tile t) {
-			t.vis();
+			tile().repaint();
+		LoS.triangle(tile().pos(), direction, new LoS.Action() {public void action(Tile t) {
+			t.visible();
 		}});
 	}
 
@@ -85,13 +85,13 @@ public class Player extends Mob implements KeyListener {
 	 *@param millisekunder how long the hammer last*/
 	public synchronized void hammer(final int millisekunder) {
 		if (hammer)
-			throw Window.feil("Spilleren har allerede en hammer.");
+			throw Window.error("Spilleren har allerede en hammer.");
 		hammer = true;
 		Thread t = new Thread(new Runnable(){public void run(){
 			try {
 				Thread.sleep(millisekunder);
-			} catch (InterruptedException e) {
-			}
+			} catch (InterruptedException e)
+				{}
 			hammer = false;
 		}});
 		t.setName("hammer");
@@ -101,23 +101,23 @@ public class Player extends Mob implements KeyListener {
 
 
 	@Override
-	public void flytt(final Point pos) {
-		super.flytt(pos);
+	public void move(final Point pos) {
+		super.move(pos);
 		if (pos != null)
 			SwingUtilities.invokeLater(new Runnable(){public void run() {
-				LoS.triangle(rute().pos(), retning, new LoS.Action() {public void action(Tile t) {
-					t.vis();
+				LoS.triangle(tile().pos(), direction, new LoS.Action() {public void action(Tile t) {
+					t.visible();
 				}});
 			}});
 	}
 
 
 	@Override
-	public void truffet(Mob enhet) {
+	public void hit(Mob mob) {
 		if (hammer)
-			enhet.fjern();
+			mob.remove();
 		else
-			Window.tapte();
+			Window.lost();
 	}
 	@Override
 	/**@super*/
@@ -126,15 +126,15 @@ public class Player extends Mob implements KeyListener {
 	}
 
 	@Override
-	/**Fjerner KeyListener
+	/**removes KeyListener
 	 * @super*/
-	public void fjern() {
-		Window.vindu.removeKeyListener(this);
-		super.fjern();
+	public void remove() {
+		Window.window.removeKeyListener(this);
+		super.remove();
 	}
 
 	/**Lar programmer kjo/re egen kode naar spilleren flytter til et felt.*/
-	public static interface FlyttTil {
-		void flyttTil(Player spiller);
+	public static interface MoveTo {
+		void moveTo(Player player);
 	}
 }

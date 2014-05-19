@@ -10,42 +10,42 @@ import java.util.List;
 
 /**Siden ruter kan skifte type, og det ikke er mulig å erstatte komponenter i GridLayout*/
 public class Type {
-	private static List<Type> typer = new ArrayList<Type>(20);
+	private static List<Type> types = new ArrayList<Type>(20);
 
-	public static Type get(char tegn) {
-		for (Type type : typer)
-			if (type.tegn(tegn))
+	public static Type get(char symbol) {
+		for (Type type : types)
+			if (type.symbol(symbol))
 				return type;
 			return null;
 	}
-	public static Type get(String navn) {
-		for (Type type : typer)
-			if (navn.equalsIgnoreCase(type.navn))
+	public static Type get(String name) {
+		for (Type type : types)
+			if (name.equalsIgnoreCase(type.name))
 				return type;
 		return null;
 	}
 
 	/**Returnerer den første typen som har tegnet tegn
 	 * Gir en feilmelding hvis den ikke finner noen.*/
-	public static Type t(char tegn) {
-		Type type = get(tegn);
+	public static Type t(char symbol) {
+		Type type = get(symbol);
 		if (type == null)
-			throw Window.feil("Ukjent type '%c'", tegn);
+			throw Window.error("Ukjent type '%c'", symbol);
 		return type;
 	}
 	/**Returnerer den første typen med navn nanv
 	 * Gir en feilmelding hvis den ikke finner noen.*/
-	public static Type t(String navn) {
-		Type type = get(navn);
+	public static Type t(String name) {
+		Type type = get(name);
 		if (type == null)
-			throw Window.feil("Ukjent type \"%s\"", navn);
+			throw Window.error("Ukjent type \"%s\"", name);
 		return type;
 	}
 
 	/**Lager en ny type, og legger den i listen.*/
-	public static Type add(String navn, boolean solid, boolean metode, String bildefil, Color farge, String tegn) {
-		Type type = new Type(navn, solid, metode, bildefil, farge, tegn);
-		typer.add(type);
+	public static Type add(String name, boolean solid, boolean method, String imagePath, Color color, String symbol) {
+		Type type = new Type(name, solid, method, imagePath, color, symbol);
+		types.add(type);
 		return type;
 	}
 
@@ -53,50 +53,50 @@ public class Type {
 
 
 	/***/
-	public final String navn;
+	public final String name;
 	/**Bakgrunnsfarge*/
-	public final Color farge;
-	public final BufferedImage bilde;
+	public final Color color;
+	public final BufferedImage image;
 	/**Enheter kan ikke flytte til solide ruter*/
 	public final boolean solid;
 	/**Kan felt av denne typen ha en metode*/
-	public final boolean metode;
+	public final boolean method;
 	/**Hvilke tegn angir denne typen*/
-	private final char[] tegn;
-	protected Type(String navn, boolean solid, boolean metode, String bildefil, Color farge, String tegn) {
-		this.navn=navn;
-		this.tegn=tegn.toCharArray();
-		this.farge=farge;
+	private final char[] symbols;
+	protected Type(String name, boolean solid, boolean method, String imagePath, Color color, String symbol) {
+		this.name=name;
+		this.symbols=symbol.toCharArray();
+		this.color=color;
 		this.solid=solid;
-		this.metode=metode;
-		BufferedImage bilde = null;
-		if (bildefil != null)
+		this.method=method;
+		BufferedImage image = null;
+		if (imagePath != null)
 			try {
-				bilde = ImageIO.read(new File(bildefil));
+				image = ImageIO.read(new File(imagePath));
 			} catch (IOException e) {
-				throw Window.feil(
+				throw Window.error(
 						"Feil under lasting av bildefil \"%s\" til RuteType %s:\n"
 						+"Det kan skyldes at working directory ikke er satt til pakkeNavnet\n"+"%s",
-						bildefil, navn, e.getMessage()
+						imagePath, name, e.getMessage()
 					);
 			}
-		this.bilde=bilde;
+		this.image=image;
 	}
 
-	public char[] getTegn() {
-		return tegn.clone();
+	public char[] getSymbols() {
+		return symbols.clone();
 	}
 
 	/**Er en rute angitt med tegn denne typen?*/
-	public boolean tegn(char tegn) {
-		for (char c : this.tegn)
-			if (tegn==c)
+	public boolean symbol(char symbol) {
+		for (char c : this.symbols)
+			if (symbol==c)
 				return true;
 		return false;
 	}
 
 	/**Starter navnet til denne typen med navn*/
-	public boolean type(String navn) {
-		return this.navn.startsWith(navn);
+	public boolean type(String name) {
+		return this.name.startsWith(name);
 	}
 }

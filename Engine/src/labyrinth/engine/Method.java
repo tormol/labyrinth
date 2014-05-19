@@ -9,58 +9,57 @@ import java.util.regex.Pattern;
 
 
 public class Method {
-	static final Map<String,Method> metoder = new HashMap<String,Method>();
-	public static Method get(String metode) {
-		if (metode==null)
+	static final Map<String,Method> methods = new HashMap<String,Method>();
+	public static Method get(String method) {
+		if (method==null)
 			return null;
-		Method m = metoder.get(metode);
+		Method m = methods.get(method);
 		if (m==null)
-			throw Window.feil("Finner ikke metoden \"%s\"", metode);
+			throw Window.error("Finner ikke metoden \"%s\"", method);
 		return m;
 	}
-	public static void kall(String metode, Tile rute, Mob enhet) {
-		Method.get(metode).kall(rute, enhet);
+	public static void call(String method, Tile tile, Mob mob) {
+		Method.get(method).call(tile, mob);
 	}
-	public static void add(String linje) {
-		Method ny = new Method(linje);
-		metoder.put(ny.navn, ny);
+	public static void add(String line) {
+		Method ny = new Method(line);
+		methods.put(ny.name, ny);
 	}
 
 
-	public final String navn;
-	private final Operasjon[] operasjoner;
+	public final String name;
+	private final Operation[] operations;
 	/**
-	 * @param navn
 	 * 
 	 */
-	public Method(String linje) {
-		final String mNavn = "\\w+";
-		final String parametre = "(?:[\\w\\s,]|'.')*";
+	public Method(String line) {
+		final String mName = "\\w+";
+		final String parameters = "(?:[\\w\\s,]|'.')*";
 		//finne navn
-		Matcher metode = Pattern.compile("^\\s*("+mNavn+")\\s*:((?:\\s*"+mNavn+"\\("+parametre+"\\);)*)\\s*$").matcher(linje);
-		if (!metode.matches())
-			MapFile.feil("Uforsttaælig metode: \"%s\"", linje);
-		navn = metode.group(1);
+		Matcher method = Pattern.compile("^\\s*("+mName+")\\s*:((?:\\s*"+mName+"\\("+parameters+"\\);)*)\\s*$").matcher(line);
+		if (!method.matches())
+			MapFile.error("Uforsttaælig metode: \"%s\"", line);
+		name = method.group(1);
 
 		//http://stackoverflow.com/questions/6835970/regular-expression-capturing-all-repeating-groups
-		String[] navn = finnAlle(metode.group(2), "("+mNavn+")(?=\\("+parametre+"\\);)"/*""+mNavn+"(?=\\("+parametre+"\\);)"*/);
-		String[] parameter = finnAlle(metode.group(2), "(?<="+mNavn+"\\()("+parametre+")(?=\\);)");
-		operasjoner = new Operasjon[parameter.length];
-		for (int i=0; i<navn.length; i++) {
-			Operasjon o = null;
+		String[] name = findAll(method.group(2), "("+mName+")(?=\\("+parameters+"\\);)"/*""+mNavn+"(?=\\("+parametre+"\\);)"*/);
+		String[] parameter = findAll(method.group(2), "(?<="+mName+"\\()("+parameters+")(?=\\);)");
+		operations = new Operation[parameter.length];
+		for (int i=0; i<name.length; i++) {
+			Operation o = null;
 			//TODO: hvis koordinater mangler vil metoden kjøres på feltet som startet funksjonen.
-			switch (navn[i]) {
+			switch (name[i]) {
 			  case "sett":
 				String[] param = param(parameter[i], "(\\d+)", "(\\d+)", "'(.)'");
-				o = new Sett(point(param), param[2].charAt(0));
+				o = new Set(point(param), param[2].charAt(0));
 				break;
 			  case "trigger": o=new Trigger(point(param(parameter[i], "(\\d+)", "(\\d+)")));  break;
-			  case "kall": o=new Kall(param(parameter[i], "(\\w+)")[0]);  break;
-			  case "flytt": o=new Flytt(point(param(parameter[i], "(\\d+)", "(\\d+)")));  break;
+			  case "kall": o=new Call(param(parameter[i], "(\\w+)")[0]);  break;
+			  case "flytt": o=new Move(point(param(parameter[i], "(\\d+)", "(\\d+)")));  break;
 			  default:
-				throw MapFile.feil("Metode %s: Ukjent operasjon %s.", this.navn, navn[i]); 
+				throw MapFile.error("Metode %s: Ukjent operasjon %s.", this.name, name[i]); 
 			}
-			operasjoner[i] = o;
+			operations[i] = o;
 		}
 	}
 
@@ -68,13 +67,13 @@ public class Method {
 
 	//hjelper-funksjoner til Metode()
 	/**Returnerer en array med alle treff av regex i str.*/
-	public String[] finnAlle(String str, String regex) {
-		LinkedList<String> treff = new LinkedList<String>();
+	public String[] findAll(String str, String regex) {
+		LinkedList<String> found = new LinkedList<String>();
 		Matcher m = Pattern.compile(regex).matcher(str);
 
 		while (m.find())
-			treff.add(m.group());
-		return treff.toArray(new String[treff.size()]);
+			found.add(m.group());
+		return found.toArray(new String[found.size()]);
 	}
 	/**bygger en regex av par..., matcher den mot str og returnerer svarene*/
 	private String[] param(String str, String... par) {
@@ -87,105 +86,105 @@ public class Method {
 		Matcher m = Pattern.compile(regex).matcher(str);
 		if (!m.matches())
 			//finner ingen god måte å fortelle funksjon-navn eller kolonne.
-			throw MapFile.feil("Metode %s: En funksjon har feil parametre \"(%s)\"", navn, str);
-		String[] treff = new String[par.length];
+			throw MapFile.error("Metode %s: En funksjon har feil parametre \"(%s)\"", name, str);
+		String[] found = new String[par.length];
 		for (int i=0; i<par.length; i++)
-			treff[i] = m.group(i+1);
-		return treff;
+			found[i] = m.group(i+1);
+		return found;
 	}
-	private Point point(String[] treff) {
+	private Point point(String[] found) {
 		Point p = new Point(
-				Integer.valueOf(treff[0]),
-				Integer.valueOf(treff[1])
+				Integer.valueOf(found[0]),
+				Integer.valueOf(found[1])
 			);
-		Dimension d = TileMap.dimensjoner();
+		Dimension d = TileMap.dimesions();
 		if (p.x<0 || p.y<0 || p.x>=d.width || p.y>=d.height)
-			throw MapFile.feil("Metode %s: koordinatene (%d,%d) er utenfor labyrinten.", navn, p.x, p.y);
+			throw MapFile.error("Metode %s: koordinatene (%d,%d) er utenfor labyrinten.", name, p.x, p.y);
 		return p;
 	}
 
 
-	public void kall(Tile rute, Mob enhet) {
-		for (Operasjon op : operasjoner)
-			op.utfør(rute, enhet);
+	public void call(Tile tile, Mob mob) {
+		for (Operation op : operations)
+			op.perform(tile, mob);
 	}
 
 
-	protected static interface Operasjon {
-		public void utfør(Tile rute, Mob Enhet);
+	protected static interface Operation {
+		public void perform(Tile tile, Mob mob);
 	}
 
 	
-	class Sett implements Operasjon {
+	class Set implements Operation {
 		public final Point pos;
 		public final Type type;
-		public final String metode;
-		public Sett(Point pos, char tegn) {
+		public final String method;
+		public Set(Point pos, char symbol) {
 			this.pos = pos;
-			type = Type.t(tegn);
-			if (type.metode)
-				metode = String.valueOf(tegn);
+			type = Type.t(symbol);
+			if (type.method)
+				method = String.valueOf(symbol);
 			else
-				metode = null;
+				method = null;
 		}
 
 		@Override
-		public void utfør(Tile rute, Mob enhet) {
+		public void perform(Tile rute, Mob enhet) {
 			if (pos != null)
 				rute = TileMap.get(pos);
 			rute.setType(type);
-			rute.metode = Method.get(metode);
+			rute.method = Method.get(method);
 		}
 	}
 
 
 	/**Kjør metoden til et annet felt*/
-	class Trigger implements Operasjon {
+	class Trigger implements Operation {
 		public final Point pos;
 		public Trigger(Point pos) {
 			this.pos = pos;
 		}
 
 		@Override
-		public void utfør(Tile rute, Mob enhet) {
+		public void perform(Tile rute, Mob enhet) {
 			if (pos != null)
 				rute = TileMap.get(pos);
-			if (rute.enhet() != null)
-				enhet = rute.enhet();
-			if (rute.metode != null)
-				rute.metode.kall(rute, enhet);
+			if (rute.mob() != null)
+				enhet = rute.mob();
+			if (rute.method != null)
+				rute.method.call(rute, enhet);
 		}
 	}
 
 
 	/**kall en annen metode*/
-	class Kall implements Operasjon {
+	class Call implements Operation {
 		public final String metode;
-		public Kall(String metode) {
+		public Call(String metode) {
 			this.metode = metode;
 		}
 
 		@Override
-		public void utfør(Tile rute, Mob enhet) {
-			Method.kall(metode, rute, enhet);
+		public void perform(Tile rute, Mob enhet) {
+			Method.call(metode, rute, enhet);
 		}
 	}
 
 
 	/**teleporter*/
-	class Flytt implements Operasjon {
+	class Move implements Operation {
 		public final Point pos;
-		public Flytt(Point pos) {
+		public Move(Point pos) {
 			this.pos = pos;
 		}
 		@Override
-		public void utfør(Tile rute, final Mob enhet) {
+		public void perform(Tile rute, final Mob enhet) {
 			if (pos != null)
 				rute = TileMap.get(pos);
 			if (enhet==null)
-				throw Window.feil("Metode.utfoor(): enhet==null");
+				throw Window.error("Metode.utfoor(): enhet==null");
 			//Unngår å trigge felter, for hvis to felter teleporterer til hverandre ville det skapt en uendelig løkke.
-			enhet.flytt(pos);
+			enhet.move(pos);
 		}
 	}
 }

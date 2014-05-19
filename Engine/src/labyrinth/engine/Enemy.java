@@ -3,55 +3,55 @@ import tbm.util.geom.Point;
 import tbm.util.geom.Direction;
 
 public abstract class Enemy extends Mob implements Runnable {
-	static final ThreadGroup threadGroup = new ThreadGroup("Fiender");
+	static final ThreadGroup threadGroup = new ThreadGroup("Enemies");
 
 
-	private int vent;
-	public final int ventRaskere;
-	public final int ventMin;
-	private boolean stopp = false;
+	private int wait;
+	public final int waitShorter;
+	public final int waitMin;
+	private boolean stop = false;
 	private boolean pause = false;
-	private final Thread tråd;
+	private final Thread thread;
 
 	/**called from run()
 	 *@return where the unit should move to*/
-	abstract protected Point finnRute();
+	abstract protected Point findTile();
 
-	protected Enemy(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
-		super("Fiende", fil);
-		vent = ventStart;
-		this.ventRaskere = ventRaskere;
-		this.ventMin = ventMin + ventRaskere;
-		setRute(start);
-		rute().flyttTil(this, false);
-		tråd = new Thread(threadGroup, this, "Fiende");
-		tråd.setName("Fiende");
-		tråd.setDaemon(true);
-		tråd.start();
+	protected Enemy(Tile start, String imagePath, int waitStart, int waitShorter, int waitMin) {
+		super("Enemy", imagePath);
+		wait = waitStart;
+		this.waitShorter = waitShorter;
+		this.waitMin = waitMin + waitShorter;
+		setTile(start);
+		tile().moveTo(this, false);
+		thread = new Thread(threadGroup, this, "Enemy");
+		thread.setName("Enemy");
+		thread.setDaemon(true);
+		thread.start();
 	}
 
 	@Override//Runnable (Thread)
 	public void run() {
-		sov(vent);
-		while (!stopp) {
+		sleep(wait);
+		while (!stop) {
 			if (pause) {
-				sov(Long.MAX_VALUE);
+				sleep(Long.MAX_VALUE);
 				continue;
 			}
 			//flytter
-			final Point til = finnRute();
-			if (til != null)
-				flytt(til);
+			final Point to = findTile();
+			if (to != null)
+				move(to);
 			//flytt raskere og raskere intill grensse
-			if (vent > ventMin)
-				vent -= ventRaskere;
-			sov(vent);
+			if (wait > waitMin)
+				wait -= waitShorter;
+			sleep(wait);
 		}
 	}
 
 	/**To avoid try/catch around every Thread.sleep().
 	 *Ends pause if it is interrupted.*/
-	private void sov(long millisekunder) {
+	private void sleep(long millisekunder) {
 		try {
 			Thread.sleep(millisekunder);
 		} catch (InterruptedException e) {
@@ -59,114 +59,114 @@ public abstract class Enemy extends Mob implements Runnable {
 		}
 	}
 
-	public void truffet(Mob enhet) {
-		if (enhet instanceof Enemy)
-			fjern();
+	public void hit(Mob mob) {
+		if (mob instanceof Enemy)
+			remove();
 		else
-			enhet.truffet(this);
+			mob.hit(this);
 	}
 
 	/**setter pause*/
 	public void pause(boolean pause) {
 		if (!pause)
-			tråd.interrupt();
+			thread.interrupt();
 		this.pause = pause;
 	}
 
 	/**Tells the thread to stop, and waits for it.*/
-	public void fjern() {
-		stopp = true;
+	public void remove() {
+		stop = true;
 		try {
-			tråd.interrupt();
-			tråd.join();
+			thread.interrupt();
+			thread.join();
 		} catch (InterruptedException e) {
-			System.err.println("Error interrupting Fiende: " + navn);
+			System.err.println("Error interrupting Fiende: " + name);
 			e.printStackTrace();
 		}
-		super.fjern();
+		super.remove();
 	}
 
 
 	/**@return this.vent*/
-	public int getVent() {
-		return vent;
+	public int getWait() {
+		return wait;
 	}
 
-	/**@param vent kan ikke vaere negativ.*/
-	public void setVent(int vent) {
-		if (vent < 0)
+	/**@param wait kan ikke vaere negativ.*/
+	public void setWait(int wait) {
+		if (wait < 0)
 			throw new IllegalArgumentException("vent er negativ.");
-		this.vent = vent;
+		this.wait = wait;
 	}
 
 
 
 	/**Pro/ver aa flytte i tilfeldig retnig*/
-	public static class Vanlig extends Enemy {
-		public Vanlig(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
-			super(start, fil, ventStart, ventRaskere, ventMin);
+	public static class Normal extends Enemy {
+		public Normal(Tile start, String imagePath, int waitStart, int waitShorter, int waitMin) {
+			super(start, imagePath, waitStart, waitShorter, waitMin);
 		}
 
 		@Override//Fiende
-		protected Point finnRute() {
-			retning = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Tile til = TileMap.get( rute().pos().move(retning) );
-			if (til.kanFlytteTil(this, false)  &&  !(til.enhet() instanceof Enemy))
-				return til.pos();
+		protected Point findTile() {
+			direction = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
+			final Tile to = TileMap.get( tile().pos().move(direction) );
+			if (to.canMoveTo(this, false)  &&  !(to.mob() instanceof Enemy))
+				return to.pos();
 			return null;
 		}
 	}
 
 	/**Pro/ver aa flytte i tilfeldig retning, kan flytte til solide ruter.*/
-	public static class Spøkelse extends Enemy {
-		public Spøkelse(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
+	public static class Ghost extends Enemy {
+		public Ghost(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
 		}
 
 		@Override//Fiende
-		protected Point finnRute() {
-			retning = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Tile til = TileMap.get( rute().pos().move(retning) );
-			if (!til.isType("utenfor")  &&  !(til.enhet() instanceof Enemy))
-				return til.pos();
+		protected Point findTile() {
+			direction = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
+			final Tile to = TileMap.get( tile().pos().move(direction) );
+			if (!to.isType("outside")  &&  !(to.mob() instanceof Enemy))
+				return to.pos();
 			return null;
 		}
 	}
 
 	/**Flytter mot spilleren, en akse om gangen.*/
-	public static class Målrettet extends Enemy {
-		public Målrettet(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
+	public static class Targeting extends Enemy {
+		public Targeting(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
 		}
 
 		@Override//Fiende
 		/**finner spilleren,  finner avstanden, snur seg etter den lengste avstanden til spilleren, og gaar mot den minste avstanden som ikke er 0.
 		 * */
-		protected Point finnRute() {
-			Point avstand = new Point();
-			Point pos = rute().pos();
-			for (Mob e : Mob.enheter)
+		protected Point findTile() {
+			Point distance = new Point();
+			Point pos = tile().pos();
+			for (Mob e : Mob.mobs)
 				if (e instanceof Player) {
-					avstand = rute().pos().diff(pos);
+					distance = tile().pos().diff(pos);
 					break;
 				}
-			Point ret = new Point( (int)Math.signum(avstand.x), (int)Math.signum(avstand.y));
-			Point[] alternativ;
-			if (Math.abs(avstand.x) > Math.abs(avstand.y)) {
-				retning = Direction.d( ret.x,  0, 0, -1, 1);
-				alternativ = new Point[]{ new Point(0, ret.y),  new Point(ret.x, 0)};
+			Point dir = new Point( (int)Math.signum(distance.x), (int)Math.signum(distance.y));
+			Point[] alt;
+			if (Math.abs(distance.x) > Math.abs(distance.y)) {
+				direction = Direction.d( dir.x,  0, 0, -1, 1);
+				alt = new Point[]{ new Point(0, dir.y),  new Point(dir.x, 0)};
 			} else {
-				retning = Direction.d( ret.y,  -1, 1, 0, 0);
-				alternativ = new Point[]{ new Point(ret.x, 0),  new Point(0, ret.y)};
+				direction = Direction.d( dir.y,  -1, 1, 0, 0);
+				alt = new Point[]{ new Point(dir.x, 0),  new Point(0, dir.y)};
 			}
 
-			for (Point p : alternativ) {
+			for (Point p : alt) {
 				if (p.equals(0, 0))
 					continue;
-				Tile rute = TileMap.get(pos.x+p.x, pos.y+p.y);
-				if (rute.kanFlytteTil(this, false)
-				 && !(rute.enhet() instanceof Enemy))
-					return rute.pos();
+				Tile tile = TileMap.get(pos.x+p.x, pos.y+p.y);
+				if (tile.canMoveTo(this, false)
+				 && !(tile.mob() instanceof Enemy))
+					return tile.pos();
 			}
 			return null;
 		}

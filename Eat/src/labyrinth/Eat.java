@@ -11,25 +11,25 @@ import labyrinth.engine.*;
 
 
 public class Eat {
-	public static final int GODBITER = 5;
-	public static final int MAKS_FIENDER = 10;
+	public static final int DOTS = 5;
+	public static final int MAX_ENEMIES = 10;
 	static Player player;
 
 	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
-		Window.start("Labyrint");
-		Type.add("gang",   false, false, null, BLACK,  " ");
-		Type.add("godbit", false, false, "res/dot.png", BLACK, ".");
+		Window.start("Eat");
+		Type.add("floor", false, false, null,          BLACK, " ");
+		Type.add("dot",   false, false, "res/dot.png", BLACK, ".");
 
 		TileMap.start(10, 10);
-		TileMap.visible(Arrays.asList(TileMap.alle()));
-		player = new Player("res/player.png", null, new Player.FlyttTil(){
+		TileMap.visible(Arrays.asList(TileMap.all()));
+		player = new Player("res/player.png", null, new Player.MoveTo(){
 			int enemies = 1;
-			public void flyttTil(Player player) {
-				if (player.rute().isType("godbit")) {
-					player.rute().setType("gang");
-					if (TileMap.alle("godbit").isEmpty())
-						if (enemies == MAKS_FIENDER)
-							Window.vant();
+			public void moveTo(Player player) {
+				if (player.tile().isType("dot")) {
+					player.tile().setType("floor");
+					if (TileMap.all("dot").isEmpty())
+						if (enemies == MAX_ENEMIES)
+							Window.won();
 						else {
 							enemies++;
 							Eat.start(enemies);
@@ -38,36 +38,36 @@ public class Eat {
 			}
 		});
 		start(1);
-		Window.vis();
+		Window.display();
 	}
 
 	static void start(final int enemies) {
 		SwingUtilities.invokeLater(new Runnable() {public void run() {
-			Window.setTekst("Nivå "+enemies);
-			Mob.pauseAlle(true);
+			Window.setText("Level "+enemies);
+			Mob.pauseAll(true);
 			Point p;
-			for (int i=0; i<GODBITER; i++) {
+			for (int i=0; i<DOTS; i++) {
 				do {
 					p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
-				} while (TileMap.get(p).isType("godbit"));
-				TileMap.get(p).setType("godbit");
+				} while (TileMap.get(p).isType("dot"));
+				TileMap.get(p).setType("dot");
 			}
 			int i=0;
-			for (Mob e : Mob.enheter)
+			for (Mob e : Mob.mobs)
 				if (e instanceof Enemy) {
-					p = e.rute().pos();
-					while ((p.x<5 && p.y<5) || TileMap.get(p).enhet() != null)
+					p = e.tile().pos();
+					while ((p.x<5 && p.y<5) || TileMap.get(p).mob() != null)
 						p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
-					e.flytt( p );
-					((Enemy)e).setVent(1000 - i*100);
+					e.move( p );
+					((Enemy)e).setWait(1000 - i*100);
 					i++;
 				}
-			player.flytt(new Point(1, 1));
+			player.move(new Point(1, 1));
 			do {
 				p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
-			} while ((p.x<5 && p.y<5) || TileMap.get(p).enhet() != null);
-			new Enemy.Vanlig(TileMap.get(p), "res/enemy.png", 1000-100*(enemies-1), 5, 0);
-			Mob.pauseAlle(false);
+			} while ((p.x<5 && p.y<5) || TileMap.get(p).mob() != null);
+			new Enemy.Normal(TileMap.get(p), "res/enemy.png", 1000-100*(enemies-1), 5, 0);
+			Mob.pauseAll(false);
 		}});
 	}
 }

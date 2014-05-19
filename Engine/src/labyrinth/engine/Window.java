@@ -6,73 +6,73 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 
 public class Window {
-	public static JFrame vindu = null;
-	private static JLabel tekst = new JLabel();
+	public static JFrame window = null;
+	private static JLabel text = new JLabel();
 	public static void start(String vinduTittel) {
-		vindu = new JFrame(vinduTittel);
+		window = new JFrame(vinduTittel);
 	}
 
 	/**@param args første argument er et filnavn som lastes i stedet for å spørre.*/
-	public static void vis() {
-		vindu.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		vindu.getContentPane().setLayout(new BoxLayout(
-				vindu.getContentPane(), BoxLayout.PAGE_AXIS
+	public static void display() {
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		window.getContentPane().setLayout(new BoxLayout(
+				window.getContentPane(), BoxLayout.PAGE_AXIS
 			));
-		tekst.setEnabled(false);
-		vindu.getContentPane().add(tekst);
-		vindu.getContentPane().add(TileMap.panel);
-		vindu.setFocusable(true);
-		vindu.requestFocus();
-		vindu.pack();
-		vindu.setVisible(true);
+		text.setEnabled(false);
+		window.getContentPane().add(text);
+		window.getContentPane().add(TileMap.panel);
+		window.setFocusable(true);
+		window.requestFocus();
+		window.pack();
+		window.setVisible(true);
 	}
 
 
-	public static void setTekst(String str) {
-		setTekst(str, null);
+	public static void setText(String str) {
+		setText(str, null);
 	}
-	public static void setTekst(String str, String tooltip) {
-		tekst.setEnabled(true);
-		tekst.setText(str);
-		tekst.setToolTipText(tooltip);
+	public static void setText(String str, String tooltip) {
+		text.setEnabled(true);
+		text.setText(str);
+		text.setToolTipText(tooltip);
 	}
-	public static void skjulTekst() {
-		tekst.setEnabled(false);
+	public static void hideText() {
+		text.setEnabled(false);
 	}
 
 
-	public static void vant() {
+	public static void won() {
 		//TODO: last et nytt brett fra en konstant
-		slutt("Du vant!");
+		end("Du vant!");
 	}
-	public static void tapte() {
-		slutt("du tapte");
+	public static void lost() {
+		end("du tapte");
 	}
 
-	public static void slutt(String tekst) {
-		for (Mob e :Mob.enheter)
+	public static void end(String text) {
+		for (Mob e : Mob.mobs)
 			e.pause(true);
-		JOptionPane.showMessageDialog(vindu,
-				tekst, vindu.getTitle(), JOptionPane.PLAIN_MESSAGE
+		JOptionPane.showMessageDialog(window,
+				text, window.getTitle(), JOptionPane.PLAIN_MESSAGE
 			);
-		vindu.dispose();
+		window.dispose();
 	}
 
 
 	/**Gjør det enkelt å gi en feilmelding*/
-	public static FeilMelding feil(String f, Object... a) {
-		return new FeilMelding(String.format(f, a));
+	public static ErrorDialog error(String f, Object... a) {
+		return new ErrorDialog(String.format(f, a));
 	}
 	@SuppressWarnings("serial")
-	public static class FeilMelding extends RuntimeException {
-		private FeilMelding(String melding) {
-			JOptionPane.showMessageDialog(vindu,
-					melding, "Labyrint - feil", JOptionPane.ERROR_MESSAGE
+	public static class ErrorDialog extends RuntimeException {
+		private ErrorDialog(String message) {
+			JOptionPane.showMessageDialog(window,
+					message, "Labyrint - feil", JOptionPane.ERROR_MESSAGE
 				);
 			//Siden det er flere tråder blir ikke programmet
 			//avsluttet av et unntak i én tråd.
-			if (vindu != null)
-				vindu.dispose();
+			if (window != null)
+				window.dispose();
 		}
 	}
 }
