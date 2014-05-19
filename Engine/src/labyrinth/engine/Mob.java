@@ -1,6 +1,7 @@
 package labyrinth.engine;
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
+
 import java.awt.Graphics;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
@@ -9,6 +10,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+
+import tbm.util.geom.Direction;
 import tbm.util.geom.Point;
 
 
@@ -23,7 +26,7 @@ public abstract class Mob {
 	private Tile rute;
 	protected String navn="Ukjent mob";
 	public final BufferedImage figur;
-	protected Retning retning = Retning.NORD;
+	protected Direction retning = Direction.NORTH;
 
 	/**Is called from Rute if another unit tries to move to this units rute.
 	 *@param enhet the unit that is trying to move.*/
@@ -80,28 +83,5 @@ public abstract class Mob {
 	/**It's really simple*/
 	protected void setRute(Tile rute) {
 		this.rute = rute;
-	}
-
-
-	/**Retningen enheten ser.*/
-	public static enum Retning {
-		NORD(0), ØST(Math.PI/2), SØR(Math.PI), VEST(-Math.PI/2);
-		/**hvor mye bildet må roteres.*/
-		public final double theta;
-		private Retning(double theta) {
-			this.theta = theta;
-		}
-		/**Flytt p en rute i retning*/
-		public Point flytt(Point p) {
-			return p.move(this, ØST, VEST, SØR, NORD);
-		}
-		/**Returner den retningen verdi er lik*/
-		public static Retning retning(int verdi, int nord, int øst, int sør, int vest) {
-			if (verdi==nord)  return NORD;
-			if (verdi==øst)   return ØST;
-			if (verdi==sør)   return SØR;
-			if (verdi==vest)  return VEST;
-			return null;
-		}
 	}
 }

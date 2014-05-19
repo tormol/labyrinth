@@ -25,7 +25,6 @@ public class MapFile {
 		fd.setDirectory(new File("./"+sti).getAbsolutePath());
 		fd.setFile("*.txt");
 		fd.setVisible(true);
-		System.out.format("%s %s\n", fd.getDirectory(), fd.getFile());
 		String file = fd.getFile();
 		if (file == null)
 			throw feil("Ingen fil ble valgt");

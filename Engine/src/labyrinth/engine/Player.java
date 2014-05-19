@@ -1,7 +1,11 @@
 package labyrinth.engine;
 import static java.awt.event.KeyEvent.*; 
+
 import javax.swing.SwingUtilities;
+
+import tbm.util.geom.Direction;
 import tbm.util.geom.Point;
+
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.LinkedList;
@@ -43,28 +47,28 @@ public class Player extends Mob implements KeyListener {
 
 	@Override//KeyListener
 	public void keyPressed(KeyEvent e) {
-		Retning retning = Retning.retning(e.getKeyCode(), VK_UP, VK_RIGHT, VK_DOWN, VK_LEFT);
-		if (retning==null) {
+		Direction retning = Direction.d(e.getKeyCode(), VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT);
+		if (retning==null || pause) {
 			if (e.getKeyCode() == VK_ESCAPE)
 				Mob.pauseAlle(!pause);
 			return;
 		}
-		if (pause)
-			return;
 		this.retning = retning;
-		final Point nyPos = retning.flytt(rute().pos());
+		final Point nyPos = rute().pos().move(retning);
 		
 		final Tile til = TileMap.get(nyPos);
-		final Player denne = this;
-		if (til.kanFlytteTil(denne, true))
-			SwingUtilities.invokeLater(new Runnable(){public void run() {
-				rute().flyttFra(true);
-				setRute(til);
-				rute().flyttTil(denne, true);
-				TileMap.fjernDis(nyPos);
-				if (flyttTil != null)
-					flyttTil.flyttTil(denne);
-			}});
+		if (til.kanFlytteTil(this, true)) {
+			//is called from the eventqueue
+			rute().flyttFra(true);
+			setRute(til);
+			rute().flyttTil(this, true);
+			if (flyttTil != null)
+				flyttTil.flyttTil(this);
+		} else
+			rute().repaint();
+		LoS.triangle(rute().pos(), retning, new LoS.Action() {public void action(Tile t) {
+			t.vis();
+		}});
 	}
 
 
@@ -101,7 +105,9 @@ public class Player extends Mob implements KeyListener {
 		super.flytt(pos);
 		if (pos != null)
 			SwingUtilities.invokeLater(new Runnable(){public void run() {
-				TileMap.fjernDis(pos);
+				LoS.triangle(rute().pos(), retning, new LoS.Action() {public void action(Tile t) {
+					t.vis();
+				}});
 			}});
 	}
 
