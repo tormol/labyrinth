@@ -2,10 +2,12 @@ package labyrinth.engine;
 import tbm.util.chars;
 import tbm.util.geom.Point;
 
+import static labyrinth.engine.Method.VType.*;
 import java.awt.Dimension;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,7 +33,7 @@ public class Method {
 
 
 	public final String name;
-	private final Operation[] operations;
+	private final Func[] operations;
 	/**
 	 * 
 	 */
@@ -113,83 +115,6 @@ public class Method {
 	}
 
 
-	protected static interface Operation {
-		public void perform(Tile tile, Mob mob);
-	}
-
-	
-	class Set implements Operation {
-		public final Point pos;
-		public final Type type;
-		public final String method;
-		public Set(Point pos, char symbol) {
-			this.pos = pos;
-			type = Type.t(symbol);
-			if (type.method)
-				method = String.valueOf(symbol);
-			else
-				method = null;
-		}
-
-		@Override
-		public void perform(Tile rute, Mob enhet) {
-			if (pos != null)
-				rute = TileMap.get(pos);
-			rute.setType(type);
-			rute.method = Method.get(method);
-		}
-	}
-
-
-	/**Kjør metoden til et annet felt*/
-	class Trigger implements Operation {
-		public final Point pos;
-		public Trigger(Point pos) {
-			this.pos = pos;
-		}
-
-		@Override
-		public void perform(Tile rute, Mob enhet) {
-			if (pos != null)
-				rute = TileMap.get(pos);
-			if (rute.mob() != null)
-				enhet = rute.mob();
-			if (rute.method != null)
-				rute.method.call(rute, enhet);
-		}
-	}
-
-
-	/**kall en annen metode*/
-	class Call implements Operation {
-		public final String metode;
-		public Call(String metode) {
-			this.metode = metode;
-		}
-
-		@Override
-		public void perform(Tile rute, Mob enhet) {
-			Method.call(metode, rute, enhet);
-		}
-	}
-
-
-	/**teleporter*/
-	class Move implements Operation {
-		public final Point pos;
-		public Move(Point pos) {
-			this.pos = pos;
-		}
-		@Override
-		public void perform(Tile rute, final Mob enhet) {
-			if (pos != null)
-				rute = TileMap.get(pos);
-			if (enhet==null)
-				throw Window.error("Metode.utfoor(): enhet==null");
-			//Unngår å trigge felter, for hvis to felter teleporterer til hverandre ville det skapt en uendelig løkke.
-			enhet.move(pos);
-		}
-	}
 
 
 	static class Source {
@@ -231,7 +156,15 @@ public class Method {
 			return new Variable(this, parser.apply(src));
 		}
 	}*/
-	
+
+	public static enum VType {
+		VOID("void"), INT("int"), POINT("point"), CHAR("char");
+		private VType(String str)
+			{}
+		public static VType[] l(VType... types) {
+			return types;
+		}
+	}
 	static abstract class Var {
 		final String name;
 		final VType type;
@@ -243,11 +176,6 @@ public class Method {
 		public int Int() {throw Window.error("\"%s\" is not an Integer", name);}
 		public Point Point() {throw Window.error("\"%s\" is not a Point", name);}
 		public char Char() {throw Window.error("\"%s\" is not a characther", name);}
-		public static enum VType {
-			INT("int"), POINT("point"), CHAR("char");
-			private VType(String str)
-				{}
-		}
 
 		public static Var parse(Source src) {
 			src.whitespace();
@@ -262,6 +190,11 @@ public class Method {
 			return null;
 		}
 
+		public static class VVoid extends Var {
+			public VVoid() {
+				super(null, Var.VType.VOID);
+			}
+		}
 		public static class VChar extends Var {
 			public char c;
 			public VChar(char c) {
@@ -300,13 +233,89 @@ public class Method {
 	}
 
 
-	static abstract class Func {
+	static class Func {
 		public final String name;
-		public final Type[] parameters;
-		private Func(String name, Type[] parameters) {
+		public final VType[] parameters;
+		public final VType ret;
+		private final Function<Var[], BiFunction<Tile, Mob, Var>> init;
+		private Func(String name, VType[] parameters, VType ret, Function<Var[], BiFunction<Tile, Mob, Var>> init) {
 			this.name = name;
 			this.parameters = parameters;
+			this.ret = ret;
+			this.init = init;
 		}
-		public Function<Var[], Var> init;
+		public BiFunction<Tile, Mob, Var> instance(Var... arg) {
+			return init.apply(arg);
+		}
 	}
+
+	static Func[] methodks = new Func[] {
+		new Func("set", VType.l(POINT, CHAR), VOID, (param)->{
+				Point p = param[0].Point();
+				char symbol = param[1].Char();
+				Type type = Type.t(symbol);
+				
+					m = String.valueOf(symbol);
+				
+			public void perform(Tile rute, Mob enhet) {
+				if (pos != null)
+					rute = TileMap.get(pos);
+				rute.setType(type);
+				if (type.method)
+					rute.method = Method.get(symbol);
+			}
+		});
+	};
+	
+	
+		/**Kjør metoden til et annet felt*/
+		class Trigger implements Operation {
+			public final Point pos;
+			public Trigger(Point pos) {
+				this.pos = pos;
+			}
+	
+			@Override
+			public void perform(Tile rute, Mob enhet) {
+				if (pos != null)
+					rute = TileMap.get(pos);
+				if (rute.mob() != null)
+					enhet = rute.mob();
+				if (rute.method != null)
+					rute.method.call(rute, enhet);
+			}
+		}
+	
+	
+		/**kall en annen metode*/
+		class Call implements Operation {
+			public final String metode;
+			public Call(String metode) {
+				this.metode = metode;
+			}
+	
+			@Override
+			public void perform(Tile rute, Mob enhet) {
+				Method.call(metode, rute, enhet);
+			}
+		}
+	
+	
+		/**teleporter*/
+		class Move implements Operation {
+			public final Point pos;
+			public Move(Point pos) {
+				this.pos = pos;
+			}
+			@Override
+			public void perform(Tile rute, final Mob enhet) {
+				if (pos != null)
+					rute = TileMap.get(pos);
+				if (enhet==null)
+					throw Window.error("Metode.utfoor(): enhet==null");
+				//Unngår å trigge felter, for hvis to felter teleporterer til hverandre ville det skapt en uendelig løkke.
+				enhet.move(pos);
+			}
+		}
+
 }
