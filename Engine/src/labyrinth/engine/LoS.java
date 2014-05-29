@@ -2,24 +2,24 @@ package labyrinth.engine;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.function.Consumer;
 
 import tbm.util.geom.Direction;
 import tbm.util.geom.Point;
 
 public class LoS {
-	public static int line(Point p, Direction d, int max, Action a) {
-		if (a==null)
-			a=new Action(){public void action(Tile t){}};
+	public static int line(Point p, Direction d, int max, Consumer<Tile> a) {
 		int len=0; Tile t;
 		do {
 			len++;
 			t = TileMap.get(p);
-			a.action(t);
+			if (a != null)
+				a.accept(t);
 			p=p.move(d);
 		} while (!t.getType().solid && len<max);
 		return len-1;
 	}
-	public static void triangle(Point start, Direction forward, Action a) {
+	public static void triangle(Point start, Direction forward, Consumer<Tile> a) {
 		int max = line(start, forward, Integer.MAX_VALUE, a);
 		Direction back = forward.back();
 		Queue<Line> lines = new ArrayDeque<>();
@@ -31,7 +31,7 @@ public class LoS {
 			int i, opening=0;
 			for (i=0;  i<l.max||opening>0;  i++) {
 				Tile t = TileMap.get(p);
-				a.action(t);
+				a.accept(t);
 				if (t.getType().solid) {
 					if (opening>0)
 						lines.add(new Line(p.move(back, opening-1), l.side, opening-1));
@@ -41,13 +41,13 @@ public class LoS {
 				p=p.move(forward);
 			}
 			if (i==l.max)
-				a.action(TileMap.get(p));
+				a.accept(TileMap.get(p));
 		}
 
 		//Look behind
-		a.action(TileMap.get(start.move(back)));
-		a.action(TileMap.get(start.move(back).move(forward.left())));
-		a.action(TileMap.get(start.move(back).move(forward.right())));
+		a.accept(TileMap.get(start.move(back)));
+		a.accept(TileMap.get(start.move(back).move(forward.left())));
+		a.accept(TileMap.get(start.move(back).move(forward.right())));
 	}
 
 
@@ -61,8 +61,5 @@ public class LoS {
 			this.side=side;
 			this.max=max;
 		}
-	}
-	public static interface Action {
-		void action(Tile t);
 	}
 }

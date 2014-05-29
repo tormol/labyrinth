@@ -18,6 +18,7 @@ public class Tile extends javax.swing.JPanel {
 	public Method method;
 	/**Spiller i ruten.*/
 	private Mob mob = null;
+	
 	/**Om spilleren kan se dette feltet.*/
 	private boolean visible = false;
 
@@ -28,8 +29,6 @@ public class Tile extends javax.swing.JPanel {
 		//Størrelse til ruten, i pixler.
 		setPreferredSize(new Dimension(32, 32));
 		setMinimumSize(new Dimension(32, 32));
-		if (type.type("exit"))
-			visible();//Vis alle utganger fra start
 	}
 
 	/**Sjekker om enheten er solid, hvis trigger==true kan den kalle en Metode*/

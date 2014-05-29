@@ -47,12 +47,12 @@ public abstract class Mob {
 	/**Move from current tile to tile with pos.*/
 	public void move(final Point pos) {
 		final Mob _this = this;
-		SwingUtilities.invokeLater(new Runnable(){public void run() {
+		SwingUtilities.invokeLater(() -> {
 			if (tile != null)
 				tile.moveFrom(false);
 			if (pos != null)
 				tile = TileMap.get(pos).moveTo(_this, false);
-		}});
+		});
 	}
 
 	public String name() {

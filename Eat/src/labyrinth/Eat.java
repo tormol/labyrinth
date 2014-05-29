@@ -3,6 +3,7 @@ import static java.awt.Color.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 import javax.swing.SwingUtilities;
 
@@ -22,12 +23,12 @@ public class Eat {
 
 		TileMap.start(10, 10);
 		TileMap.visible(Arrays.asList(TileMap.all()));
-		player = new Player("res/player.png", null, new Player.MoveTo(){
+		player = new Player("res/player.png", null, new Consumer<Player>(){
 			int enemies = 1;
-			public void moveTo(Player player) {
+			public void accept(Player player) {
 				if (player.tile().isType("dot")) {
 					player.tile().setType("floor");
-					if (TileMap.all("dot").isEmpty())
+					if (!TileMap.anyTiles("dot"))
 						if (enemies == MAX_ENEMIES)
 							Window.won();
 						else {

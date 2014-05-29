@@ -27,7 +27,7 @@ public class MapFile {
 		fd.setVisible(true);
 		String file = fd.getFile();
 		if (file == null)
-			throw error("Ingen fil ble valgt");
+			throw Window.error("Ingen fil ble valgt");
 		return new File(fd.getDirectory(), file);
 	}
 
@@ -42,9 +42,9 @@ public class MapFile {
 			while ((linje = fileReader.readLine()) != null)
 				file.add(linje);
 		} catch (FileNotFoundException e) {
-			throw error("Filen \"%s\" finnes ikke.", path);
+			throw Window.error("Filen \"%s\" finnes ikke.", path);
 		} catch (IOException e) {
-			throw error("Feil under lesing av fil \"%s\"", path);
+			throw Window.error("Feil under lesing av fil \"%s\"", path);
 		}
 		MapFile.line = 1;
 
@@ -77,17 +77,11 @@ public class MapFile {
 			try {
 				TileMap.synsvidde( Integer.parseInt(synsvidde) );
 			} catch (NumberFormatException e) {
-				throw error("Konstanten $synsvidde er ikke et tall\n%s", synsvidde);
+				throw Window.error("Konstanten $synsvidde er ikke et tall\n%s", synsvidde);
 			}
 		}
 		
 		TileMap.findMethods();
-	}
-
-	/**Legger til linjenummer før feilmeldingen.*/
-	public static Window.ErrorDialog error(String f, Object... a) {
-		if (line == -1)
-			return Window.error( String.format(f, a) );
-		return Window.error("Line %d: %s", line, String.format(f, a));
+		MapFile.line=-1;
 	}
 }

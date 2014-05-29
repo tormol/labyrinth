@@ -38,7 +38,7 @@ public class Method {
 		//finne navn
 		Matcher method = Pattern.compile("^\\s*("+mName+")\\s*:((?:\\s*"+mName+"\\("+parameters+"\\);)*)\\s*$").matcher(line);
 		if (!method.matches())
-			MapFile.error("Uforsttaælig metode: \"%s\"", line);
+			Window.error("Uforsttaælig metode: \"%s\"", line);
 		name = method.group(1);
 
 		//http://stackoverflow.com/questions/6835970/regular-expression-capturing-all-repeating-groups
@@ -57,7 +57,7 @@ public class Method {
 			  case "kall": o=new Call(param(parameter[i], "(\\w+)")[0]);  break;
 			  case "flytt": o=new Move(point(param(parameter[i], "(\\d+)", "(\\d+)")));  break;
 			  default:
-				throw MapFile.error("Metode %s: Ukjent operasjon %s.", this.name, name[i]); 
+				throw Window.error("Metode %s: Ukjent operasjon %s.", this.name, name[i]); 
 			}
 			operations[i] = o;
 		}
@@ -86,7 +86,7 @@ public class Method {
 		Matcher m = Pattern.compile(regex).matcher(str);
 		if (!m.matches())
 			//finner ingen god måte å fortelle funksjon-navn eller kolonne.
-			throw MapFile.error("Metode %s: En funksjon har feil parametre \"(%s)\"", name, str);
+			throw Window.error("Metode %s: En funksjon har feil parametre \"(%s)\"", name, str);
 		String[] found = new String[par.length];
 		for (int i=0; i<par.length; i++)
 			found[i] = m.group(i+1);
@@ -99,7 +99,7 @@ public class Method {
 			);
 		Dimension d = TileMap.dimesions();
 		if (p.x<0 || p.y<0 || p.x>=d.width || p.y>=d.height)
-			throw MapFile.error("Metode %s: koordinatene (%d,%d) er utenfor labyrinten.", name, p.x, p.y);
+			throw Window.error("Metode %s: koordinatene (%d,%d) er utenfor labyrinten.", name, p.x, p.y);
 		return p;
 	}
 

@@ -6,7 +6,9 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.function.Consumer;
 
+import tbm.util.Wrapper;
 import tbm.util.geom.Point;
 
 
@@ -47,11 +49,11 @@ public class TileMap {
 		//lager Ruter
 		for (int y=0;  y<map.length;  y++, MapFile.line++) {
 			if (tegn[y].length != collumns)
-				throw MapFile.error("lengden passynsvidde ikke med resten.");
+				throw Window.error("lengden passynsvidde ikke med resten.");
 			for (int x=0; x<map[0].length; x++) {
 				Type type = Type.get(tegn[y][x]);
 				if (type == null)
-					throw MapFile.error("Kolonne %d: Ugyldig tegn '%c'", x, tegn[y][x]);
+					throw Window.error("Kolonne %d: Ugyldig tegn '%c'", x, tegn[y][x]);
 				map[y][x] = new Tile(type, new Point(x, y));
 				if (type.method)
 					findMethod = new FindMethod(tegn[y][x], map[y][x], findMethod);
@@ -82,6 +84,12 @@ public class TileMap {
 	public static int numberOfTiles() {
 		return map[0].length * map.length;
 	}
+	
+	public static boolean anyTiles(String type) {
+		Wrapper<Boolean> any = new Wrapper<>(false);
+		all(type, (t)->any.v=true);
+		return any.v;
+	}
 
 	/**Returnerer alle rutene på brettet*/
 	public static Tile[] all() {
@@ -94,17 +102,15 @@ public class TileMap {
 		return all;
 	}
 
-	public static Queue<Tile> all(String type) {
-		return all(Type.t(type));
+	public static void all(String type, Consumer<Tile> c) {
+		all(Type.t(type), c);
 	}
 	/**Returnerer alle ruter av typen*/
-	public static Queue<Tile> all(Type type) {
-		ArrayDeque<Tile> tiles = new ArrayDeque<Tile>(numberOfTiles());
+	public static void all(Type type, Consumer<Tile> consumer) {
 		for (Tile[] row : map)
 			for (Tile t : row)
 				if (t.getType() == type)
-					tiles.add(t);
-		return tiles;
+					consumer.accept(t);
 	}
 
 	public static void visible(Iterable<Tile> tiles) {
@@ -132,7 +138,7 @@ public class TileMap {
 	@Deprecated
 	public static void synsvidde(int synsvidde) {
 		if (synsvidde<0)
-			throw MapFile.error("Brett.synsvidde kan ikke være negativ");
+			throw Window.error("Brett.synsvidde kan ikke være negativ");
 		TileMap.synsvidde = synsvidde;
 		if (synsvidde==0)
 			for (Tile rute : all())

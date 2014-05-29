@@ -19,7 +19,7 @@ public class Constant {
 	}
 	public static String get(String name) {
 		if (!name.matches("\\w+"))
-			throw MapFile.error("Ugyldig konstant-navn \"%s\"", name);
+			throw Window.error("Ugyldig konstant-navn \"%s\"", name);
 		return constants.get(name);
 	}
 	public static String fillIn(String str) {
@@ -31,7 +31,7 @@ public class Constant {
 			else {
 				String value = Constant.get(part[i]);
 				if (value==null)
-					throw MapFile.error("Konstanten $%s er ikke definert.", part[i]);
+					throw Window.error("Konstanten $%s er ikke definert.", part[i]);
 				b.append(value);
 			}
 		return b.toString();

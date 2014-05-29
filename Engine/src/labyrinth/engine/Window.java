@@ -58,13 +58,20 @@ public class Window {
 		window.dispose();
 	}
 
-
-	/**Gjør det enkelt å gi en feilmelding*/
+	/**Gjør det enkelt å gi en feilmelding
+	 *Legger til linjenummer før feilmeldingen.*/
 	public static ErrorDialog error(String f, Object... a) {
-		return new ErrorDialog(String.format(f, a));
+		if (MapFile.line == -1)
+			return new ErrorDialog(f, a);
+		return new ErrorDialog("Line %d: %s", MapFile.line, String.format(f, a));
 	}
+
+
 	@SuppressWarnings("serial")
 	public static class ErrorDialog extends RuntimeException {
+		private ErrorDialog(String f, Object... a) {
+			this(String.format(f, a));
+		}
 		private ErrorDialog(String message) {
 			JOptionPane.showMessageDialog(window,
 					message, "Labyrint - feil", JOptionPane.ERROR_MESSAGE

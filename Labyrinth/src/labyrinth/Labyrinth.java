@@ -1,6 +1,10 @@
 package labyrinth;
 import static java.awt.Color.*;
+
 import java.io.File;
+import java.util.LinkedList;
+import java.util.function.Consumer;
+
 import labyrinth.engine.*;
 
 public class Labyrinth {
@@ -22,12 +26,14 @@ public class Labyrinth {
 			MapFile.read(new File(args[0]));
 		else //show a fileChooser
 			MapFile.read(MapFile.choose("maps/"));
-		for (Tile enemy : TileMap.all("enemy")) {
-			enemy.setType("floor");
-			new Enemy.Normal(enemy, l+"enemy.png", 600, 0, 600); 
-		}
+		TileMap.all("enemy", new Consumer<Tile>(){public void accept(Tile t) {
+				t.setType("floor");
+				new Enemy.Normal(t, l+"enemy.png", 600, 0, 600);
+			}});
+		
+		TileMap.all("exit", (t)->t.visible());//Vis alle utganger fra start
 
-		new Player(l+"player.png", new Player.MoveTo(){public void moveTo(Player player) {
+		new Player(l+"player.png", findStart(), (player) -> {
 			if (player.tile().isType("exit")) {
 				player.tile().moveFrom(true);
 				Window.won();
@@ -38,10 +44,25 @@ public class Labyrinth {
 			}
 			else if (player.tile().isType("dot")) {
 				player.tile().setType("floor");
-				if (TileMap.all("dot").isEmpty())
+				if (!TileMap.anyTiles("dot"))
 					Window.won();
 			}
-		}});
+		}
+		);
 		Window.display();
+	}
+
+	private static Tile findStart() {
+		LinkedList<Tile> start = new LinkedList<Tile>();
+		TileMap.all("start", (t)-> {
+			if (t.mob()==null)
+				start.add(t);
+			TileMap.removeShroud(t.pos());
+		});
+		if (start.size() > 1)
+			throw Window.error("Brettet har mer enn ett startpunkt.");
+		if (start.size() == 0)
+			throw Window.error("Brettet mangler startpunkt.");
+		return start.getFirst();
 	}
 }

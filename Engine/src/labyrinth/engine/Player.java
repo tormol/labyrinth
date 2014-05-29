@@ -8,40 +8,21 @@ import tbm.util.geom.Point;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.LinkedList;
+import java.util.function.Consumer;
 
 public class Player extends Mob implements KeyListener {
-	private static Tile findStart() {
-		LinkedList<Tile> startpunkt = new LinkedList<Tile>();
-		for (Tile tile : TileMap.all("start")) {
-			if (tile.mob() == null)
-				startpunkt.add(tile);
-			//gjør feltene rundt synlige
-			TileMap.removeShroud(tile.pos());
-		}
-		if (startpunkt.size() > 1)
-			throw Window.error("Brettet har mer enn ett startpunkt.");
-		if (startpunkt.size() == 0)
-			throw Window.error("Brettet mangler startpunkt.");
-		return startpunkt.getFirst();
-	}
-
-
-	public final MoveTo flyttTil;
+	public final Consumer<Player> moveTo;
 	private boolean pause = false;
 	/**Med en hammer er det fiendene som taper*/
 	protected boolean hammer = false;
 
-	public Player(String fil, Tile start, MoveTo flyttTil) {
-		super("Player", fil);
+	public Player(String imagePath, Tile start, Consumer<Player> moveTo) {
+		super("Player", imagePath);
 		setTile(start);
-		this.flyttTil = flyttTil;
+		this.moveTo = moveTo;
 		if (start!=null)
 			tile().moveTo(this, false);
 		Window.window.addKeyListener(this);
-	}
-	public Player(String fil, MoveTo flyttTil) {
-		this(fil, Player.findStart(), flyttTil);
 	}
 
 
@@ -62,13 +43,11 @@ public class Player extends Mob implements KeyListener {
 			tile().moveFrom(true);
 			setTile(to);
 			tile().moveTo(this, true);
-			if (flyttTil != null)
-				flyttTil.moveTo(this);
+			if (moveTo != null)
+				moveTo.accept(this);
 		} else
 			tile().repaint();
-		LoS.triangle(tile().pos(), direction, new LoS.Action() {public void action(Tile t) {
-			t.visible();
-		}});
+		LoS.triangle(tile().pos(), direction, (tile) -> tile.visible());
 	}
 
 
@@ -87,13 +66,13 @@ public class Player extends Mob implements KeyListener {
 		if (hammer)
 			throw Window.error("Spilleren har allerede en hammer.");
 		hammer = true;
-		Thread t = new Thread(new Runnable(){public void run(){
+		Thread t = new Thread(() -> {
 			try {
 				Thread.sleep(millisekunder);
 			} catch (InterruptedException e)
 				{}
 			hammer = false;
-		}});
+		});
 		t.setName("hammer");
 		t.setDaemon(true);
 		t.start();
@@ -104,11 +83,7 @@ public class Player extends Mob implements KeyListener {
 	public void move(final Point pos) {
 		super.move(pos);
 		if (pos != null)
-			SwingUtilities.invokeLater(new Runnable(){public void run() {
-				LoS.triangle(tile().pos(), direction, new LoS.Action() {public void action(Tile t) {
-					t.visible();
-				}});
-			}});
+			SwingUtilities.invokeLater(() -> LoS.triangle(tile().pos(), direction, (tile) -> tile.visible()));
 	}
 
 
@@ -131,10 +106,5 @@ public class Player extends Mob implements KeyListener {
 	public void remove() {
 		Window.window.removeKeyListener(this);
 		super.remove();
-	}
-
-	/**Lar programmer kjo/re egen kode naar spilleren flytter til et felt.*/
-	public static interface MoveTo {
-		void moveTo(Player player);
 	}
 }
