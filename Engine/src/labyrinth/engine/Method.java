@@ -1,9 +1,12 @@
 package labyrinth.engine;
+import tbm.util.chars;
 import tbm.util.geom.Point;
+
 import java.awt.Dimension;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -188,7 +191,122 @@ public class Method {
 		}
 	}
 
-	enum parameter {
-		POINT, STRING, ITEGER;
+
+	static class Source {
+		public final String str;
+		public final char[] arr;
+		public int pos;
+		public Source(String str) {
+			this.str = str;
+			this.arr = str.toCharArray();
+			this.pos = 0;
+		}
+		public char peek() {
+			return arr[pos];
+		}
+		public char next() {
+			char c = arr[pos];
+			pos++;
+			return c;
+		}
+		public void back() {
+			pos--;
+		}
+		public void whitespace() {
+			while (chars.whitespace(arr[pos]))
+				pos++;
+		}
+	}
+
+	/*static class VType {
+		public final String name;
+		public final String start;
+		private Function<Source, Object> parser;
+		public VType(String name, String start, Function<Source, Object> parser) {
+			this.name = name;
+			this.start = start;
+			this.parser = parser;
+		}
+		public Variable parse(Source src) {
+			return new Variable(this, parser.apply(src));
+		}
+	}*/
+	
+	static abstract class Var {
+		final String name;
+		final VType type;
+		protected Var(String n, VType t) {
+			name=n;
+			type=t;
+		}
+		public VType basicType() {return type;}
+		public int Int() {throw Window.error("\"%s\" is not an Integer", name);}
+		public Point Point() {throw Window.error("\"%s\" is not a Point", name);}
+		public char Char() {throw Window.error("\"%s\" is not a characther", name);}
+		public static enum VType {
+			INT("int"), POINT("point"), CHAR("char");
+			private VType(String str)
+				{}
+		}
+
+		public static Var parse(Source src) {
+			src.whitespace();
+			char c = src.peek();
+			if (c=='(') {
+				
+			}
+			else if (c=='"') {
+				src.pos++;
+				int start = src.pos;
+			}
+			return null;
+		}
+
+		public static class VChar extends Var {
+			public char c;
+			public VChar(char c) {
+				super(null, Var.VType.CHAR);
+				this.c=c;
+			}
+			@Override
+			public char Char() {
+				return c;
+			}
+		}
+
+		public static class VInt extends Var {
+			public int n;
+			public VInt(int n) {
+				super(null, Var.VType.INT);
+				this.n=n;
+			}
+			@Override
+			public int Int() {
+				return n;
+			}
+		}
+
+		public static class VPoint extends Var {
+			public Point p;
+			public VPoint(Point p) {
+				super(null, Var.VType.POINT);
+				this.p=p;
+			}
+			@Override
+			public Point Point() {
+				return p;
+			}
+		}
+	}
+
+
+	static abstract class Func {
+		public final String name;
+		public final Type[] parameters;
+		private Func(String name, Type[] parameters) {
+			this.name = name;
+			this.parameters = parameters;
+		}
+		public Function<Var[], Var> init;
 	}
 }
