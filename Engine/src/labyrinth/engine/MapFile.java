@@ -52,11 +52,11 @@ public class MapFile {
 		while (!file.isEmpty() && !file.getFirst().isEmpty())
 			map.add(file.removeFirst().toCharArray());
 		TileMap.start(map);
-		MapFile.line++;
 
 		while (!file.isEmpty()) {
+			MapFile.line++;
 			String line = file.removeFirst().trim();
-			if (line.trim().isEmpty()  ||  line.startsWith("#"))
+			if (line.trim().isEmpty()  ||  line.startsWith("#")) 
 				continue;
 			while (line.endsWith("\\") && !file.isEmpty()) {
 				line = line.substring(0, -1) + file.removeFirst().trim();
@@ -66,7 +66,6 @@ public class MapFile {
 				Constant.add(line);
 			else
 				Method.add( Constant.fillIn(line) );
-			MapFile.line++;
 		}
 
 		String synsvidde = Constant.get("synsvidde");
