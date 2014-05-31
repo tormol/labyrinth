@@ -33,8 +33,8 @@ public class LoS {
 				Tile t = TileMap.get(p);
 				a.accept(t);
 				if (t.getType().solid) {
-					if (opening>0)
-						lines.add(new Line(p.move(back, opening-1), l.side, opening-1));
+					if (opening>0) 
+						lines.add(new Line(p.move(back, opening-1), l.side, opening-2));
 					opening = 0;
 				} else
 					opening++;

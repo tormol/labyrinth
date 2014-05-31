@@ -1,10 +1,16 @@
 package labyrinth;
 import static java.awt.Color.*;
+import static java.awt.event.KeyEvent.*;
 
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.function.Consumer;
+import java.util.concurrent.LinkedTransferQueue;
 
+import tbm.util.awtKeyListen;
+import tbm.util.geom.Direction;
 import labyrinth.engine.*;
 
 public class Labyrinth {
@@ -26,14 +32,15 @@ public class Labyrinth {
 			MapFile.read(new File(args[0]));
 		else //show a fileChooser
 			MapFile.read(MapFile.choose("maps/"));
-		TileMap.all("enemy", new Consumer<Tile>(){public void accept(Tile t) {
-				t.setType("floor");
-				new Enemy.Normal(t, l+"enemy.png", 600, 0, 600);
-			}});
+		TileMap.all("enemy", tile -> {
+			tile.setType("floor");
+			new Enemy.Normal(tile, l+"enemy.png", 600, 0, 600);
+		});
 		
-		TileMap.all("exit", (t)->t.visible());//Vis alle utganger fra start
+		TileMap.all("exit", t->t.visible());
+		TileMap.panel.repaint();
 
-		new Player(l+"player.png", findStart(), (player) -> {
+		new Player(l+"player.png", findStart(), player -> {
 			if (player.tile().isType("exit")) {
 				player.tile().moveFrom(true);
 				Window.won();
@@ -47,17 +54,20 @@ public class Labyrinth {
 				if (!TileMap.anyTiles("dot"))
 					Window.won();
 			}
-		}
-		);
+		});
 		Window.display();
 	}
 
+
+
 	private static Tile findStart() {
-		LinkedList<Tile> start = new LinkedList<Tile>();
-		TileMap.all("start", (t)-> {
-			if (t.mob()==null)
-				start.add(t);
-			TileMap.removeShroud(t.pos());
+		LinkedList<Tile> start = new LinkedList<>();
+		TileMap.all("start", tile-> { 
+			if (tile.mob()==null) {
+				start.add(tile);
+				for (Direction d : Direction.values())
+					LoS.triangle(tile.pos(), d, t -> t.visible());
+			}
 		});
 		if (start.size() > 1)
 			throw Window.error("Brettet har mer enn ett startpunkt.");
