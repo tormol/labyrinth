@@ -1,6 +1,5 @@
 package labyrinth.engine;
 import javax.imageio.ImageIO;
-import javax.swing.SwingUtilities;
 
 import java.awt.Graphics;
 import java.awt.geom.AffineTransform;
@@ -8,15 +7,14 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import tbm.util.geom.Direction;
-import tbm.util.geom.Point;
 
 
 public abstract class Mob {
-	public static final List<Mob> mobs = new LinkedList<Mob>();
+	public static final List<Mob> mobs = new ArrayList<Mob>();
 	public static void pauseAll(boolean pause) {
 		for (Mob enhet : Mob.mobs)
 			enhet.pause(pause);
@@ -27,8 +25,9 @@ public abstract class Mob {
 	protected String name="Unknown mob";
 	public final BufferedImage image;
 	protected Direction direction = Direction.NORTH;
+	protected boolean pause = true;
 
-	/**Is called from Rute if another unit tries to move to this units rute.
+	/**Is called from Tile if another unit tries to move to this units rute.
 	 *@param mob the unit that is trying to move.*/
 	public abstract void hit(Mob mob);
 	/**Make the unit stop/start.*/
@@ -39,20 +38,19 @@ public abstract class Mob {
 		try {
 			this.image = ImageIO.read(new File(imagePath));
 		} catch (IOException e) {
-			throw Window.error("Feil under lasting av bilde til %s: %s", name, imagePath);
+			throw Window.error("Error loading image to %s: (%s)\n%s", name, imagePath, e.getMessage());
 		}
 		mobs.add(this);
 	}
 
 	/**Move from current tile to tile with pos.*/
-	public void move(final Point pos) {
-		final Mob _this = this;
-		SwingUtilities.invokeLater(() -> {
-			if (tile != null)
-				tile.moveFrom(false);
-			if (pos != null)
-				tile = TileMap.get(pos).moveTo(_this, false);
-		});
+	public void move(Tile tile) {
+		//might be buggy, change later.
+		Mob _this = this;
+		if (_this.tile != null)
+			_this.tile.moveFrom(false);
+		if (tile != null)
+			_this.tile = tile.enter(_this, false);
 	}
 
 	public String name() {
@@ -64,23 +62,22 @@ public abstract class Mob {
 	}
 
 	/**Draw the unit's image.*/
-	public void draw(Graphics g, int bredde, int høyde) {
-		//Roterer figur etter retning
+	public void draw(Graphics g, int width, int height) {
+		//Rotate image to direction
 		AffineTransform transform = new AffineTransform();
-		transform.rotate(direction.theta, bredde/2, høyde/2);
+		transform.rotate(direction.theta, width/2, height/2);
 		AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
-		g.drawImage(op.filter(image, null), 0, 0, bredde, høyde, null);
+		g.drawImage(op.filter(image, null), 0, 0, width, height, null);
 	}
 
-	/**Flytter fra rute, fjerner fra Enhet.enheter.*/
+	/**Move from tile, and remove from Mob.mobs.*/
 	public void remove() {
 		if (tile != null)
 			tile.moveFrom(false);
 		mobs.remove(this);
 	}
 
-
-	/**It's really simple*/
+	/**Set this.tile to tile*/
 	protected void setTile(Tile tile) {
 		this.tile = tile;
 	}

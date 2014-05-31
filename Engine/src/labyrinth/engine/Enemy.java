@@ -10,12 +10,11 @@ public abstract class Enemy extends Mob implements Runnable {
 	public final int waitShorter;
 	public final int waitMin;
 	private boolean stop = false;
-	private boolean pause = false;
 	private final Thread thread;
 
 	/**called from run()
 	 *@return where the unit should move to*/
-	abstract protected Point findTile();
+	abstract protected Tile findTile();
 
 	protected Enemy(Tile start, String imagePath, int waitStart, int waitShorter, int waitMin) {
 		super("Enemy", imagePath);
@@ -23,7 +22,7 @@ public abstract class Enemy extends Mob implements Runnable {
 		this.waitShorter = waitShorter;
 		this.waitMin = waitMin + waitShorter;
 		setTile(start);
-		tile().moveTo(this, false);
+		tile().enter(this, false);
 		thread = new Thread(threadGroup, this, "Enemy");
 		thread.setName("Enemy");
 		thread.setDaemon(true);
@@ -36,13 +35,13 @@ public abstract class Enemy extends Mob implements Runnable {
 		while (!stop) {
 			if (pause) {
 				sleep(Long.MAX_VALUE);
-				continue;
+				continue;//might have been stopped
 			}
-			//flytter
-			final Point to = findTile();
+			//moves
+			Tile to = findTile();
 			if (to != null)
 				move(to);
-			//flytt raskere og raskere intill grensse
+			//wait shorter and shorter until limit.
 			if (wait > waitMin)
 				wait -= waitShorter;
 			sleep(wait);
@@ -51,9 +50,9 @@ public abstract class Enemy extends Mob implements Runnable {
 
 	/**To avoid try/catch around every Thread.sleep().
 	 *Ends pause if it is interrupted.*/
-	private void sleep(long millisekunder) {
+	private void sleep(long ms) {
 		try {
-			Thread.sleep(millisekunder);
+			Thread.sleep(ms);
 		} catch (InterruptedException e) {
 			pause = false;
 		}
@@ -66,7 +65,7 @@ public abstract class Enemy extends Mob implements Runnable {
 			mob.hit(this);
 	}
 
-	/**setter pause*/
+	/**Sets pause*/
 	public void pause(boolean pause) {
 		if (!pause)
 			thread.interrupt();
@@ -80,69 +79,69 @@ public abstract class Enemy extends Mob implements Runnable {
 			thread.interrupt();
 			thread.join();
 		} catch (InterruptedException e) {
-			System.err.println("Error interrupting Fiende: " + name);
+			System.err.println("Error interrupting Enemy: " + name);
 			e.printStackTrace();
 		}
 		super.remove();
 	}
 
 
-	/**@return this.vent*/
+	/**@return this.wait*/
 	public int getWait() {
 		return wait;
 	}
 
-	/**@param wait kan ikke vaere negativ.*/
+	/**@param wait >= 0*/
 	public void setWait(int wait) {
 		if (wait < 0)
-			throw new IllegalArgumentException("vent er negativ.");
+			throw new IllegalArgumentException("wait is negative.");
 		this.wait = wait;
 	}
 
 
 
-	/**Pro/ver aa flytte i tilfeldig retnig*/
+	/**Moves in random direction.*/
 	public static class Normal extends Enemy {
 		public Normal(Tile start, String imagePath, int waitStart, int waitShorter, int waitMin) {
 			super(start, imagePath, waitStart, waitShorter, waitMin);
 		}
 
 		@Override//Fiende
-		protected Point findTile() {
+		protected Tile findTile() {
 			direction = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
 			final Tile to = TileMap.get( tile().pos().move(direction) );
-			if (to.canMoveTo(this, false)  &&  !(to.mob() instanceof Enemy))
-				return to.pos();
+			if (to.canEnter(this, false)  &&  !(to.mob() instanceof Enemy))
+				return to;
 			return null;
 		}
 	}
 
-	/**Pro/ver aa flytte i tilfeldig retning, kan flytte til solide ruter.*/
+	/**Moves in random direction, and can move trough wall.*/
 	public static class Ghost extends Enemy {
 		public Ghost(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
 		}
 
-		@Override//Fiende
-		protected Point findTile() {
+		@Override//Enemy
+		protected Tile findTile() {
 			direction = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
 			final Tile to = TileMap.get( tile().pos().move(direction) );
 			if (!to.isType("outside")  &&  !(to.mob() instanceof Enemy))
-				return to.pos();
+				return to;
 			return null;
 		}
 	}
 
-	/**Flytter mot spilleren, en akse om gangen.*/
+	/**Moves towards player, one axis at a time.*/
 	public static class Targeting extends Enemy {
 		public Targeting(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
 			super(start, fil, ventStart, ventRaskere, ventMin);
 		}
 
-		@Override//Fiende
-		/**finner spilleren,  finner avstanden, snur seg etter den lengste avstanden til spilleren, og gaar mot den minste avstanden som ikke er 0.
-		 * */
-		protected Point findTile() {
+		@Override//Enemy
+		/**Finds player, find the distance, turn toward the axis with longest distance,
+		 *  and moves to reduce the smallest nonzero distance.*/
+		protected Tile findTile() {
 			Point distance = new Point();
 			Point pos = tile().pos();
 			for (Mob e : Mob.mobs)
@@ -164,9 +163,9 @@ public abstract class Enemy extends Mob implements Runnable {
 				if (p.equals(0, 0))
 					continue;
 				Tile tile = TileMap.get(pos.x+p.x, pos.y+p.y);
-				if (tile.canMoveTo(this, false)
+				if (tile.canEnter(this, false)
 				 && !(tile.mob() instanceof Enemy))
-					return tile.pos();
+					return tile;
 			}
 			return null;
 		}

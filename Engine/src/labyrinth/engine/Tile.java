@@ -7,16 +7,15 @@ import tbm.util.geom.Point;
 
 
 public class Tile extends javax.swing.JPanel {
-	/**Fargen til felter man ikke har sett.*/
+	/**The color of unexplored tiles.*/
 	public static final Color shroud = Color.LIGHT_GRAY;
-	//type og metode skulle egentlig vært final, men jeg vet ikke hvordan jeg erstatter en rute i GridLayout
-	/**Hva slags type rute denne ruten er*/
+	/**What kind of tile this tile is, see Type*/
 	private Type type;
-	/***/
+	/**coordinate*/
 	private final Point pos;
-	/**For knapper, plater og teleportører: Hva som skjer når knappen trykkes.*/
+	/**method to be called when a mob enters the tile with trigger=true*/
 	public Method method;
-	/**Spiller i ruten.*/
+	/**Mob in this tile*/
 	private Mob mob = null;
 	
 	/**Om spilleren kan se dette feltet.*/
@@ -26,23 +25,23 @@ public class Tile extends javax.swing.JPanel {
 		type = t;
 		pos = p;
 		setBackground(shroud);
-		//Størrelse til ruten, i pixler.
+		//Size of tile in pixels.
 		setPreferredSize(new Dimension(32, 32));
 		setMinimumSize(new Dimension(32, 32));
 	}
 
-	/**Sjekker om enheten er solid, hvis trigger==true kan den kalle en Metode*/
-	public boolean canMoveTo(Mob enhet, boolean trigger) {
+	/**Most mobs cannot enter solid tiles, and if trigger=true a method might be called*/
+	public boolean canEnter(Mob mob, boolean trigger) {
 		if (trigger && type.type("button"))
-			method.call(this, enhet);
+			method.call(this, mob);
 		return !type.solid;
 	}
 
-	public Tile moveTo(Mob mob, boolean trigger) {
+	public Tile enter(Mob mob, boolean trigger) {
 		if (type.method && trigger)
 			method.call(this, mob);
-		//den som flytter til kan sjekke hva som er her før den flytter,
-		//men det kan ikke den som var her fra før av.
+		//if there is a mob in the tile, let it know it has been removed.
+		//the mob entering the tile can check if its occupied before moving.
 		if (this.mob != null)
 			this.mob.hit(mob);
 		this.mob = mob;
@@ -65,8 +64,7 @@ public class Tile extends javax.swing.JPanel {
 		}
 	}
 
-	/**For å vise bilde.*/
-	@Override
+	/**draw images for tile and mob.*/@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		if (visible) {
@@ -97,7 +95,7 @@ public class Tile extends javax.swing.JPanel {
 
 	public Point pos() {
 		if (pos==null)
-			new Point();//no-op
+			new Point();//no-op TODO: Why?
 		return new Point(pos);
 	}
 

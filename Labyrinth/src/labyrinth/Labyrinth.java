@@ -1,10 +1,12 @@
 package labyrinth;
 import static java.awt.Color.*;
-
+import static java.awt.event.KeyEvent.*;
 import java.io.File;
-import java.util.LinkedList;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.concurrent.LinkedTransferQueue;
 import java.util.function.Consumer;
-
+import tbm.util.awtKeyListen;
 import labyrinth.engine.*;
 
 public class Labyrinth {
@@ -33,7 +35,7 @@ public class Labyrinth {
 		
 		TileMap.all("exit", (t)->t.visible());//Vis alle utganger fra start
 
-		new Player(l+"player.png", findStart(), (player) -> {
+		Player p = new Player(l+"player.png", player->{
 			if (player.tile().isType("exit")) {
 				player.tile().moveFrom(true);
 				Window.won();
@@ -49,20 +51,51 @@ public class Labyrinth {
 			}
 		}
 		);
+
 		Window.display();
+		findStart(p);
+		p.start();
+		Mob.pauseAll(false);
 	}
 
-	private static Tile findStart() {
-		LinkedList<Tile> start = new LinkedList<Tile>();
+	private static void findStart(Player player) {
+		ArrayList<Tile> start = new ArrayList<Tile>();
 		TileMap.all("start", (t)-> {
 			if (t.mob()==null)
 				start.add(t);
 			TileMap.removeShroud(t.pos());
 		});
-		if (start.size() > 1)
-			throw Window.error("Brettet har mer enn ett startpunkt.");
-		if (start.size() == 0)
-			throw Window.error("Brettet mangler startpunkt.");
-		return start.getFirst();
+		if (start.isEmpty())
+			throw Window.error("No start tile.");
+		player.move(start.get(0));
+		if (start.size() == 1)
+			return;
+
+		LinkedTransferQueue<KeyEvent> queue = new LinkedTransferQueue<>();
+		awtKeyListen.Pressed klp = event->queue.add(event);
+		Window.window.addKeyListener(klp);
+
+		int index = 0;
+		boolean finished = false;
+		while (!finished)
+			try {switch (queue.take().getKeyCode()) {
+				case VK_LEFT :
+					if (index == 0)
+						index = start.size();
+					index--;
+					player.move(start.get(index));						
+					break;
+				case VK_RIGHT:
+					index++;
+					if (index == start.size())
+						index = 0;
+					player.move(start.get(index));
+					break;
+				case VK_ENTER:
+					finished = true;
+			}} catch (InterruptedException e1) {
+				finished = true;
+			}
+		Window.window.removeKeyListener(klp);
 	}
 }

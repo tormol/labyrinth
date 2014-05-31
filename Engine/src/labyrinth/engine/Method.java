@@ -184,7 +184,7 @@ public class Method {
 			if (enhet==null)
 				throw Window.error("Metode.utfoor(): enhet==null");
 			//Unngår å trigge felter, for hvis to felter teleporterer til hverandre ville det skapt en uendelig løkke.
-			enhet.move(pos);
+			enhet.move(rute);
 		}
 	}
 }
