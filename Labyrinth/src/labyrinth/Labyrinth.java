@@ -1,15 +1,7 @@
 package labyrinth;
 import static java.awt.Color.*;
-import static java.awt.event.KeyEvent.*;
-
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.concurrent.LinkedTransferQueue;
-
-import tbm.util.awtKeyListen;
 import tbm.util.geom.Direction;
 import labyrinth.engine.*;
 
