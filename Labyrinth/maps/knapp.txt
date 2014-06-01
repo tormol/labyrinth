@@ -3,14 +3,14 @@
 #X #t
 #A # 
 
-A: sett(0,3,'B'); sett(1,3,' ');
-B: sett(0,2,'C');
-C: sett(3,3,' ');
-t: sett(4,0,'*'); sett(0,0,'-');
-0: flytt(4,0);
+A: set((0,3),'B'); set((1,3),' ');
+B: set((0,2),'C');
+C: set((3,3),' ');
+t: set((4,0),'*'); set((0,0),'-');
+0: move((4,0));
 
 #av-på knapp.
-X: sett(2,0,'#'); sett(1,2,'Y');
-Y: sett(2,0,' '); sett(1,2,'X');
+X: set((2,0),'#'); set((1,2),'Y');
+Y: set((2,0),' '); set((1,2),'X');
 
 $synsvidde = 1

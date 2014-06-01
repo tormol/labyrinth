@@ -1,12 +1,15 @@
 package labyrinth.engine;
+import tbm.util.StringStream;
 import tbm.util.geom.Point;
-import java.awt.Dimension;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import static labyrinth.engine.Method.VType.*;
+import static tbm.util.statics.*;
 
+import java.awt.Dimension;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
 
 public class Method {
 	static final Map<String,Method> methods = new HashMap<String,Method>();
@@ -15,176 +18,281 @@ public class Method {
 			return null;
 		Method m = methods.get(method);
 		if (m==null)
-			throw Window.error("Finner ikke metoden \"%s\"", method);
+			throw Window.error("No method \"%s\"", method);
 		return m;
 	}
 	public static void call(String method, Tile tile, Mob mob) {
 		Method.get(method).call(tile, mob);
 	}
 	public static void add(String line) {
-		Method ny = new Method(line);
-		methods.put(ny.name, ny);
+		Method toAdd = new Method(line);
+		methods.put(toAdd.name, toAdd);
 	}
 
 
 	public final String name;
-	private final Operation[] operations;
+	private final Func.Operation[] operations;
 	/**
 	 * 
 	 */
 	public Method(String line) {
-		final String mName = "\\w+";
-		final String parameters = "(?:[\\w\\s,]|'.')*";
-		//finne navn
-		Matcher method = Pattern.compile("^\\s*("+mName+")\\s*:((?:\\s*"+mName+"\\("+parameters+"\\);)*)\\s*$").matcher(line);
-		if (!method.matches())
-			Window.error("Uforsttaælig metode: \"%s\"", line);
-		name = method.group(1);
+		StringStream l = new StringStream(line);
+		l.whitespace();
+		if (l.empty())
+			;
+		
+		name = l.next(c -> char_word(c));
+		if (name.isEmpty())
+			Window.error("not a method");
+		if (l.next_nw() != ':')
+			Window.error("Method %s: not a method", name);
+		l.whitespace();
 
-		//http://stackoverflow.com/questions/6835970/regular-expression-capturing-all-repeating-groups
-		String[] name = findAll(method.group(2), "("+mName+")(?=\\("+parameters+"\\);)"/*""+mNavn+"(?=\\("+parametre+"\\);)"*/);
-		String[] parameter = findAll(method.group(2), "(?<="+mName+"\\()("+parameters+")(?=\\);)");
-		operations = new Operation[parameter.length];
-		for (int i=0; i<name.length; i++) {
-			Operation o = null;
-			//TODO: hvis koordinater mangler vil metoden kjøres på feltet som startet funksjonen.
-			switch (name[i]) {
-			  case "sett":
-				String[] param = param(parameter[i], "(\\d+)", "(\\d+)", "'(.)'");
-				o = new Set(point(param), param[2].charAt(0));
+		ArrayList<Func.Operation> ops = new ArrayList<>(10);
+		while (!l.empty()) {
+			if (l.peek()=='#')
 				break;
-			  case "trigger": o=new Trigger(point(param(parameter[i], "(\\d+)", "(\\d+)")));  break;
-			  case "kall": o=new Call(param(parameter[i], "(\\w+)")[0]);  break;
-			  case "flytt": o=new Move(point(param(parameter[i], "(\\d+)", "(\\d+)")));  break;
-			  default:
-				throw Window.error("Metode %s: Ukjent operasjon %s.", this.name, name[i]); 
+			try {
+				String op_name = l.next( c->char_word(c) );
+				if (op_name.isEmpty())
+					throw Window.error("Method %s: operation expected", name);
+				Func f = Func.get(op_name);
+				if (f==null)
+					throw Window.error("Method %s: Unknown operation %s.", name, op_name);
+				if (l.next_nw() != '(')
+					Window.error("Method %s: '(' expected after \"%s\".", name, op_name);
+				Var[] params = new Var[f.parameters.length];
+				int i=0;
+				while (i<params.length) {
+					params[i] = f.parameters[i].parse(l); 
+					i++;
+					if (i < params.length  &&  l.next_nw() != ',')
+						throw Window.error("Method %s: ',' expected after %i. argument.", name, i);
+				}
+				if (l.next_nw() != ')')
+					throw Window.error("Method %s: ')' expected after %i. argument.", name, i);
+				if (l.next_nw() != ';')
+					throw Window.error("Method %s: ';' expected after a method (%s(", name, op_name);
+				ops.add(f.instance(params));
+			} catch (ArrayIndexOutOfBoundsException e) {
+				throw Window.error("", "Method %s: unexpected end of line.", name);
 			}
-			operations[i] = o;
+			l.whitespace();
+			//TODO: hvis koordinater mangler vil metoden kjøres på feltet som startet funksjonen.
 		}
+		operations = ops.toArray(new Func.Operation[ops.size()]);
 	}
-
-
-
-	//hjelper-funksjoner til Metode()
-	/**Returnerer en array med alle treff av regex i str.*/
-	public String[] findAll(String str, String regex) {
-		LinkedList<String> found = new LinkedList<String>();
-		Matcher m = Pattern.compile(regex).matcher(str);
-
-		while (m.find())
-			found.add(m.group());
-		return found.toArray(new String[found.size()]);
-	}
-	/**bygger en regex av par..., matcher den mot str og returnerer svarene*/
-	private String[] param(String str, String... par) {
-		String regex="";
-		for (String p : par)
-			regex += ",\\s*"+p+"\\s*";
-		regex = regex.substring(1);
-		if (par.length==0)
-			regex = "^\\s*$";
-		Matcher m = Pattern.compile(regex).matcher(str);
-		if (!m.matches())
-			//finner ingen god måte å fortelle funksjon-navn eller kolonne.
-			throw Window.error("Metode %s: En funksjon har feil parametre \"(%s)\"", name, str);
-		String[] found = new String[par.length];
-		for (int i=0; i<par.length; i++)
-			found[i] = m.group(i+1);
-		return found;
-	}
-	private Point point(String[] found) {
-		Point p = new Point(
-				Integer.valueOf(found[0]),
-				Integer.valueOf(found[1])
-			);
-		Dimension d = TileMap.dimesions();
-		if (p.x<0 || p.y<0 || p.x>=d.width || p.y>=d.height)
-			throw Window.error("Metode %s: koordinatene (%d,%d) er utenfor labyrinten.", name, p.x, p.y);
-		return p;
-	}
-
 
 	public void call(Tile tile, Mob mob) {
-		for (Operation op : operations)
+		for (Func.Operation op : operations)
 			op.perform(tile, mob);
 	}
 
 
-	protected static interface Operation {
-		public void perform(Tile tile, Mob mob);
+
+	public static enum VType {
+		VOID("void"), INT("int"), POINT("point"), CHAR("char"), STRING("string");
+		private VType(String str)
+			{}
+		public Var parse(StringStream ss) {switch (this) {
+			case CHAR:
+				char open = ss.next_nw();
+				char c1 = ss.next();
+				if (open!='\'' || ss.next()!='\'')
+					throw Window.error("not a char");
+				return new Var.VChar(c1);
+			case STRING:
+				if (ss.next_nw() != '"')
+					throw Window.error("not a string");
+				String str = ss.next(c2 -> c2!='"');
+				ss.next();//past the the '"'
+				return new Var.VString(str);
+			case INT:
+				int num = ss._int();
+				if (char_letter(ss.peek_nw()))
+					throw Window.error("not an integer");
+				return new Var.VInt(num);
+			case POINT:
+				ss.whitespace();
+				java.awt.Point p = new java.awt.Point();
+				boolean parenthes = false;
+				if (ss.peek() == '(') {//optional to lighten the syntax.
+					ss.next();
+					parenthes = true;
+				}
+				try {
+					p.x = ss._int();
+					if (ss.next_nw() != ',')
+						throw Window.error("invalid point");
+					p.y = ss._int();
+				} catch (NumberFormatException e) {
+					throw Window.error("not a number point");
+				}
+				if (parenthes  &&  ss.next_nw() != ')')
+					throw Window.error("Poit missing closeing parenthese");
+				Dimension d = TileMap.dimesions();
+				if (p.x<0 || p.y<0 || p.x>=d.width || p.y>=d.height)
+					throw Window.error("(%d,%d) is outside the map", p.x, p.y);
+				return new Var.VPoint(new Point(p));
+			case VOID:
+				throw new RuntimeException("cannot parse a VOID");
+			default:
+				throw new AssertionError("Unhandled type");
+		}}
 	}
 
-	
-	class Set implements Operation {
-		public final Point pos;
-		public final Type type;
-		public final String method;
-		public Set(Point pos, char symbol) {
-			this.pos = pos;
-			type = Type.t(symbol);
-			if (type.method)
-				method = String.valueOf(symbol);
-			else
-				method = null;
+	static abstract class Var {
+		final String name;
+		final VType type;
+		protected Var(String n, VType t) {
+			name=n;
+			type=t;
+		}
+		//public VType basicType() {return type;}
+		public int Int() {throw Window.error("\"%s\" is not an Integer", name);}
+		public Point Point() {throw Window.error("\"%s\" is not a Point", name);}
+		public char Char() {throw Window.error("\"%s\" is not a characther", name);}
+		public String String() {throw Window.error("\"%s\" is not a string", name);}
+
+		public static class VVoid extends Var {
+			public VVoid() {
+				super(null, VOID);
+			}
+		}
+		public static class VChar extends Var {
+			public char c;
+			public VChar(char c) {
+				super(null, CHAR);
+				this.c=c;
+			}
+			@Override
+			public char Char() {
+				return c;
+			}
+		}
+		public static class VString extends Var {
+			public String str;
+			public VString(String str) {
+				super(null, STRING);
+				this.str=str;
+			}
+			@Override
+			public String String() {
+				return str;
+			}
+		}
+		
+
+		public static class VInt extends Var {
+			public int n;
+			public VInt(int n) {
+				super(null, INT);
+				this.n=n;
+			}
+			@Override
+			public int Int() {
+				return n;
+			}
 		}
 
-		@Override
-		public void perform(Tile rute, Mob enhet) {
-			if (pos != null)
-				rute = TileMap.get(pos);
-			rute.setType(type);
-			rute.method = Method.get(method);
+		public static class VPoint extends Var {
+			public Point p;
+			public VPoint(Point p) {
+				super(null, POINT);
+				this.p=p;
+			}
+			@Override
+			public Point Point() {
+				return p;
+			}
 		}
 	}
 
 
-	/**Kjør metoden til et annet felt*/
-	class Trigger implements Operation {
-		public final Point pos;
-		public Trigger(Point pos) {
-			this.pos = pos;
+	static class Func {
+		public final String name;
+		public final VType[] parameters;
+		public final VType ret;
+		private final Function<Var[], Operation> init;
+		private Func(String name, VType[] parameters, VType ret, Function<Var[], Operation> init) {
+			this.name = name;
+			this.parameters = parameters;
+			this.ret = ret;
+			this.init = init;
+		}
+		public Operation instance(Var... arg) {
+			return init.apply(arg);
+		}
+		interface Operation {
+			Var perform(Tile t, Mob m);
 		}
 
-		@Override
-		public void perform(Tile rute, Mob enhet) {
-			if (pos != null)
-				rute = TileMap.get(pos);
-			if (rute.mob() != null)
-				enhet = rute.mob();
-			if (rute.method != null)
-				rute.method.call(rute, enhet);
-		}
-	}
 
-
-	/**kall en annen metode*/
-	class Call implements Operation {
-		public final String metode;
-		public Call(String metode) {
-			this.metode = metode;
+		public static Func get(String name) {
+			return map.get(name);
 		}
+		protected static Map<String, Func> map = Collections.unmodifiableMap(map_init(
+			array("set","trigger","call","move"),
+			/**change the type and method of a tile*/
+			new Func("set", array(POINT, CHAR), VOID, (params)->{
+				Point p = params[0].Point();
+				char symbol = params[1].Char();
+				Tile target;
+				if (p==null)
+					target = null;
+				else
+					target = TileMap.get(p);
+				Type type = Type.t(symbol);
+				return (tile, mob) -> {
+					if (target != null)
+						tile = target;
+					tile.setType(type);
+					if (type.method)
+						tile.method = Method.get(String.valueOf(symbol));
+					else
+						tile.method = null;
+					return new Var.VVoid();
+				};
+			}),
 
-		@Override
-		public void perform(Tile rute, Mob enhet) {
-			Method.call(metode, rute, enhet);
-		}
-	}
+			/**run the method of another tile*/
+			new Func("trigger", array(POINT), VOID, (params) -> {
+				Point pos = params[0].Point();
+				return (Tile tile, Mob mob) -> {
+					if (pos != null)
+						tile = TileMap.get(pos);
+					if (tile.mob() != null)
+						mob = tile.mob();
+					if (tile.method != null)
+						tile.method.call(tile, mob);
+					return new Var.VVoid();
+				};
+			}),
 
+			/**run a method*/
+			new Func("call", array(STRING), VOID, (params) -> {
+				String method = params[0].String();
+				return (Tile tile, Mob mob) -> {
+					Method.call(method, tile, mob);
+					return new Var.VVoid();
+				};
+			}),
 
-	/**teleporter*/
-	class Move implements Operation {
-		public final Point pos;
-		public Move(Point pos) {
-			this.pos = pos;
-		}
-		@Override
-		public void perform(Tile rute, final Mob enhet) {
-			if (pos != null)
-				rute = TileMap.get(pos);
-			if (enhet==null)
-				throw Window.error("Metode.utfoor(): enhet==null");
-			//Unngår å trigge felter, for hvis to felter teleporterer til hverandre ville det skapt en uendelig løkke.
-			enhet.move(rute);
-		}
+			/**teleport*/
+			new Func("move", array(POINT), VOID, (params) -> {
+				Point pos = params[0].Point();
+				Tile to = TileMap.get(pos); 
+				return (Tile tile, Mob mob) -> {
+					if (pos != null)
+						tile = TileMap.get(pos);
+					if (mob==null)
+						throw Window.error("Method move: mob==null");
+					//if the target is also a teleporter, you could end up teleporting infinitely.
+					//using Mob.move() prevents that because it doesn't trigger tiles.
+					mob.move(to);
+					return new Var.VVoid();
+				};
+			})
+		));
 	}
 }

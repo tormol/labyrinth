@@ -11,26 +11,26 @@ A   ###   B
 D   ###   C
 
 $ssynsvidde = 3
-$E = 0, 5
-$F = 5, 0
-$G = 5, 10
-$H = 10, 5 
+$E = (0, 5)
+$F = (5, 0)
+$G = (5, 10)
+$H = (10, 5)
 
-A: sett($E$,'E');
-B: sett($F$,'F');
-C: sett($G$,'G'); trigger($E$);
-D: sett($H$,'H');
+A: set($E$,'E');
+B: set($F$,'F');
+C: set($G$,'G'); trigger($E$);
+D: set($H$,'H');
 
 E: trigger($F$);
 F: trigger($G$);
 G: trigger($H$);
-H: kall(vinn);
+H: call("vinn");
 
-0: flytt(6,4);
-1: flytt(6,6);
-2: flytt(4,6);
-3: flytt(4,4);
+0: move(6,4);
+1: move((6,6));
+2: move((4,6));
+3: move((4,4));
 
-vinn : kall(vinnX); kall(vinnY);
-vinnY: sett(5,1,' '); sett(5,2,' '); sett(5,3,' '); sett(5,4,' '); sett(5,6,' '); sett(5,7,' '); sett(5,8,' '); sett(5,9,' ');
-vinnX: sett(1,5,' '); sett(2,5,' '); sett(3,5,' '); sett(4,5,' '); sett(6,5,' '); sett(7,5,' '); sett(8,5,' '); sett(9,5,' '); 
+vinn : call("vinnX"); call("vinnY");
+vinnY: set((5,1),' '); set((5,2),' '); set((5,3),' '); set((5,4),' '); set((5,6),' '); set((5,7),' '); set((5,8),' '); set((5,9),' ');
+vinnX: set((1,5),' '); set((2,5),' '); set((3,5),' '); set((4,5),' '); set((6,5),' '); set((7,5),' '); set((8,5),' '); set((9,5),' '); 
