@@ -87,9 +87,10 @@ public class Tile extends javax.swing.JPanel {
 	}
 	public synchronized void setType(final Type type) {
 		this.type = type;
-		if (visible)
+		if (visible) {
 			setBackground(this.type.color);
-		repaint();
+			repaint();
+		}
 	}
 
 

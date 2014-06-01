@@ -46,6 +46,7 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 		} else
 			tile().repaint();
 		LoS.triangle(tile().pos(), direction, (tile) -> tile.visible());
+		TileMap.panel.repaint();
 	}
 
 

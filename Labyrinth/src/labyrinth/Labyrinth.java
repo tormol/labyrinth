@@ -3,10 +3,10 @@ import static java.awt.Color.*;
 import static java.awt.event.KeyEvent.*;
 import java.io.File;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.concurrent.LinkedTransferQueue;
-import java.util.function.Consumer;
 import tbm.util.awtKeyListen;
+import java.util.LinkedList;
+import tbm.util.geom.Direction;
 import labyrinth.engine.*;
 
 public class Labyrinth {
@@ -28,12 +28,13 @@ public class Labyrinth {
 			MapFile.read(new File(args[0]));
 		else //show a fileChooser
 			MapFile.read(MapFile.choose("maps/"));
-		TileMap.all("enemy", new Consumer<Tile>(){public void accept(Tile t) {
-				t.setType("floor");
-				new Enemy.Normal(t, l+"enemy.png", 600, 0, 600);
-			}});
+		TileMap.all("enemy", tile -> {
+			tile.setType("floor");
+			new Enemy.Normal(tile, l+"enemy.png", 600, 0, 600);
+		});
 		
-		TileMap.all("exit", (t)->t.visible());//Vis alle utganger fra start
+		TileMap.all("exit", t->t.visible());
+		TileMap.panel.repaint();
 
 		Player p = new Player(l+"player.png", player->{
 			if (player.tile().isType("exit")) {
@@ -51,19 +52,22 @@ public class Labyrinth {
 			}
 		}
 		);
-
 		Window.display();
 		findStart(p);
 		p.start();
 		Mob.pauseAll(false);
 	}
 
+
+
 	private static void findStart(Player player) {
-		ArrayList<Tile> start = new ArrayList<Tile>();
-		TileMap.all("start", (t)-> {
-			if (t.mob()==null)
-				start.add(t);
-			TileMap.removeShroud(t.pos());
+		LinkedList<Tile> start = new LinkedList<>();
+		TileMap.all("start", tile-> { 
+			if (tile.mob()==null) {
+				start.add(tile);
+				for (Direction d : Direction.values())
+					LoS.triangle(tile.pos(), d, t -> t.visible());
+			}
 		});
 		if (start.isEmpty())
 			throw Window.error("No start tile.");

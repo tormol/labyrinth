@@ -4,7 +4,6 @@ import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.function.Consumer;
 
