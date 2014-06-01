@@ -23,7 +23,7 @@ public class Eat {
 
 		TileMap.start(10, 10);
 		TileMap.visible(Arrays.asList(TileMap.all()));
-		player = new Player("res/player.png", null, new Consumer<Player>(){
+		player = new Player("res/player.png", new Consumer<Player>(){
 			int enemies = 1;
 			public void accept(Player player) {
 				if (player.tile().isType("dot")) {
@@ -38,6 +38,7 @@ public class Eat {
 				}
 			}
 		});
+		player.start();
 		start(1);
 		Window.display();
 	}
@@ -59,11 +60,11 @@ public class Eat {
 					p = e.tile().pos();
 					while ((p.x<5 && p.y<5) || TileMap.get(p).mob() != null)
 						p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
-					e.move( p );
+					e.move( TileMap.get(p) );
 					((Enemy)e).setWait(1000 - i*100);
 					i++;
 				}
-			player.move(new Point(1, 1));
+			player.move(TileMap.get(1, 1));
 			do {
 				p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
 			} while ((p.x<5 && p.y<5) || TileMap.get(p).mob() != null);

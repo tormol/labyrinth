@@ -11,18 +11,19 @@ import java.util.Queue;
 
 
 public class MapFile {
-	/**Brukes av feil()
-	 *-1 betyr at det ikke leses noen fil, og Fil.feil() vil ikke vise noe linjenummer.*/
+	/**Used by Window.error()
+	 *-1 == not reading a file, so don't show a line number in error messages.*/
 	public static int line = -1;
 
 	
 	public static File choose() {
 		return choose("");
 	}
-	/**Viser en */
-	public static File choose(String sti) {
+	/**Display a file dialog and return the chosen file.
+	 *@param dir directory to view in the file dialog*/
+	public static File choose(String dir) {
 		FileDialog fd = new FileDialog(Window.window, Window.window.getTitle()+" - Velg fil", FileDialog.LOAD);
-		fd.setDirectory(new File("./"+sti).getAbsolutePath());
+		fd.setDirectory(new File("./"+dir).getAbsolutePath());
 		fd.setFile("*.txt");
 		fd.setVisible(true);
 		String file = fd.getFile();
@@ -32,52 +33,50 @@ public class MapFile {
 	}
 
 
-	/**leser en fil og setter opp Brett, konstanter og metoder
-	 * TODO: UTF-8*/
+	/**Read a map file and set up TileMap, Constant and Method
+	 *TODO: UTF-8*/
 	public static void read(File path) {
-		//Holder linjer i filen.
-		LinkedList<String> file = new LinkedList<String>();
+		LinkedList<String> lines = new LinkedList<String>();
 		try (BufferedReader fileReader= new BufferedReader(new FileReader(path))) {
-			String linje;
-			while ((linje = fileReader.readLine()) != null)
-				file.add(linje);
+			String line;
+			while ((line = fileReader.readLine()) != null)
+				lines.add(line);
 		} catch (FileNotFoundException e) {
-			throw Window.error("Filen \"%s\" finnes ikke.", path);
+			throw Window.error("%s: File not Found.", path);
 		} catch (IOException e) {
-			throw Window.error("Feil under lesing av fil \"%s\"", path);
+			throw Window.error("%s: Error reading file\n%s", path, e.getMessage());
 		}
 		MapFile.line = 1;
 
 		Queue<char[]> map = new LinkedList<char[]>();
-		while (!file.isEmpty() && !file.getFirst().isEmpty())
-			map.add(file.removeFirst().toCharArray());
+		while (!lines.isEmpty() && !lines.getFirst().isEmpty())
+			map.add(lines.removeFirst().toCharArray());
 		TileMap.start(map);
-		MapFile.line++;
 
-		while (!file.isEmpty()) {
-			String line = file.removeFirst().trim();
+		while (!lines.isEmpty()) {
+			MapFile.line++;
+			String line = lines.removeFirst().trim();
 			if (line.trim().isEmpty()  ||  line.startsWith("#"))
 				continue;
-			while (line.endsWith("\\") && !file.isEmpty()) {
-				line = line.substring(0, -1) + file.removeFirst().trim();
+			while (line.endsWith("\\") && !lines.isEmpty()) {
+				line = line.substring(0, -1) + lines.removeFirst().trim();
 				MapFile.line++;
 			}
 			if (line.startsWith("$"))
 				Constant.add(line);
 			else
 				Method.add( Constant.fillIn(line) );
-			MapFile.line++;
 		}
 
-		String synsvidde = Constant.get("synsvidde");
-		if (synsvidde != null) {
-			synsvidde = synsvidde.trim();
-			if (synsvidde.equals("av"))
-				synsvidde = "0";
+		String wiewDistance = Constant.get("synsvidde");
+		if (wiewDistance != null) {
+			wiewDistance = wiewDistance.trim();
+			if (wiewDistance.equals("av"))
+				wiewDistance = "0";
 			try {
-				TileMap.synsvidde( Integer.parseInt(synsvidde) );
+				TileMap.synsvidde( Integer.parseInt(wiewDistance) );
 			} catch (NumberFormatException e) {
-				throw Window.error("Konstanten $synsvidde er ikke et tall\n%s", synsvidde);
+				throw Window.error("The Constant $synsvidde is not a number.\n%s", wiewDistance);
 			}
 		}
 		
