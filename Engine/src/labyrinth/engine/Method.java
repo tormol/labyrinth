@@ -25,8 +25,8 @@ public class Method {
 		Method.get(method).call(tile, mob);
 	}
 	public static void add(String line) {
-		Method ny = new Method(line);
-		methods.put(ny.name, ny);
+		Method toAdd = new Method(line);
+		methods.put(toAdd.name, toAdd);
 	}
 
 
@@ -233,6 +233,7 @@ public class Method {
 		}
 		protected static Map<String, Func> map = Collections.unmodifiableMap(map_init(
 			array("set","trigger","call","move"),
+			/**change the type and method of a tile*/
 			new Func("set", array(POINT, CHAR), VOID, (params)->{
 				Point p = params[0].Point();
 				char symbol = params[1].Char();
@@ -254,7 +255,7 @@ public class Method {
 				};
 			}),
 
-			/**Kjør metoden til et annet felt*/
+			/**run the method of another tile*/
 			new Func("trigger", array(POINT), VOID, (params) -> {
 				Point pos = params[0].Point();
 				return (Tile tile, Mob mob) -> {
@@ -268,7 +269,7 @@ public class Method {
 				};
 			}),
 
-			/**kall en annen metode*/
+			/**run a method*/
 			new Func("call", array(STRING), VOID, (params) -> {
 				String method = params[0].String();
 				return (Tile tile, Mob mob) -> {
@@ -277,7 +278,7 @@ public class Method {
 				};
 			}),
 
-			/**teleporter*/
+			/**teleport*/
 			new Func("move", array(POINT), VOID, (params) -> {
 				Point pos = params[0].Point();
 				return (Tile tile, Mob mob) -> {
@@ -285,7 +286,8 @@ public class Method {
 						tile = TileMap.get(pos);
 					if (mob==null)
 						throw Window.error("Method move: mob==null");
-					//Unngår å trigge felter, for hvis to felter teleporterer til hverandre ville det skapt en uendelig løkke.
+					//if the target is also a teleporter, you could end up teleporting infinitely.
+					//using Mob.move() prevents that because it doesn't trigger tiles.
 					mob.move(pos);
 					return new Var.VVoid();
 				};
