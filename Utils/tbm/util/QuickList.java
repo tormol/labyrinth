@@ -2,7 +2,7 @@ package tbm.util;
 import java.util.Iterator;
 
 @SuppressWarnings("unchecked")//(E)Stackable<E>
-public class List<E extends List.Single> extends java.util.AbstractQueue<E> implements java.util.Queue<E> {
+public class QuickList<E extends QuickList.Single> extends java.util.AbstractQueue<E> implements java.util.Queue<E> {
 	public static class Single {
 		protected Single next;
 	}
@@ -57,7 +57,7 @@ public class List<E extends List.Single> extends java.util.AbstractQueue<E> impl
 
 	@Override
 	public Iterator<E> iterator() {
-		final List<E> denne = this;
+		final QuickList<E> denne = this;
 		return new Iterator<E>(){
 			Single top = denne.start;
 			Single prev = null;

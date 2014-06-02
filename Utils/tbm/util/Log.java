@@ -63,7 +63,7 @@ public class Log {
 			String level = (this.level==null ? "null" : this.level.toString()) + ":\t";
 			String[] line = this.message.split("\n");
 			String str = level + line[0];
-			String spaces = tbm.util.strings.nchars(level.length()-1, ' ');
+			String spaces = tbm.util.statics.String_nchars(level.length()-1, ' ');
 			for (int i=1; i<line.length; i++)
 				str += "\n" + spaces + "\t" + line[i];
 			return str;

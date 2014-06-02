@@ -62,7 +62,7 @@ public class Point implements Serializable, Cloneable {
 	/***/
 	public <T> Point move(T direction, T xa, T xs, T ya, T ys) {return move(direction, xa, xs, ya, ys, 1);}
 	/***/
-	public <T> Point move(T direction, T xa, T xs, T ya, T ys, int n) {return move( Direction.d(direction, xa, xs, ya, ys),  n);}
+	public <T> Point move(T direction, T xa, T xs, T ya, T ys, int n) {return move( Direction.d(direction, ys, ya, xs, xa),  n);}
 
 	/***/
 	public Point negate() {return new Point(-x, -y);}

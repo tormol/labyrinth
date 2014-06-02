@@ -1,11 +1,12 @@
 package tbm.util.geom;
 
-@SuppressWarnings("serial")
-public class PointFormatException extends NumberFormatException {
-	protected PointFormatException() {
+public class PointFormatException extends RuntimeException {
+	public PointFormatException() {
 		super();
 	}
-	protected PointFormatException(String str) {
+	public PointFormatException(String str) {
 		super(str);
 	}
+
+	private static final long serialVersionUID = 1L;
 }

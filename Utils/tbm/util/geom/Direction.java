@@ -5,8 +5,8 @@ import static tbm.util.geom.Axis.*;
 public enum Direction {
 	NORTH(Y, 0),
 	SOUTH(Y, Math.PI),
-	 WEST(X, Math.PI/2),
-	 EAST(X, Math.PI*3/2);
+	 WEST(X, Math.PI*3/2),
+	 EAST(X, Math.PI/2);
 
 	public final Axis axis;
 	public final double theta;

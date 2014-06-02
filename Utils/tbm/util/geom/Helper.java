@@ -4,10 +4,16 @@ import java.awt.geom.Point2D;
 public class Helper {
 	public static java.awt.Point parsePoint(String str) throws PointFormatException
 	{
-		str = str.replace("\t", "").replace(" ", "");		
-		if (str.charAt(0) != '['  ||  str.indexOf(']') == -1) 
+		str = str.replace("\t", "").replace(" ", "");
+		char close;
+		switch (str.charAt(0)) {
+			case'[': close=']'; break;
+			case'(': close=')'; break;
+			default: throw new PointFormatException("Not a point.");
+		}
+		if (str.indexOf(close) == -1) 
 			throw new PointFormatException("Not a point.");
-		str = str.substring(1).split("]")[0];
+		str = str.substring(1).split( String.valueOf(close) )[0];
 	
 		if (str.toLowerCase().equals("null"))
 			return null;
