@@ -40,7 +40,7 @@ public abstract class Enemy extends Mob implements Runnable {
 			//moves
 			Tile to = findTile();
 			if (to != null)
-				move(to);
+				moveTo(to);
 			//wait shorter and shorter until limit.
 			if (wait > waitMin)
 				wait -= waitShorter;

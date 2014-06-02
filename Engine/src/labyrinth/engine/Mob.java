@@ -44,11 +44,11 @@ public abstract class Mob {
 	}
 
 	/**Move from current tile to tile with pos.*/
-	public void move(Tile tile) {
+	public void moveTo(Tile tile) {
 		//might be buggy, change later.
 		Mob _this = this;
 		if (_this.tile != null)
-			_this.tile.moveFrom(false);
+			_this.tile.leave(false);
 		if (tile != null)
 			_this.tile = tile.enter(_this, false);
 	}
@@ -73,7 +73,7 @@ public abstract class Mob {
 	/**Move from tile, and remove from Mob.mobs.*/
 	public void remove() {
 		if (tile != null)
-			tile.moveFrom(false);
+			tile.leave(false);
 		mobs.remove(this);
 	}
 

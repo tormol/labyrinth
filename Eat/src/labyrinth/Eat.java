@@ -60,11 +60,11 @@ public class Eat {
 					p = e.tile().pos();
 					while ((p.x<5 && p.y<5) || TileMap.get(p).mob() != null)
 						p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
-					e.move( TileMap.get(p) );
+					e.moveTo( TileMap.get(p) );
 					((Enemy)e).setWait(1000 - i*100);
 					i++;
 				}
-			player.move(TileMap.get(1, 1));
+			player.moveTo(TileMap.get(1, 1));
 			do {
 				p = new Point((int)(Math.random()*10), (int)(Math.random()*10));
 			} while ((p.x<5 && p.y<5) || TileMap.get(p).mob() != null);

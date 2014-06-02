@@ -38,7 +38,7 @@ public class Labyrinth {
 
 		Player p = new Player(l+"player.png", player->{
 			if (player.tile().isType("exit")) {
-				player.tile().moveFrom(true);
+				player.tile().leave(true);
 				Window.won();
 			}
 			else if (player.tile().isType("hammer")) {
@@ -53,31 +53,33 @@ public class Labyrinth {
 		}
 		);
 		Window.display();
-		findStart(p);
+		Tile start = findStart(p);
+		p.moveTo( start );
+		for (Direction d : Direction.values())
+			LoS.triangle(p.tile().pos(), d, t -> t.visible());
 		p.start();
 		Mob.pauseAll(false);
 	}
 
 
 
-	private static void findStart(Player player) {
+	private static Tile findStart(Player player) {
 		LinkedList<Tile> start = new LinkedList<>();
 		TileMap.all("start", tile-> { 
 			if (tile.mob()==null) {
 				start.add(tile);
-				for (Direction d : Direction.values())
-					LoS.triangle(tile.pos(), d, t -> t.visible());
+				tile.visible();
 			}
 		});
 		if (start.isEmpty())
 			throw Window.error("No start tile.");
-		player.move(start.get(0));
 		if (start.size() == 1)
-			return;
+			return start.get(0);
 
 		LinkedTransferQueue<KeyEvent> queue = new LinkedTransferQueue<>();
 		awtKeyListen.Pressed klp = event->queue.add(event);
 		Window.window.addKeyListener(klp);
+		start.get(0).enter(player, false);
 
 		int index = 0;
 		boolean finished = false;
@@ -86,14 +88,16 @@ public class Labyrinth {
 				case VK_LEFT :
 					if (index == 0)
 						index = start.size();
+					start.get(index).leave(false);
 					index--;
-					player.move(start.get(index));						
+					start.get(index).enter(player, false);						
 					break;
 				case VK_RIGHT:
+					start.get(index).leave(false);
 					index++;
 					if (index == start.size())
 						index = 0;
-					player.move(start.get(index));
+					start.get(index).enter(player, false);
 					break;
 				case VK_ENTER:
 					finished = true;
@@ -101,5 +105,7 @@ public class Labyrinth {
 				finished = true;
 			}
 		Window.window.removeKeyListener(klp);
+		start.get(index).leave(false);
+		return start.get(index);
 	}
 }

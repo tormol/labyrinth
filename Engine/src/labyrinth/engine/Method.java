@@ -289,7 +289,7 @@ public class Method {
 						throw Window.error("Method move: mob==null");
 					//if the target is also a teleporter, you could end up teleporting infinitely.
 					//using Mob.move() prevents that because it doesn't trigger tiles.
-					mob.move(to);
+					mob.moveTo(to);
 					TileMap.panel.repaint();
 					return new Var.VVoid();
 				};

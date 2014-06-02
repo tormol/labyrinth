@@ -11,12 +11,12 @@ import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
 
 public class Player extends Mob implements awtKeyListen.Pressed {
-	public final Consumer<Player> moveTo;
+	public final Consumer<Player> onMove;
 	protected boolean hammer = false;
 
 	public Player(String imagePath, Consumer<Player> moveTo) {
 		super("Player", imagePath);
-		this.moveTo = moveTo;
+		this.onMove = moveTo;
 	}
 
 	public void start() {
@@ -38,11 +38,11 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 		final Tile to = TileMap.get(newPos);
 		if (to.canEnter(this, true)) {
 			//is called from the eventqueue
-			tile().moveFrom(true);
+			tile().leave(true);
 			setTile(to);
 			tile().enter(this, true);
-			if (moveTo != null)
-				moveTo.accept(this);
+			if (onMove != null)
+				onMove.accept(this);
 		} else
 			tile().repaint();
 		LoS.triangle(tile().pos(), direction, (tile) -> tile.visible());
@@ -71,8 +71,8 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 
 
 	@Override//Mob
-	public void move(Tile t) {
-		super.move(t);
+	public void moveTo(Tile t) {
+		super.moveTo(t);
 		if (t != null)
 			SwingUtilities.invokeLater(()->LoS.triangle(
 					tile().pos(), direction,

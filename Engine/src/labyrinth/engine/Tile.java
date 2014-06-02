@@ -49,7 +49,7 @@ public class Tile extends javax.swing.JPanel {
 		return this;
 	}
 
-	public void moveFrom(boolean trigger) {
+	public void leave(boolean trigger) {
 		this.mob = null;
 		repaint();
 	}
