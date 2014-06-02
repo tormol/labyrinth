@@ -80,7 +80,6 @@ public abstract class Enemy extends Mob implements Runnable {
 			thread.join();
 		} catch (InterruptedException e) {
 			System.err.println("Error interrupting Enemy: " + name);
-			e.printStackTrace();
 		}
 		super.remove();
 	}

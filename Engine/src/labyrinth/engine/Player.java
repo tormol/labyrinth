@@ -75,8 +75,7 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 		super.move(t);
 		if (t != null)
 			SwingUtilities.invokeLater(()->LoS.triangle(
-					tile()
-					.pos(), direction,
+					tile().pos(), direction,
 					tile->tile.visible()));
 	}
 

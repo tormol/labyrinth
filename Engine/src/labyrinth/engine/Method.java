@@ -290,6 +290,7 @@ public class Method {
 					//if the target is also a teleporter, you could end up teleporting infinitely.
 					//using Mob.move() prevents that because it doesn't trigger tiles.
 					mob.move(to);
+					TileMap.panel.repaint();
 					return new Var.VVoid();
 				};
 			})

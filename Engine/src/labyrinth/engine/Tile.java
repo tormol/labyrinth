@@ -38,22 +38,20 @@ public class Tile extends javax.swing.JPanel {
 	}
 
 	public Tile enter(Mob mob, boolean trigger) {
-		if (type.method && trigger)
-			method.call(this, mob);
 		//if there is a mob in the tile, let it know it has been removed.
 		//the mob entering the tile can check if its occupied before moving.
 		if (this.mob != null)
 			this.mob.hit(mob);
 		this.mob = mob;
+		if (type.method && trigger)
+			method.call(this, mob);
 		repaint();
 		return this;
 	}
 
-	public Mob moveFrom(boolean trigger) {
-		Mob enhet = this.mob;
+	public void moveFrom(boolean trigger) {
 		this.mob = null;
 		repaint();
-		return enhet;
 	}
 
 	public void visible() {
