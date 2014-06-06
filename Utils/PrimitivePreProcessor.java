@@ -118,7 +118,8 @@ public class PrimitivePreProcessor {
 
 		public void parse(String line) throws AnError {
 			if (line.startsWith("&")) {
-				Matcher m = Pattern.compile("^&\\s*(\\w[\\w\\.\\d]*)\\s*=\\s*(.*)$").matcher(line);
+				final String _name = "\\w[\\w\\d]*";
+				Matcher m = Pattern.compile("^&\\s*("+_name+"(\\."+_name+")?)\\s*=").matcher(line);
 				if (!m.matches())
 					throw new AnError(false, "Invalid variable line: %s", line);
 				String name = m.group(1);
