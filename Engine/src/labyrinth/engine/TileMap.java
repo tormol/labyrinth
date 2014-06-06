@@ -7,6 +7,8 @@ import java.awt.GridLayout;
 import java.util.Queue;
 import java.util.function.Consumer;
 
+import labyrinth.engine.method.Procedure;
+import static tbm.util.statics.*;
 import tbm.util.Wrapper;
 import tbm.util.geom.Point;
 
@@ -17,8 +19,6 @@ public class TileMap {
 	private static Tile[][] map;
 	/**Panelet som inneholder rutene*/
 	public static final JPanel panel = new JPanel(); 
-	/**Er en linket liste*/
-	private static FindMethod findMethod = null;
 	
 
 	/**Empty map*/
@@ -48,14 +48,14 @@ public class TileMap {
 		//lager Ruter
 		for (int y=0;  y<map.length;  y++, MapFile.line++) {
 			if (tegn[y].length != collumns)
-				throw Window.error("lengden passynsvidde ikke med resten.");
+				throw Window.error("lengden passer ikke med resten.");
 			for (int x=0; x<map[0].length; x++) {
 				Type type = Type.get(tegn[y][x]);
 				if (type == null)
 					throw Window.error("Kolonne %d: Ugyldig tegn '%c'", x, tegn[y][x]);
 				map[y][x] = new Tile(type, new Point(x, y));
 				if (type.method)
-					findMethod = new FindMethod(tegn[y][x], map[y][x], findMethod);
+					map[y][x].method = Procedure.get( charToString(tegn[y][x]) );
 				panel.add(map[y][x]);
 			}
 		}
@@ -79,14 +79,15 @@ public class TileMap {
 	public static Dimension dimesions() {
 		return new Dimension(map[0].length, map.length);
 	}
-	/**Returnerer hvor mange ruter det er på brettet.*/
+	/**@return map width*height*/
 	public static int numberOfTiles() {
 		return map[0].length * map.length;
 	}
-	
+
+	/**Are there any tiles of this type?*/
 	public static boolean anyTiles(String type) {
 		Wrapper<Boolean> any = new Wrapper<>(false);
-		all(type, (t)->any.v=true);
+		all(type, t->any.v=true);
 		return any.v;
 	}
 
@@ -112,17 +113,13 @@ public class TileMap {
 					consumer.accept(t);
 	}
 
+	/**make tiles visible*/
 	public static void visible(Iterable<Tile> tiles) {
 		for (Tile t : tiles)
 			t.visible();
 	}
 
-	/**Metode trenger å vite størrelsen på brettet for å sjekke at koordinater er gyldige, Brett trenger Metode for å lage ruter med metorer
-	 * Løsning: start brett, les inn metoder, legg metoder irutene med finnMetoder()*/
-	public static void findMethods() {
-		for (; findMethod != null;  findMethod = findMethod.next)
-			findMethod.tile.method = Method.get( String.valueOf(findMethod.method) );
-	}
+
 
 	@Deprecated/**Hvor mange felt spilleren ser i hver retning. 0=ser alle*/
 	private static int synsvidde = 2;
@@ -142,16 +139,5 @@ public class TileMap {
 		if (synsvidde==0)
 			for (Tile rute : all())
 				rute.visible();
-	}
-}
-
-/**For å legge metoder til ruter i labyrinten før metodene er lest inn.*/
-class FindMethod {
-	/**Linket liste*/
-	public final FindMethod next;
-	public final char method;
-	public final Tile tile;
-	public FindMethod(char method, Tile tile, FindMethod ext) {
-		this.method = method;	this.tile = tile;	this.next = ext;
 	}
 }

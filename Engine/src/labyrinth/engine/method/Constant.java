@@ -1,9 +1,11 @@
-package labyrinth.engine;
+package labyrinth.engine.method;
 
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.HashMap;
 import java.util.Map;
+
+import labyrinth.engine.Window;
 
 /**Kjekt å ha, linjer som starter med $ leses som konstante variabler*/
 public class Constant {

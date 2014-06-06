@@ -1,13 +1,23 @@
 package labyrinth.engine;
 
+import static tbm.util.statics.char_word;
+
 import java.awt.FileDialog;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
+
+import tbm.util.StringStream;
+import labyrinth.engine.method.Constant;
+import labyrinth.engine.method.Method;
+import labyrinth.engine.method.Operation;
+import labyrinth.engine.method.Procedure;
+import labyrinth.engine.method.Value;
 
 
 public class MapFile {
@@ -28,7 +38,7 @@ public class MapFile {
 		fd.setVisible(true);
 		String file = fd.getFile();
 		if (file == null)
-			throw Window.error("Ingen fil ble valgt");
+			throw Window.error("No file selected.");
 		return new File(fd.getDirectory(), file);
 	}
 
@@ -55,9 +65,17 @@ public class MapFile {
 
 		while (!lines.isEmpty()) {
 			MapFile.line++;
-			String line = lines.removeFirst().trim();
-			if (line.trim().isEmpty()  ||  line.startsWith("#"))
+			StringStream l = new StringStream(lines.removeFirst());
+			l.whitespace();
+			if (l.empty())
 				continue;
+			
+			String name = l.next(c -> char_word(c));
+			if (name.isEmpty())
+				Window.error("not a method");
+			if (l.next_nw() == ':')
+				Window.error("Method %s: not a method", name);
+
 			while (line.endsWith("\\") && !lines.isEmpty()) {
 				line = line.substring(0, -1) + lines.removeFirst().trim();
 				MapFile.line++;
@@ -65,7 +83,7 @@ public class MapFile {
 			if (line.startsWith("$"))
 				Constant.add(line);
 			else
-				Method.add( Constant.fillIn(line) );
+				Procedure.add( Constant.fillIn(line) );
 		}
 
 		String wiewDistance = Constant.get("synsvidde");
@@ -80,7 +98,46 @@ public class MapFile {
 			}
 		}
 		
-		TileMap.findMethods();
-		MapFile.line=-1;
+		MapFile.line = -1;
+		Procedure.checkUndefined();
+	}
+
+
+	private static void parse_Procedure(String name, StringStream l) {
+		l.whitespace();
+
+		ArrayList<Operation> ops = new ArrayList<>(10);
+		while (!l.empty()) {
+			if (l.peek()=='#')
+				break;
+			try {
+				String op_name = l.next( c->char_word(c) );
+				if (op_name.isEmpty())
+					throw Window.error("Method %s: operation expected", name);
+				Method f = Method.get(op_name);
+				if (f==null)
+					throw Window.error("Method %s: Unknown operation %s.", name, op_name);
+				if (l.next_nw() != '(')
+					Window.error("Method %s: '(' expected after \"%s\".", name, op_name);
+				Value[] params = new Value[f.parameters.length];
+				int i=0;
+				while (i<params.length) {
+					params[i] = f.parameters[i].parse(l); 
+					i++;
+					if (i < params.length  &&  l.next_nw() != ',')
+						throw Window.error("Method %s: ',' expected after %i. argument.", name, i);
+				}
+				if (l.next_nw() != ')')
+					throw Window.error("Method %s: ')' expected after %i. argument.", name, i);
+				if (l.next_nw() != ';')
+					throw Window.error("Method %s: ';' expected after a method (%s(", name, op_name);
+				ops.add(f.instance(params));
+			} catch (ArrayIndexOutOfBoundsException e) {
+				throw Window.error("", "Method %s: unexpected end of line.", name);
+			}
+			l.whitespace();
+			//TODO: hvis koordinater mangler vil metoden kjøres på feltet som startet funksjonen.
+		}
+		Procedure.define(name, ops);
 	}
 }

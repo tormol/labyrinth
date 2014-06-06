@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 
+import labyrinth.engine.method.Procedure;
 import tbm.util.geom.Point;
 
 
@@ -14,11 +15,11 @@ public class Tile extends javax.swing.JPanel {
 	/**coordinate*/
 	private final Point pos;
 	/**method to be called when a mob enters the tile with trigger=true*/
-	public Method method;
+	public Procedure method;
 	/**Mob in this tile*/
 	private Mob mob = null;
-	
-	/**Om spilleren kan se dette feltet.*/
+
+	/**Can the player see this tile?*/
 	private boolean visible = false;
 
 	public Tile(Type t, Point p) {
@@ -33,7 +34,7 @@ public class Tile extends javax.swing.JPanel {
 	/**Most mobs cannot enter solid tiles, and if trigger=true a method might be called*/
 	public boolean canEnter(Mob mob, boolean trigger) {
 		if (trigger && type.type("button"))
-			method.call(this, mob);
+			method.perform(this, mob);
 		return !type.solid;
 	}
 
@@ -44,7 +45,7 @@ public class Tile extends javax.swing.JPanel {
 			this.mob.hit(mob);
 		this.mob = mob;
 		if (type.method && trigger)
-			method.call(this, mob);
+			method.perform(this, mob);
 		repaint();
 		return this;
 	}
@@ -94,8 +95,8 @@ public class Tile extends javax.swing.JPanel {
 
 	public Point pos() {
 		if (pos==null)
-			new Point();//no-op TODO: Why?
-		return new Point(pos);
+			new Point();//no-op FIXME: Why?
+		return pos;
 	}
 
 	public Mob mob() {
