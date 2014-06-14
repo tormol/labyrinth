@@ -1,8 +1,8 @@
 package tbm.util;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
+import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * new parser(args)
@@ -16,50 +16,29 @@ import java.util.LinkedList;
  * 
  */
 public class ArgsParser {
-	/**For debugging.*/
-	public String toString() {
-		String str="";
-		for (ParsedOpt o : opts)
-			str+=", "+o.trigger()+"->"+o.argument.str;
-		str+="\nargs: "+getArgs();
-		return str;
-	}
-
-	public static class Builder {
-		public String shortopt_regex = "[A-Za-z].*";
-		public boolean nonopt_stops_opts = false;
-		public boolean h_help = true;
-		public Builder() {	
-		}
-		public ArgsParser parse(String[] args) {
-			return new ArgsParser(args, this);
-		}
-
-		public Builder valid_shortopts(String regex) {
-			shortopt_regex = regex;
-			return this;
-		}
-		public Builder integer_shortopts() {
-			shortopt_regex = "[A-Za-Z0-9].*";
-			return this;
-		}
-		public Builder h_not_help() {
-			h_help = false;
-			return this;
-		}
-	}
-
+	/***/
+	private SortedSet<ParsedOpt> opts;
+	/***/
+	private ArrayList<OptCore> validOpts = new ArrayList<OptCore>();
+	/**All arguments that are not an option.
+	 * Sort before open.*/
+	public SortedSet<Argument> arg;
+	private boolean unused_arg = true;
+	//a log
+	private StringBuilder errors = new StringBuilder();
 
 	/**Parse args with default parameters.
 	 * @param args the String[] passed to main().
 	 */
-	public ArgsParser(String[] args) {
-		this(args, new Builder());
+	public ArgsParser(String... args) {
+		this(null, args);
 	}
 	/**Parse args with parameters set in ArgsParser.Builder.
 	 * @param args the String[] passed to main().
 	 */
-	public ArgsParser(String[] args, Builder b) {
+	public ArgsParser(Builder b, String... args) {
+		if (b==null)
+			b = new Builder();
 		final boolean windows = System.getProperty("os.name").startsWith("Windows");
 		final String helpStr = "(\\?|h|help)";
 		if (args.length==1
@@ -67,8 +46,8 @@ public class ArgsParser {
 		  || (windows && args[0].matches("/"+helpStr)) ) )
 			args[0] = "--help";
 
-		arg = new ArrayList<Argument>(8);
-		opts = new LinkedList<ParsedOpt>();
+		arg = new TreeSet<Argument>();
+		opts = new TreeSet<ParsedOpt>();
 		boolean stopopt = false;
 		for (int i=0; i<args.length; i++)
 			if (stopopt)
@@ -102,8 +81,8 @@ public class ArgsParser {
 					}
 			}
 			//if the previous option doesn't have an argument, add this.
-			else if (!opts.isEmpty()  &&  opts.getLast().argument.index == -1)
-				opts.getLast().argument = new Argument(i, args[i]);
+			else if (!opts.isEmpty()  &&  opts.last().argument.index == -1)
+				opts.last().argument = new Argument(i, args[i]);
 			else {
 				arg.add(new Argument(i, args[i]));
 				if (b.nonopt_stops_opts)
@@ -114,7 +93,7 @@ public class ArgsParser {
 
 
 
-	/**An inteerface for creating an option
+	/**An interface for creating an option
 	 *
 	 */
 	public static interface Opt_interface {
@@ -129,8 +108,8 @@ public class ArgsParser {
 		/**Is called when the option was given an argument, should it be a non-opt argument?*/
 		public boolean dropArg();
 	}
-	//TODO: consider using a map
-	private LinkedList<ParsedOpt> opts;
+
+
 	/**TODO
 	 * Adds the option to a list in case help() is called.
 	 * Searches a list of set options, and calls opt.got() when an option matches.
@@ -139,23 +118,24 @@ public class ArgsParser {
 	 */
 	public <T extends Opt_interface> T opt(T opt) {
 		OptCore inf = new OptCore(opt.getShort(), opt.getLong(), opt.getHelp());
-		for (int i=0; i<opts.size(); i++)
-			if (opts.get(i).matches(inf._Short, inf._Long)) {
-				String error = opt.got(opts.get(i));
+		Iterator<ParsedOpt> itr = opts.iterator();
+		ParsedOpt po;
+		while ((po=itr.next()) != null)
+			if (po.matches(inf._Short, inf._Long)) {
+				String error = opt.got(po);
 				if (error != null)
 					errors.append(error);
-				else if (opts.get(i).argSeparate() && opt.dropArg()) {
-					arg.add(opts.get(i).argument);
-					opts.get(i).argument = null;
+				else if (po.argSeparate() && opt.dropArg()) {
+					arg.add(po.argument);
+					po.argument = null;
 				}
-				opts.remove(i);
+				itr.remove();
 			}
 		validOpts.add(inf);
 		return opt;
 	}
 
 
-	private LinkedList<OptCore> validOpts = new LinkedList<OptCore>();
 	/**Return a String with a list of all options and their description.*/
 	public String getHelp() {
 		StringBuilder help = new StringBuilder();
@@ -180,34 +160,25 @@ public class ArgsParser {
 
 
 
-	/**All arguments that are not an option.
-	 * Sort before open.*/
-	public ArrayList<Argument> arg;
-	private boolean unused_arg = true;
 	/**@return An array of all  non-opt arguments.
 	 */
 	public String[] getArgs() {
 		unused_arg = false;
 		//sort: during init all argument after options are considered argument to that option.
-		//when arguments to flag options are added back, they appear et the end of the list. sorting fixes that. 
-		Collections.sort(arg, new Comparator<Argument>(){
-			public int compare(Argument a1, Argument a2) {
-				return a1.index-a2.index;
-			}
-		});
+		//when arguments to flag options are added back, they appear at the end of the list. sorting fixes that. 
 
 		//return String[] to allow args = .getArgs();
 		String[] args = new String[arg.size()];
-		for (int i=0; i<arg.size(); i++)
-			args[i] = arg.get(i).str;
-		
+		int i=0;
+		for (Argument a : arg) {
+			args[i] = a.str;
+			i++;
+		}		
 		return args;
 	}
 
 
 
-	//a log
-	private StringBuilder errors = new StringBuilder();
 	/**Returns true if there are any errors.*/
 	public boolean hasErrors() {
 		return (getErrors().length() > 0);
@@ -232,7 +203,7 @@ public class ArgsParser {
 	 * 
 	 *
 	 */
-	public static class ParsedOpt {
+	public static class ParsedOpt implements Comparable<ParsedOpt> {
 		/**A multi-character option; --option*/
 		public String Long = "";
 		/**A single-character option; -o*/
@@ -288,6 +259,11 @@ public class ArgsParser {
 				str += String.format("->[%d]=%s", argument.index, argument.str);
 			return str;
 		}
+
+		@Override//Comparable
+		public int compareTo(ParsedOpt po) {
+			return this.index-po.index;
+		}
 	}
 
 
@@ -319,7 +295,7 @@ public class ArgsParser {
 
 
 	/**A class to store the index along with an non-option argument.*/
-	protected static class Argument {
+	protected static class Argument implements Comparable<Argument> {
 		/**The arguments index in args[].*/
 		public final int index;
 		/**The argument*/
@@ -327,6 +303,34 @@ public class ArgsParser {
 		protected Argument(int index, String str) {
 			this.index = index;
 			this.str = str;
+		}
+		@Override//Comparable
+		public int compareTo(Argument arg) {
+			return this.index-arg.index;
+		}
+	}
+
+
+	public static class Builder {
+		public String shortopt_regex = "[A-Za-z].*";
+		public boolean nonopt_stops_opts = false;
+		public boolean h_help = true;
+		public Builder()
+			{}
+		public ArgsParser parse(String... args) {
+			return new ArgsParser(this,  args);
+		}
+		public Builder valid_shortopts(String regex) {
+			shortopt_regex = regex;
+			return this;
+		}
+		public Builder integer_shortopts() {
+			shortopt_regex = "[A-Za-Z0-9].*";
+			return this;
+		}
+		public Builder h_not_help() {
+			h_help = false;
+			return this;
 		}
 	}
 
