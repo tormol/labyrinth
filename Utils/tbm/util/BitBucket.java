@@ -1,13 +1,6 @@
 package tbm.util;
 
-import java.util.Collection;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 /**Mimics /dev/null: add/push are accepted, but does nothing, otherwize acts as an empty collection*/
 public class BitBucket<E> implements Collection<E>, List<E>, Set<E>, Queue<E>, Deque<E> {
@@ -129,6 +122,12 @@ public class BitBucket<E> implements Collection<E>, List<E>, Set<E>, Queue<E>, D
 	@Override//List
 	public List<E> subList(int arg0, int arg1) {
 		return null;
+	}
+
+	@Override//List//Set
+	//remove if java < 8
+	public Spliterator<E> spliterator() {
+		return Spliterators.spliterator(this, 0);
 	}
 
 
