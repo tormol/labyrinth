@@ -6,8 +6,6 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.Queue;
 import java.util.function.Consumer;
-
-import labyrinth.engine.method.Procedure;
 import static tbm.util.statics.*;
 import tbm.util.Wrapper;
 import tbm.util.geom.Point;
@@ -21,41 +19,43 @@ public class TileMap {
 	public static final JPanel panel = new JPanel(); 
 	
 
-	/**Empty map*/
-	public static void start(int width, int height) {
+	/**Empty map
+	 * @throws InvalidMapException */
+	public static void start(int width, int height) throws InvalidMapException {
 		char[][] map = new char[height][width];
 		for (int y=0; y<height; y++)
 			for (int x=0; x<width; x++)
 				map[y][x] = ' ';
 		start(map);
 	}
-	/***/
-	public static void start(String[] lines) {
+	/**
+	 * @throws InvalidMapException */
+	public static void start(String[] lines) throws InvalidMapException {
 		char[][] symbol = new char[lines.length][];
 		for (int i=0; i<symbol.length; i++)
 			symbol[i] = lines[i].toCharArray();
 		start(symbol);
 	}
-	public static void start(Queue<char[]> symbol) {
+	public static void start(Queue<char[]> symbol) throws InvalidMapException {
 		start(symbol.toArray(new char[symbol.size()][]));
 	}
-	public static void start(char[][] tegn) {
+	public static void start(char[][] tegn) throws InvalidMapException {
 		Type.add("outside", true, false, null, Color.CYAN, "");
 		int collumns = tegn[0].length;
 		map = new Tile[tegn.length][collumns];
 		panel.setLayout(new GridLayout( map.length, map[0].length));
 
 		//lager Ruter
-		for (int y=0;  y<map.length;  y++, MapFile.line++) {
+		for (int y=0;  y<map.length;  y++) {
 			if (tegn[y].length != collumns)
-				throw Window.error("lengden passer ikke med resten.");
+				throw new InvalidMapException(y, "Length doesn't match the previous rows");
 			for (int x=0; x<map[0].length; x++) {
 				Type type = Type.get(tegn[y][x]);
 				if (type == null)
-					throw Window.error("Kolonne %d: Ugyldig tegn '%c'", x, tegn[y][x]);
+					throw new InvalidMapException(y, "collumn %d: Unknown symbol '%c'", x, tegn[y][x]);
 				map[y][x] = new Tile(type, new Point(x, y));
 				if (type.method)
-					map[y][x].method = Procedure.get( charToString(tegn[y][x]) );
+					map[y][x].method = charToString(tegn[y][x]);
 				panel.add(map[y][x]);
 			}
 		}
@@ -139,5 +139,25 @@ public class TileMap {
 		if (synsvidde==0)
 			for (Tile rute : all())
 				rute.visible();
+	}
+
+	public static class InvalidMapException extends Exception {
+		public final int row;
+		private InvalidMapException(int row, String f, Object... a) {
+			super(String.format(f, a));
+			this.row = row;
+		}
+		@Override
+		public String getMessage() {
+			return String.format("Row %d %s", row, super.getMessage());
+		}
+		public String getOffsetMessage(int lineOffset) {
+			return String.format("Line %d %s", lineOffset+row, super.getMessage());
+		}
+		//TODO: LocalizedMessage
+		public int getRow() {
+			return row;
+		}
+		private static final long serialVersionUID = 1L;
 	}
 }

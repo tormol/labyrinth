@@ -7,5 +7,5 @@ package labyrinth.engine;
 //class method accepts compiler
 public interface Action {
 	/**@return null (this way subinterfaces can return something).*/
-	Object perform(Tile t, Mob m);
+	Object perform();
 }

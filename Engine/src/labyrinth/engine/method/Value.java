@@ -1,20 +1,28 @@
 package labyrinth.engine.method;
 import static labyrinth.engine.method.VType.*;
 import labyrinth.engine.Window;
-
 import tbm.util.geom.Point;
 
-public abstract class Value {
+public abstract class Value implements Operation {
 	public final VType type;
 	protected Value(VType t) {
 		type=t;
 	}
 	public Object value() {return null;}
 	//public VType basicType() {return type;}
-	public int Int() {throw Window.error("not an Integer");}
-	public Point Point() {throw Window.error("not a Point");}
-	public char Char() {throw Window.error("not a characther");}
-	public String String() {throw Window.error("not a string");}
+	/** a point has members x and y, to support structs, etc*/
+	public Value member(String name) {throw Window.error("%s have no members", type);}
+	public int Int() {throw Script.error("not an Integer");}
+	public Point Point() {throw Script.error("not a Point");}
+	public char Char() {throw Script.error("not a characther");}
+	public String String() {throw Script.error("not a string");}
+	public Value call(Value[] param) {throw Script.error("not a function");}
+	public void setRef(Value v) {throw Script.error("not a reference");}
+	public Value getRef() {throw Script.error("not a reference");}
+	@Override
+	public Value perform() {
+		return this;
+	}
 
 
 
@@ -71,22 +79,13 @@ public abstract class Value {
 		public Point value() {return p;}
 	}
 
-	public static class Var extends Value {
-		public Value value;
-		public final String name;
-		protected Var(VType t, String name) {
-			super(t);
-			this.name = name;
-		}
-		public void set(Value v) {
-			if 
-			if (this.type != VOID  &&  this.type != v.type)
-				;
-		}
-
-		public int Int() {throw Window.error("\"%s\" is not an Integer", name);}
-		public Point Point() {throw Window.error("\"%s\" is not a Point", name);}
-		public char Char() {throw Window.error("\"%s\" is not a characther", name);}
-		public String String() {throw Window.error("\"%s\" is not a string", name);}
+	public static Value get(Object o) {
+		if (o instanceof String)
+			return Script.current.get((String)o);
+		if (o instanceof Value)
+			return (Value)o;
+		if (o instanceof Operation)
+			return ((Operation)o).perform();
+		throw Script.error("Value.get(): Unrecognized object.");
 	}
 }

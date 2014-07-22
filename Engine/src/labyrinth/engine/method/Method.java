@@ -1,95 +1,129 @@
 package labyrinth.engine.method;
-
 import static labyrinth.engine.method.VType.*;
 import static tbm.util.statics.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Function;
-
-import labyrinth.engine.Mob;
-import labyrinth.engine.Tile;
-import labyrinth.engine.TileMap;
-import labyrinth.engine.Type;
-import labyrinth.engine.Window;
+import labyrinth.engine.*;
 import labyrinth.engine.method.Method;
 import tbm.util.geom.Point;
 
-class Method {
-	public final String name;
+public class Method extends Value {
 	public final VType[] parameters;
-	public final VType ret;
-	private final Function<Value[], Operation> init;
-	public Method(String name, VType[] parameters, VType ret, Function<Value[], Operation> init) {
-		this.name = name;
+	private final Function<Value[], Value> internal;
+	public Method(String name, VType[] parameters, Function<Value[], Value> function) {
+		super(VType.FUNC);
 		this.parameters = parameters;
-		this.ret = ret;
-		this.init = init;
-		map.put(name, this);
+		this.internal = function;
+		Script.root.define(name, this);
 	}
-	public Operation instance(Value... arg) {
-		return init.apply(arg);
+	@Override
+	public Value call(Value[] param) {
+		return internal.apply(param);
 	}
 
 
 
-	public static Method get(String name) {
-		return map.get(name);
-	}
-	protected static Map<String, Method> map = new HashMap<>();
 
-
+	//methods add themselves to Moethod.map in the constructor.
 	static {
+		ParameterWalker pa = new ParameterWalker(null);
 		/**change the type and method of a tile*/
-		new Method("set", array(POINT, CHAR), VOID, params->{
-			Point p = params[0].Point();
-			char symbol = params[1].Char();
-			Tile target;
-			if (p==null)
-				target = null;
-			else
+		new Method("set", array(POINT, CHAR), param->{
+			pa.start(param);
+			Point p = pa.point();
+			char symbol = pa.get().Char();
+			pa.finish();
+			Tile target = Script.tile;
+			if (p != null)
 				target = TileMap.get(p);
 			Type type = Type.t(symbol);
-			return (tile, mob) -> {
-				if (target != null)
-					tile = target;
-				tile.setType(type);
-				if (type.method)
-					tile.method = Procedure.get(String.valueOf(symbol));
-				else
-					tile.method = null;
-				return Value.Void;
-			};
+			target.setType(type);
+			if (type.method)
+				target.method = String.valueOf(symbol);
+			else
+				target.method = null;
+			return Value.Void;
 		});
 
 		/**run the method of another tile*/
-		new Method("trigger", array(POINT), VOID, params->{
-			Point pos = params[0].Point();
-			return (Tile tile, Mob mob) -> {
-				if (pos != null)
-					tile = TileMap.get(pos);
-				if (tile.mob() != null)
-					mob = tile.mob();
-				if (tile.method != null)
-					tile.method.perform(tile, mob);
-				return Value.Void;
-			};
+		new Method("trigger", array(POINT), param->{
+			pa.start(param);
+			Point pos = pa.point();
+			pa.finish();
+			//i think changing tile and mob for the rest of the function is OK
+			if (pos != null)
+				Script.tile = TileMap.get(pos);
+			if (Script.tile.mob() != null)
+				Script.mob = Script.tile.mob();
+			if (Script.tile.method != null)
+				Script.root.get(Script.tile.method).call(new Value[0]);
+			return Value.Void;
 		});
 
 		/**teleport*/
-		new Method("move", array(POINT), VOID, params->{
-			Point pos = params[0].Point();
-			Tile to = TileMap.get(pos); 
-			return (Tile tile, Mob mob) -> {
-				if (pos != null)
-					tile = TileMap.get(pos);
-				if (mob==null)
-					throw Window.error("Method move: mob==null");
-				//if the target is also a teleporter, you could end up teleporting infinitely.
-				//using Mob.move() prevents that because it doesn't trigger tiles.
-				mob.moveTo(to);
-				TileMap.panel.repaint();
-				return Value.Void;
-			};
+		new Method("move", array(POINT), param->{
+			pa.start(param);
+			Point pos = pa.point();
+			pa.finish();
+			Tile to = TileMap.get(pos);
+			if (Script.mob==null)
+				throw Window.error("Method move: mob==null");
+			//if the target is also a teleporter, you could end up teleporting infinitely.
+			//using Mob.move() prevents that because it doesn't trigger tiles.
+			Script.mob.moveTo(to);
+			TileMap.panel.repaint();
+			return Value.Void;
 		});
+
+		/*new Method("", array(), param->{
+			
+			return Value.Void;
+		});//*/
+		new Method("=", null, param->{
+			if (param.length == 2)
+				if (param[0].equals(param[1]))
+					;
+				else
+					;
+			else
+				;
+			return Value.Void;
+		});
+	}
+
+
+	/**A class for iterating over parameters, and allowing two integers as a point*/
+	private static class ParameterWalker {
+		private Value[] param = null;
+		private int i;
+		public ParameterWalker(Value[] param) {
+			start(param);
+		}
+		public void start(Value[] param) {
+			if (this.param != null)
+				throw new RuntimeException("ParameterWalker: previous use not finish()ed.");
+			this.param = param;
+			i=0;
+		}
+		public Point point() {
+			if (get().type==INT && get().type==INT)
+				return new Point(param[i-2].Int(), param[i-1].Int());
+			i -= 2;
+			return get().Point();
+		}
+		public Value get() {
+			if (i >= param.length)
+				throw Script.error("too few parameters");
+			Value v = param[i];
+			i++;
+			return v;
+		}
+		public void finish() {
+			if (param == null)
+				;//an extra call is harmless, allows early stop  
+				//throw new RuntimeException("ParameterWalker: allready finished()");
+			else if (i < param.length)
+				throw Script.error("too many parameters");
+			param = null;
+		}
 	}
 }

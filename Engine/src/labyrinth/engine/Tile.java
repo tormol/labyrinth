@@ -2,8 +2,7 @@ package labyrinth.engine;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-
-import labyrinth.engine.method.Procedure;
+import labyrinth.engine.method.Script;
 import tbm.util.geom.Point;
 
 
@@ -15,7 +14,7 @@ public class Tile extends javax.swing.JPanel {
 	/**coordinate*/
 	private final Point pos;
 	/**method to be called when a mob enters the tile with trigger=true*/
-	public Procedure method;
+	public String method;
 	/**Mob in this tile*/
 	private Mob mob = null;
 
@@ -34,7 +33,7 @@ public class Tile extends javax.swing.JPanel {
 	/**Most mobs cannot enter solid tiles, and if trigger=true a method might be called*/
 	public boolean canEnter(Mob mob, boolean trigger) {
 		if (trigger && type.type("button"))
-			method.perform(this, mob);
+			Script.call(method, this, mob);
 		return !type.solid;
 	}
 
@@ -45,7 +44,7 @@ public class Tile extends javax.swing.JPanel {
 			this.mob.hit(mob);
 		this.mob = mob;
 		if (type.method && trigger)
-			method.perform(this, mob);
+			Script.call(method, this, mob);
 		repaint();
 		return this;
 	}
