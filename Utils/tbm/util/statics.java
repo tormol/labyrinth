@@ -1,8 +1,13 @@
 package tbm.util;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +26,9 @@ public class statics {
 	}
 	public static boolean char_mathches(char c, String regex) {
 		return charToString(c).matches(regex);
+	}
+	public static boolean char_anyof(char c, String list) {
+		return list.indexOf(c) == -1;
 	}
 
 	public static String charToString(char c) {
@@ -63,7 +71,23 @@ public class statics {
 		return map;
 	}
 
+	/**Get the first key which value == value parameter. else return null*/
+	public static <K,V> K map_firstKey(Map<K,V> map, V value) {
+		for (Map.Entry<K,V> entry : map.entrySet())
+			if (value == entry.getValue())
+				return entry.getKey();
+		return null;
+	}
+
 	/**Intentionally do nothing*/
 	public static void do_nothing()
 		{}
+
+	/**Convert elements in a collection from one type to another and put them into a List*/
+	public static <F, T> List<T> convert(Collection<F> from, Function<F, T> convert) {
+		List<T> to = new ArrayList<>(from.size());
+		for (F e : from)
+			to.add(convert.apply(e));
+		return to;
+	}
 }

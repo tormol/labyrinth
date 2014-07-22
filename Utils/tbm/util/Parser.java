@@ -70,13 +70,16 @@ public class Parser implements Closeable, AutoCloseable {
 		return this;
 	}
 	/**skip whitespace*/
-	public Parser sw() throws IOException {
+	public Parser skip_whitespace() throws IOException {
 		int ch = peek(false);
 		while (ch==' ' || ch=='\t' || (ch=='\n' && newline_whitespace)) {
 			skip();
 			ch = peek(false);
 		}
 		return this;
+	}
+	public Parser sw() throws IOException {
+		return skip_whitespace();
 	}
 	public Pos getPos() {
 		return new Pos(line, col);
@@ -184,6 +187,12 @@ public class Parser implements Closeable, AutoCloseable {
 	public static class EOS extends RuntimeException {
 		private EOS() {
 			super();
+		}
+		private static final long serialVersionUID = 1L;
+	}
+	public static class IORuntimeException extends RuntimeException {
+		private IORuntimeException(IOException e) {
+			super(e);
 		}
 		private static final long serialVersionUID = 1L;
 	}
