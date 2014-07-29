@@ -1,5 +1,8 @@
 package labyrinth.engine.method;
 import static labyrinth.engine.method.VType.*;
+
+import java.util.List;
+
 import labyrinth.engine.Window;
 import tbm.util.geom.Point;
 
@@ -16,7 +19,7 @@ public abstract class Value implements Operation {
 	public Point Point() {throw Script.error("not a Point");}
 	public char Char() {throw Script.error("not a characther");}
 	public String String() {throw Script.error("not a string");}
-	public Value call(Value[] param) {throw Script.error("not a function");}
+	public Value call(List<Value> param) {throw Script.error("not a function");}
 	public void setRef(Value v) {throw Script.error("not a reference");}
 	public Value getRef() {throw Script.error("not a reference");}
 	@Override

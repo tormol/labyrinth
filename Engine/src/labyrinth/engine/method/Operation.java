@@ -42,4 +42,9 @@ public interface Operation extends Action {
 			Script.current.declare(name);
 		}
 	}
+
+	public static class Instance implements Operation {
+		public final Procedure proc;
+		public Instance()
+	}
 }

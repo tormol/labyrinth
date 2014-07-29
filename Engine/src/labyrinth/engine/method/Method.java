@@ -81,12 +81,49 @@ public class Method extends Value {
 		new Method("=", null, param->{
 			if (param.length == 2)
 				if (param[0].equals(param[1]))
-					;
+					return Value.True;
 				else
-					;
+					return Value.False;
+			else if (param.length != 1)
+				throw Script.error("=() takes oner or two parameters");
+			else if (Script.last.type == VType.REF)
+				Script.last.setRef(param[0]);
 			else
-				;
+				Script.error("last is not a reference", param[0])
 			return Value.Void;
+		});
+
+		new Method("+", null, param->{
+			if (param.length==0)
+				throw Script.error("+(): at least one arameter");
+			int sum=0;
+			for (Value v : param)
+				sum += v.Int();
+			return sum=
+		})
+
+		new Mathod("cat", null, param->{
+			int x=0, y=0;
+			for (Value v : param) {
+				Point p = v.point();
+				x += p.x;
+				y += p.y;
+			}
+			return new Value.Point(x, y);
+		});
+
+		new Method("cat", null, param->{
+			StringBuilder str = new StringBuilder();
+			for (Value v : param)
+				str.append(v.string());
+			return new Value.String(str.toString());
+		});
+
+		new Method("-", null, param\>{
+			if (param.length == 1)
+				return new Value.Int(-param[0].Int());
+			if (param.length == 2)
+				return new Value.Int(param[0].Int()-param[1])
 		});
 	}
 

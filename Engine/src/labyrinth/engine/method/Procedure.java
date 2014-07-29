@@ -5,6 +5,7 @@ import java.util.List;
 public class Procedure extends Value implements Operation {
 	private Iterable<Operation> operations;
 	public final String description;
+	public final Scope s;
 	public Procedure(Iterable<Operation> operations, String description) {
 		super(VType.FUNC);
 		this.description = description;
@@ -21,7 +22,7 @@ public class Procedure extends Value implements Operation {
 		return Script.last;
 	}
 
-	@Override
+	@Override//Value
 	public Value call(List<Value> param) {
 		if (param.size() != 0)
 			throw Script.error("this function takes no parameters");
