@@ -86,9 +86,9 @@ public class Labyrinth {
 		while (!finished)
 			try {switch (queue.take().getKeyCode()) {
 				case VK_LEFT :
+					start.get(index).leave(false);
 					if (index == 0)
 						index = start.size();
-					start.get(index).leave(false);
 					index--;
 					start.get(index).enter(player, false);						
 					break;

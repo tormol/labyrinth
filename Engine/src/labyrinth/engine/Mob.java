@@ -65,7 +65,8 @@ public abstract class Mob {
 	public void draw(Graphics g, int width, int height) {
 		//Rotate image to direction
 		AffineTransform transform = new AffineTransform();
-		transform.rotate(direction.theta, width/2, height/2);
+		//Rotation is done before scaling, so rotate around center of the image, not around the center of the tile.
+		transform.rotate(direction.theta, image.getWidth()/2, image.getHeight()/2);
 		AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BILINEAR);
 		g.drawImage(op.filter(image, null), 0, 0, width, height, null);
 	}
