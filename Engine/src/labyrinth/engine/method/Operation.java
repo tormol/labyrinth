@@ -1,7 +1,6 @@
 package labyrinth.engine.method;
 import java.util.ArrayList;
 import java.util.List;
-
 import labyrinth.engine.Action;
 
 //interface action in code called from code void(TIle, Mob)
@@ -40,11 +39,9 @@ public interface Operation extends Action {
 		@Override
 		public Value perform() {
 			Script.current.declare(name);
+			return Script.current.search(name);
 		}
 	}
 
-	public static class Instance implements Operation {
-		public final Procedure proc;
-		public Instance()
-	}
+	public static Operation getLast = ()->Script.last;
 }

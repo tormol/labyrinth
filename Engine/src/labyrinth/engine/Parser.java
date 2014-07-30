@@ -12,7 +12,7 @@ public class Parser extends tbm.util.Parser {
 	@Override/**@super Additionally skips comments.*/
 	public Parser sw() throws IOException {
 		super.sw();
-		while (peek() == '#') {
+		while (peek(false) == '#') {
 			line();
 			super.sw();
 		}
@@ -20,7 +20,7 @@ public class Parser extends tbm.util.Parser {
 	}
 
 	public ErrorDialog error(String f, Object... a) {
-		return Window.error("Line %d:%d: %s", getPos().line, getPos().col, String.format(f, a));
+		return Window.error("Line %d:%d: %s", getPos().line+1, getPos().col, String.format(f, a));
 	}
 
 	public int lineNumber() {

@@ -1,15 +1,13 @@
 package labyrinth.engine;
-import static tbm.util.statics.*;
-
+//import static tbm.util.statics.*;
+import static labyrinth.engine.method.Value.VType.*;
 import java.awt.FileDialog;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
-
+import tbm.util.Parser.EOS;
 import labyrinth.engine.TileMap.InvalidMapException;
 import labyrinth.engine.method.*;
 
@@ -36,54 +34,34 @@ public class MapFile {
 	 *TODO: UTF-8*/
 	public static void read(File path) {
 		try (Parser p = new Parser(path)) {
+			p.newline_whitespace = true;
 			Queue<char[]> map = new LinkedList<char[]>();
-			while ((map.isEmpty() || !p.empty()) && p.peek() != '\n')
+			while (!p.empty() && (p.peek() != '\n' || map.isEmpty()))
 				map.add(p.line().toCharArray());
 			TileMap.start(map);
-			parse_Procedure(p, null);
+			Script.parseFile(p);
 		} catch (FileNotFoundException e) {
 			throw Window.error("%s: File not Found.", path);
 		} catch (IOException e) {
 			throw Window.error("%s: Error reading file\n%s", path, e.getMessage());
 		} catch (InvalidMapException e) {
 			throw Window.error(e.getOffsetMessage(1));
+		} catch (EOS e) {
+			e.printStackTrace();
+			throw Window.error("Unexpected end of file %s", path.toString());
 		}
 
-/*
-		while (!lines.isEmpty()) {
-			MapFile.line++;
-			StringStream l = new StringStream(lines.removeFirst());
-			l.whitespace();
-			if (l.empty())
-				continue;
-			
-			String name = l.next(c -> char_word(c));
-			if (name.isEmpty())
-				Window.error("not a method");
-			if (l.next_nw() != ':')
-				Window.error("Method %s: not a method", name);
 
-			while (line.endsWith("\\") && !lines.isEmpty()) {
-				line = line.substring(0, -1) + lines.removeFirst().trim();
-				MapFile.line++;
-			}
-			if (line.startsWith("$"))
-				Constant.add(line);
-			else
-				Procedure.add( Constant.fillIn(line) );
-		}*/
-
-		/*TODO: uncumment when new system is finnished.*/
-		Variable wiewDistance = Script.getVar("viewDistaance");
-		if (wiewDistance != null) {
-			wiewDistance. = wiewDistance.trim();
-			if (wiewDistance.equals("av"))
-				wiewDistance = "0";
-			try {
-				TileMap.synsvidde( Integer.parseInt(wiewDistance) );
-			} catch (NumberFormatException e) {
-				throw Window.error("The Constant $synsvidde is not a number.\n%s", wiewDistance);
-			}
+		Scope.Variable viewDistance = Script.root.search("viewDistance");
+		if (viewDistance != null) {
+			Value vd = viewDistance.get();
+			if (vd.type == STRING  &&  vd.String().equals("disabled")  ||  vd == Value.False)
+				vd = new Value.VInt(0);
+			if (vd.type != INT)
+				throw Window.error("The variable viewDistance is not an integer.\n");
+			if (vd.Int() < 0)
+				throw Window.error("viewDistance cannot be negative");
+			TileMap.synsvidde( vd.Int() );
 		}
 	}
 }

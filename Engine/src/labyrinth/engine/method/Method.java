@@ -1,6 +1,8 @@
 package labyrinth.engine.method;
-import static labyrinth.engine.method.VType.*;
+import static labyrinth.engine.method.Value.VType.*;
 import static tbm.util.statics.*;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 import labyrinth.engine.*;
 import labyrinth.engine.method.Method;
@@ -16,13 +18,16 @@ public class Method extends Value {
 		Script.root.define(name, this);
 	}
 	@Override
-	public Value call(Value[] param) {
-		return internal.apply(param);
+	public Value call(List<Value> param) {
+		return internal.apply(param.toArray(new Value[param.size()]));
 	}
 
 
 
 
+	/**Runs the static code that adds the methods*/
+	public static void start()
+		{}
 	//methods add themselves to Moethod.map in the constructor.
 	static {
 		ParameterWalker pa = new ParameterWalker(null);
@@ -38,7 +43,7 @@ public class Method extends Value {
 			Type type = Type.t(symbol);
 			target.setType(type);
 			if (type.method)
-				target.method = String.valueOf(symbol);
+				target.method = charToString(symbol);
 			else
 				target.method = null;
 			return Value.Void;
@@ -55,7 +60,7 @@ public class Method extends Value {
 			if (Script.tile.mob() != null)
 				Script.mob = Script.tile.mob();
 			if (Script.tile.method != null)
-				Script.root.get(Script.tile.method).call(new Value[0]);
+				Script.root.get(Script.tile.method).call(new LinkedList<Value>());
 			return Value.Void;
 		});
 
@@ -89,41 +94,93 @@ public class Method extends Value {
 			else if (Script.last.type == VType.REF)
 				Script.last.setRef(param[0]);
 			else
-				Script.error("last is not a reference", param[0])
+				throw Script.error("last is not a reference", param[0]);
 			return Value.Void;
 		});
 
+		new Method("!", array(BOOL), param->{
+			if (param[0] == Value.True)
+				return Value.False;
+			if (param[0] == Value.False)
+				return Value.True;
+			throw Script.error("Unknown boolean: %s", param[0].toString());
+		});
+
+		new Method("&", array(BOOL), param->{
+			for (Value v : param)
+				if (v.Bool()==false)
+					return Value.False;
+			return Value.True;
+		});
+
+		new Method("|", array(BOOL), param->{
+			for (Value v : param)
+				if (v.Bool()==true)
+					return Value.True;
+			return Value.False;
+		});
+
+		new Method("^", array(BOOL, BOOL), param->{
+			if (param[0].Bool() == param[1].Bool())
+				return Value.False;
+			return Value.True;
+		});
+
+
 		new Method("+", null, param->{
-			if (param.length==0)
-				throw Script.error("+(): at least one arameter");
 			int sum=0;
 			for (Value v : param)
 				sum += v.Int();
-			return sum=
-		})
+			return new Value.VInt(sum);
+		});
 
-		new Mathod("cat", null, param->{
+		new Method("-", null, param->{
+			if (param.length == 1)
+				return new Value.VInt(-param[0].Int());
+			if (param.length == 2)
+				return new Value.VInt(param[0].Int()-param[1].Int());
+			throw Script.error("-(): one or two parameters");
+		});
+
+		new Method("*", null, param->{
+			int sum = 1;
+			for (Value v : param)
+				sum *= v.Int();
+			return new Value.VInt(sum);
+		});
+
+		new Method("/", array(INT, INT), param->{
+			return new Value.VInt( param[0].Int() / param[1].Int() );
+		});
+
+
+		new Method("p", array(POINT), param->{
+			pa.start(param);
+			Point p = pa.point();
+			pa.finish();
+			return new Value.VPoint(p);
+		});
+
+		new Method("p+", null, param->{
 			int x=0, y=0;
 			for (Value v : param) {
-				Point p = v.point();
+				Point p = v.Point();
 				x += p.x;
 				y += p.y;
 			}
-			return new Value.Point(x, y);
+			return new Value.VPoint(x, y);
 		});
+
 
 		new Method("cat", null, param->{
 			StringBuilder str = new StringBuilder();
 			for (Value v : param)
-				str.append(v.string());
-			return new Value.String(str.toString());
+				str.append(v.String());
+			return new Value.VString(str.toString());
 		});
 
-		new Method("-", null, param\>{
-			if (param.length == 1)
-				return new Value.Int(-param[0].Int());
-			if (param.length == 2)
-				return new Value.Int(param[0].Int()-param[1])
+		new Method("[]", array(STRING, INT), param->{
+			return new Value.VChar( param[0].String() .charAt( param[1].Int() ) );
 		});
 	}
 

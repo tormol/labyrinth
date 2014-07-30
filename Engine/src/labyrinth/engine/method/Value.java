@@ -1,12 +1,16 @@
 package labyrinth.engine.method;
-import static labyrinth.engine.method.VType.*;
-
+import static labyrinth.engine.method.Value.VType.*;
 import java.util.List;
-
 import labyrinth.engine.Window;
 import tbm.util.geom.Point;
 
-public abstract class Value implements Operation {
+public abstract class Value {
+	public enum VType {
+		VOID("void"), INT("int"), POINT("point"), CHAR("char"), STRING("string"), REF("ref"), FUNC("Func"), BOOL("bool"), STRUCT("struct");
+		private VType(String str)
+			{}
+	}
+
 	public final VType type;
 	protected Value(VType t) {
 		type=t;
@@ -19,18 +23,21 @@ public abstract class Value implements Operation {
 	public Point Point() {throw Script.error("not a Point");}
 	public char Char() {throw Script.error("not a characther");}
 	public String String() {throw Script.error("not a string");}
+	public boolean Bool() {throw Script.error("not a boolean");}
 	public Value call(List<Value> param) {throw Script.error("not a function");}
 	public void setRef(Value v) {throw Script.error("not a reference");}
 	public Value getRef() {throw Script.error("not a reference");}
-	@Override
-	public Value perform() {
-		return this;
-	}
 
 
 
 	public static Value Void = new Value(VOID)
 		{};
+	public static Value True = new Value(BOOL) {@Override public boolean Bool() {
+		return true;
+	}};
+	public static Value False = new Value(BOOL) {@Override public boolean Bool() {
+		return false;
+	}};
 
 
 	public static class VChar extends Value {
@@ -75,12 +82,25 @@ public abstract class Value implements Operation {
 			super(POINT);
 			this.p=p;
 		}
+		public VPoint(int x, int y) {
+			this(new Point(x, y));
+		}
 		@Override
 		public Point Point() {
 			return p;
 		}
+		@Override
+		public Value member(String m) {switch (m) {
+			case "x":
+				return new Value.VInt(p.x);
+			case "y":
+				return new Value.VInt(p.y);
+			default:
+				throw Script.error("Points has no member %s", m);
+		}}
 		public Point value() {return p;}
 	}
+
 
 	public static Value get(Object o) {
 		if (o instanceof String)
@@ -90,5 +110,34 @@ public abstract class Value implements Operation {
 		if (o instanceof Operation)
 			return ((Operation)o).perform();
 		throw Script.error("Value.get(): Unrecognized object.");
+	}
+
+
+	//test code to see if a subinterface can remove a default implementation
+	//it can, so VType can be removed
+	static interface a {
+		public default int Int() {
+			throw new RuntimeException();
+		};
+		public default char Char() {
+			throw new RuntimeException();
+		}
+	}
+	static interface Integer extends a {
+		public int Int();
+		static a create(Integer v) {return v;}
+	}
+	static class b implements Integer {
+		b(){}
+		@Override
+		public int Int() {
+			return 5;
+		}
+	}
+	static{
+		Integer.create(()->5);
+		new Integer(){@Override	public int Int() {
+			return 0;
+		}};
 	}
 }

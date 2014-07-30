@@ -9,6 +9,7 @@ import javax.swing.SwingUtilities;
 
 import tbm.util.geom.Point;
 import labyrinth.engine.*;
+import labyrinth.engine.TileMap.InvalidMapException;
 
 
 public class Eat {
@@ -16,7 +17,7 @@ public class Eat {
 	public static final int MAX_ENEMIES = 10;
 	static Player player;
 
-	public static void main(String[] args) throws InvocationTargetException, InterruptedException {
+	public static void main(String[] args) throws InvocationTargetException, InterruptedException, InvalidMapException {
 		Window.start("Eat");
 		Type.add("floor", false, false, null,          BLACK, " ");
 		Type.add("dot",   false, false, "res/dot.png", BLACK, ".");

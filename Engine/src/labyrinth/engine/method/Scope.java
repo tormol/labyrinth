@@ -2,18 +2,17 @@ package labyrinth.engine.method;
 import static tbm.util.statics.map_firstKey;
 import java.util.HashMap;
 import java.util.Map;
-import labyrinth.engine.Window;
 
 //can get map.getentry() with reflection, but thats dirty.
-class Scope {
+public class Scope {
 	public final Scope parent;
 	private final Map<String, Variable> vars = new HashMap<>();
 	public Scope(Scope parent) {
 		this.parent = parent;
 	}
 	public Variable declare(String name) {
-		if (!vars.containsKey(name))
-			throw Script.error("The variable %s is already declared.", name);
+		if (vars.containsKey(name))
+			throw Script.error("The variable \"%s\" is already declared.", name);
 		return vars.put(name, new Variable(true, Value.Void));
 	}
 	/**for inbuilt variables*/
@@ -38,7 +37,7 @@ class Scope {
 		return this;
 	}
 
-	class Variable extends Value {
+	public class Variable extends Value {
 		private Value value;
 		private boolean _final = false;
 		public final boolean _static;
@@ -61,9 +60,9 @@ class Scope {
 		}
 		public void set(Value v) {
 			if (_final)
-				throw Window.error("The variable has been finalized.");
+				throw Script.error("The variable has been finalized.");
 			if (v == null)
-				throw Window.error("tried to set a variable to null");
+				throw Script.error("tried to set a variable to null");
 			value = v;
 		}
 		public String findName() {

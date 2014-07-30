@@ -33,7 +33,7 @@ public class Tile extends javax.swing.JPanel {
 	/**Most mobs cannot enter solid tiles, and if trigger=true a method might be called*/
 	public boolean canEnter(Mob mob, boolean trigger) {
 		if (trigger && type.type("button"))
-			Script.call(method, this, mob);
+			Script.call('['+method+']', this, mob);
 		return !type.solid;
 	}
 
@@ -44,7 +44,7 @@ public class Tile extends javax.swing.JPanel {
 			this.mob.hit(mob);
 		this.mob = mob;
 		if (type.method && trigger)
-			Script.call(method, this, mob);
+			Script.call('['+method+']', this, mob);
 		repaint();
 		return this;
 	}
