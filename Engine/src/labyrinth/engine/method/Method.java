@@ -60,7 +60,7 @@ public class Method extends Value {
 			if (Script.tile.mob() != null)
 				Script.mob = Script.tile.mob();
 			if (Script.tile.method != null)
-				Script.root.get(Script.tile.method).call(new LinkedList<Value>());
+				Script.root.get('['+Script.tile.method+']').call(new LinkedList<Value>());
 			return Value.Void;
 		});
 
@@ -199,9 +199,10 @@ public class Method extends Value {
 			i=0;
 		}
 		public Point point() {
-			if (get().type==INT && get().type==INT)
-				return new Point(param[i-2].Int(), param[i-1].Int());
-			i -= 2;
+			int i = this.i;
+			if (i+1<param.length && get().type==INT && get().type==INT)
+				return new Point(param[this.i-2].Int(), param[this.i-1].Int());
+			this.i = i;
 			return get().Point();
 		}
 		public Value get() {

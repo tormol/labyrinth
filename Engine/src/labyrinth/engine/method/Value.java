@@ -103,9 +103,10 @@ public abstract class Value {
 
 
 	public static Value get(Object o) {
-		if (o instanceof String)
+		if (o instanceof String) {
+			Script.name = (String)o;
 			return Script.current.get((String)o);
-		if (o instanceof Value)
+		} if (o instanceof Value)
 			return (Value)o;
 		if (o instanceof Operation)
 			return ((Operation)o).perform();

@@ -6,4 +6,4 @@
 #...............#
 ########!########
 
-$synsvidde = av
+.viewDistance =("disabled")

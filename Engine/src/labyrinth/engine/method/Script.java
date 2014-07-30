@@ -19,6 +19,7 @@ public class Script {
 	//TODO: use singleton
 	static Mob mob = null;
 	static Tile tile = null;
+	static String name = null;
 	//the result of the last operation performed in a function
 	static Value last = Value.Void;
 	public static Value call(String name, Tile t, Mob m) {
@@ -31,7 +32,9 @@ public class Script {
 		return v.call(new LinkedList<Value>());
 	}
 	static Window.ErrorDialog error(String f, Object... a) {
-		return Window.error(f, a);
+		if (name == null)
+			return Window.error(f, a);
+		return Window.error("%s\n(Last variable: %s)", String.format(f, a), name);
 	}
 
 

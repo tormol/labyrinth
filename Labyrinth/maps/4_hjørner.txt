@@ -10,27 +10,28 @@ A   ###   B
      #     
 D   ###   C
 
-$ssynsvidde = 3
-$E = (0, 5)
-$F = (5, 0)
-$G = (5, 10)
-$H = (10, 5)
+.viewDistance =(3)
+.E =(p(0 5))
+.F =(p(5 0))
+.G =(p(5 10))
+.H =(p(10 5))
 
-A: set($E$,'E');
-B: set($F$,'F');
-C: set($G$,'G'); trigger($E$);
-D: set($H$,'H');
+.[A] =(: set(E 'E);)
+.[B] =(: set(F 'F);)
+.[C] =(: set(G 'G) trigger(E);)
+.[D] =(: set(H 'H);)
 
-E: trigger($F$);
-F: trigger($G$);
-G: trigger($H$);
-H: call("vinn");
+.vinn =(:
+	set(5 1 ' ') set(5 2 ' ') set(5 3 ' ') set(5 4 ' ') set(5 6 ' ') set(5 7 ' ') set(5 8 ' ') set(5 9 ' ')
+	set(1 5 ' ') set(2 5 ' ') set(3 5 ' ') set(4 5 ' ') set(6 5 ' ') set(7 5 ' ') set(8 5 ' ') set(9 5 ' ');)
 
-0: move(6,4);
-1: move((6,6));
-2: move((4,6));
-3: move((4,4));
+.[E] =(:trigger(F);)
+.[F] =(:trigger(G);)
+.[G] =(:trigger(H);)
+.[H] =(vinn)
 
-vinn : call("vinnX"); call("vinnY");
-vinnY: set((5,1),' '); set((5,2),' '); set((5,3),' '); set((5,4),' '); set((5,6),' '); set((5,7),' '); set((5,8),' '); set((5,9),' ');
-vinnX: set((1,5),' '); set((2,5),' '); set((3,5),' '); set((4,5),' '); set((6,5),' '); set((7,5),' '); set((8,5),' '); set((9,5),' '); 
+.[0] =(:move(6 4);)
+.[1] =(:move(6 6);)
+.[2] =(:move(4 6);)
+.[3] =(:move(4 4);)
+	
