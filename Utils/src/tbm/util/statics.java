@@ -30,6 +30,22 @@ public class statics {
 	public static boolean char_anyof(char c, String list) {
 		return list.indexOf(c) == -1;
 	}
+	public static boolean char_hex(char c) {
+		return char_num(c) || (c>='a' && c<='f') || (c>='A' && c<='F');
+	}
+	public static char char_asHex(char c) throws InvalidHexException {
+		if (char_num(c))
+			return(char)(c-'0');
+		if (c>='a' && c<='f')
+			return(char)(c-'a'+10);
+		if (c>='A' && c<='F')
+			return(char)(c-'A'+10);
+		//cannot write if (c<16)return c; because '\t' and '\n' are less than 16
+		throw new InvalidHexException(c);
+	}
+	public static char char_asHex(char c1, char c2) throws InvalidHexException {
+		return(char) (16*char_asHex(c1) + char_asHex(c2));
+	}
 
 	public static String charToString(char c) {
 		return String.valueOf(c);
@@ -89,5 +105,13 @@ public class statics {
 		for (F e : from)
 			to.add(convert.apply(e));
 		return to;
+	}
+
+
+	public static class InvalidHexException extends Exception {
+		public InvalidHexException(char c) {
+			super("'"+c+"' is not a hexadecimal characther.");
+		}
+		private static final long serialVersionUID = 1L;
 	}
 }

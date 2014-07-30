@@ -1,7 +1,5 @@
 package tbm.util;
-
 import static tbm.util.statics.*;
-
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -9,13 +7,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import tbm.util.statics.InvalidHexException;
 
 public class Parser implements Closeable, AutoCloseable {
-	public static void main(String[] args) {
-		char[] arr = "Hello world".toCharArray();
-		//System.out.println(new String(arr, 2, -1));//out of range
-		System.out.println(new String(arr, -1, 2));//out of range
-	}
 	public final File file;
 	private int line=0, col=0;
 	private BufferedReader src;
@@ -35,10 +29,11 @@ public class Parser implements Closeable, AutoCloseable {
 		else
 			lines.add(line.toCharArray());
 	}
-	public boolean empty() {
+	public boolean empty() throws IOException {
+		peek(false);
 		return end;
 	}
-	private int peek(boolean throw_EOS) throws IOException {
+	protected int peek(boolean throw_EOS) throws IOException {
 		if (line == lines.size()) {
 			read_line();
 			if (end)
@@ -67,6 +62,16 @@ public class Parser implements Closeable, AutoCloseable {
 			col = 0;
 			line++;
 		}
+		return this;
+	}
+	public Parser back() {
+		if (col == 0) {
+			if (line == 0)
+				throw new RuntimeException("Cannot back() from the start of a file.");
+			line--;
+			col = lines.get(line).length;
+		} else
+			col--;
 		return this;
 	}
 	/**skip whitespace*/
@@ -118,7 +123,7 @@ public class Parser implements Closeable, AutoCloseable {
 		int num=0;
 		char c=sw().peek();
 		if (!char_num(c))
-			throw new NumberFormatException("no numer at all");
+			throw new NumberFormatException("no number at all");
 		do {
 			skip();
 			num = num*10 + c-'0';
@@ -148,33 +153,58 @@ public class Parser implements Closeable, AutoCloseable {
 		col=0;
 		return str;
 	}
-	public String escapeString(char stop) throws IOException {
+	public String escapeString() throws IOException, InvalidEscapeException {
 		StringBuilder sb = new StringBuilder();
-		boolean escaped = false;
 		char c;
-		while ((c=next())!=stop || escaped)
-			if (escaped) {
-				if (c==stop)
-					sb.append(stop);
-				else
-					switch (c) {
-						case 't': sb.append('\t'); break;
-						case 's': sb.append(' '); break;
-						case '\n': sw();//a simple way to allow indentation
-						case 'n': sb.append('\n'); break;
-						case '\\': sb.append('\\'); break;
-						//case '': sb.append('\'); break;
-						default: sb.append('\\').append(c);
-					}
-				escaped = false;
-			}
-			else if (c=='\\')
-				escaped = true;
+		while ((c=next())!='"')
+			if (c=='\\')
+				sb.append(escaped());
 			else if (c=='\n')
-				throw new RuntimeException("line breaks must be escaped");
+				throw new InvalidEscapeException("line breaks must be escaped");
 			else
 				sb.append(c);
 		return sb.toString();
+	}
+
+	public char escapeChar() throws IOException, InvalidEscapeException {
+		char c = next();
+		if (c=='\n')
+			throw new InvalidEscapeException("line breaks must be escaped");
+		if (c=='\'')
+			return '\0';
+		if (c=='\\')
+			c = escaped();
+		if (peek() == '\'')
+			next();
+		return c;
+	}
+
+	private char escaped() throws IOException, InvalidEscapeException {
+		char c = next();
+		try{switch (c) {
+			case 't': return'\t';
+			case 's': return ' ';
+			case'\n': skip_whitespace();//a simple way to allow indentation
+			case 'n': return'\n';
+			case 'x': return char_asHex(next(), next());
+			case'a':case'b':case'c':case'd':case'e':case'f':
+				c -= 'a'-'A';
+			case'A':case'B':case'C':case'D':case'E':case'F':
+				c -= 'A'-'0'+10;
+			case'0':case'1':case'2':case'3':case'4':case'5':case'6':case'7':case'8':case'9':
+				return (char) (16*(c-'0') + char_asHex(next()));
+			//case '': return'\';
+			default: return c;
+		}} catch (InvalidHexException e) {
+			throw new InvalidEscapeException(e.getMessage());
+		}
+	}
+
+	public static class InvalidEscapeException extends Exception {
+		private InvalidEscapeException(String s, Object... o) {
+			super(String.format(s, o));
+		}
+		private static final long serialVersionUID = 1L;
 	}
 
 
