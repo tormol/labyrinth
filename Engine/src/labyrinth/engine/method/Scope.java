@@ -37,12 +37,11 @@ public class Scope {
 		return this;
 	}
 
-	public class Variable extends Value {
+	public class Variable implements Value.VRef {
 		private Value value;
 		private boolean _final = false;
 		public final boolean _static;
 		Variable(boolean _static, Value initial) {
-			super(VType.REF);
 			this._static = _static;
 			this.value = initial;
 		}

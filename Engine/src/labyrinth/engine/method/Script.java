@@ -1,5 +1,5 @@
 package labyrinth.engine.method;
-import static labyrinth.engine.method.Value.VType.*;
+import static labyrinth.engine.method.Value.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,11 +21,11 @@ public class Script {
 	static Tile tile = null;
 	static String name = null;
 	//the result of the last operation performed in a function
-	static Value last = Value.Void;
+	static Value last = Void;
 	public static Value call(String name, Tile t, Mob m) {
-		last = Value.Void;
+		last = Void;
 		Value v = current.get(name);
-		if (v.type != FUNC)
+		if (!(v instanceof VFunc))
 			Window.error("The variable %s is not a function.", name);
 		mob = m;
 		tile = t;

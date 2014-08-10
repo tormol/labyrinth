@@ -1,6 +1,6 @@
 package labyrinth.engine;
 //import static tbm.util.statics.*;
-import static labyrinth.engine.method.Value.VType.*;
+import static labyrinth.engine.method.Value.*;
 import java.awt.FileDialog;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -55,9 +55,9 @@ public class MapFile {
 		Scope.Variable viewDistance = Script.root.search("viewDistance");
 		if (viewDistance != null) {
 			Value vd = viewDistance.get();
-			if (vd.type == STRING  &&  vd.String().equals("disabled")  ||  vd == Value.False)
+			if (vd instanceof VString  &&  vd.String().equals("disabled")  ||  vd == Value.False)
 				vd = new Value.VInt(0);
-			if (vd.type != INT)
+			if (!(vd instanceof VInt))
 				throw Window.error("The variable viewDistance is not an integer.\n");
 			if (vd.Int() < 0)
 				throw Window.error("viewDistance cannot be negative");

@@ -1,104 +1,125 @@
 package labyrinth.engine.method;
-import static labyrinth.engine.method.Value.VType.*;
 import java.util.List;
-import labyrinth.engine.Window;
 import tbm.util.geom.Point;
 
-public abstract class Value {
-	public enum VType {
-		VOID("void"), INT("int"), POINT("point"), CHAR("char"), STRING("string"), REF("ref"), FUNC("Func"), BOOL("bool"), STRUCT("struct");
-		private VType(String str)
-			{}
-	}
-
-	public final VType type;
-	protected Value(VType t) {
-		type=t;
-	}
-	public Object value() {return null;}
-	//public VType basicType() {return type;}
+public interface Value {
 	/** a point has members x and y, to support structs, etc*/
-	public Value member(String name) {throw Window.error("%s have no members", type);}
-	public int Int() {throw Script.error("not an Integer");}
-	public Point Point() {throw Script.error("not a Point");}
-	public char Char() {throw Script.error("not a characther");}
-	public String String() {throw Script.error("not a string");}
-	public boolean Bool() {throw Script.error("not a boolean");}
-	public Value call(List<Value> param) {throw Script.error("not a function");}
-	public void setRef(Value v) {throw Script.error("not a reference");}
-	public Value getRef() {throw Script.error("not a reference");}
+	default Value member(String name) {throw Script.error("this type have no members");}
+	default int Int() {throw Script.error("not an Integer");}
+	default Point Point() {throw Script.error("not a Point");}
+	default char Char() {throw Script.error("not a characther");}
+	default String String() {throw Script.error("not a string");}
+	default boolean Bool() {throw Script.error("not a boolean");}
+	default Value call(List<Value> param) {throw Script.error("not a function");}
+	default void setRef(Value v) {throw Script.error("not a reference");}
+	default Value getRef() {throw Script.error("not a reference");}
+	default boolean equals(Value v) {
+		//if (!v.class.getName().equals(this.class.getName()))
+			return false;
+	}
+	boolean eq(Value v);
 
 
+	public static class VVoid implements Value {@Override
+		public boolean eq(Value v) {
+			return v==Void;
+		}
+	}
+	public static VVoid Void = new VVoid();
 
-	public static Value Void = new Value(VOID)
-		{};
-	public static Value True = new Value(BOOL) {@Override public boolean Bool() {
-		return true;
-	}};
-	public static Value False = new Value(BOOL) {@Override public boolean Bool() {
-		return false;
-	}};
+	public static class VBool implements Value {
+		public final boolean bool;
+		private VBool(boolean bool) {
+			this.bool = bool;
+		}@Override
+		public boolean Bool() {
+			return bool;
+		}@Override
+		public boolean eq(Value v) {
+			return bool==v.Bool();
+		}
+		public static VBool v(boolean b) {
+			return b?True:False;
+		}
+	}
+	public static VBool True  = new VBool(true );
+	public static VBool False = new VBool(false);
 
 
-	public static class VChar extends Value {
+	public static class VChar implements Value {
 		public final char c;
 		public VChar(char c) {
-			super(CHAR);
 			this.c=c;
-		}
-		@Override
+		}@Override
 		public char Char() {
 			return c;
+		}@Override
+		public boolean eq(Value v) {
+			return c==v.Char();
 		}
 	}
-	public static class VString extends Value {
+	public static class VString implements Value {
 		public final String str;
 		public VString(String str) {
-			super(STRING);
 			this.str=str;
-		}
-		@Override
+		}@Override
 		public String String() {
 			return str;
+		}@Override
+		public boolean eq(Value v) {
+			return str.equals(v.String());
 		}
 	}
 	
-
-	public static class VInt extends Value {
+	public static class VInt implements Value {
 		public final int n;
 		public VInt(int n) {
-			super(INT);
 			this.n=n;
-		}
-		@Override
+		}@Override
 		public int Int() {
 			return n;
+		}@Override
+		public boolean eq(Value v) {
+			return n==v.Int();
 		}
 	}
 
-	public static class VPoint extends Value {
-		public Point p;
+	public static class VPoint extends Point implements Value {
 		public VPoint(Point p) {
-			super(POINT);
-			this.p=p;
+			super(p);
 		}
 		public VPoint(int x, int y) {
-			this(new Point(x, y));
-		}
-		@Override
+			super(x,y);
+		}@Override
 		public Point Point() {
-			return p;
-		}
-		@Override
+			return this;
+		}@Override
 		public Value member(String m) {switch (m) {
-			case "x":
-				return new Value.VInt(p.x);
-			case "y":
-				return new Value.VInt(p.y);
-			default:
-				throw Script.error("Points has no member %s", m);
-		}}
-		public Point value() {return p;}
+			case"x":	return new Value.VInt(x);
+			case"y":	return new Value.VInt(y);
+			default:	throw Script.error("Points has no member %s", m);
+		}}@Override
+		public boolean eq(Value v) {
+			return super.equals(v.Point());
+		}
+		private static final long serialVersionUID = 1L;
+	}
+
+	public static interface VFunc extends Value {
+		@Override
+		Value call(List<Value> param);
+		@Override
+		default boolean eq(Value v) {
+			return v==this;
+		}
+	}
+
+	public static interface VRef extends Value {
+		@Override void setRef(Value v);
+		@Override Value getRef();
+		@Override default boolean eq(Value v) {
+			return this.getRef() == v.getRef();
+		}
 	}
 
 
@@ -113,32 +134,7 @@ public abstract class Value {
 		throw Script.error("Value.get(): Unrecognized object.");
 	}
 
-
-	//test code to see if a subinterface can remove a default implementation
-	//it can, so VType can be removed
-	static interface a {
-		public default int Int() {
-			throw new RuntimeException();
-		};
-		public default char Char() {
-			throw new RuntimeException();
-		}
-	}
-	static interface Integer extends a {
-		public int Int();
-		static a create(Integer v) {return v;}
-	}
-	static class b implements Integer {
-		b(){}
-		@Override
-		public int Int() {
-			return 5;
-		}
-	}
-	static{
-		Integer.create(()->5);
-		new Integer(){@Override	public int Int() {
-			return 0;
-		}};
+	public static boolean equalType(Value a, Value b) {
+		return true;
 	}
 }

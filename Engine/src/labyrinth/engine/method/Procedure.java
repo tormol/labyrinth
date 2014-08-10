@@ -16,10 +16,9 @@ public class Procedure implements Operation {
 		return new Instance(Script.current);
 	}
 
-	public class Instance extends Value implements Operation {
+	public class Instance implements Value.VFunc, Operation {
 		public final Scope parent;
 		public Instance(Scope parent) {
-			super(VType.FUNC);
 			this.parent = parent;
 		}
 
