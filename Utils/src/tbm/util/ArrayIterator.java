@@ -1,72 +1,160 @@
 package tbm.util;
-
+import java.util.function.Supplier;
+import java.util.ListIterator;
 import java.util.Iterator;
-//import java.util.ListIterator;
-
-public class ArrayIterator<E> implements Iterable<E>, Iterator<E> {
-	private final E[] array;
-	private int index=-1;
-
-	@SuppressWarnings("unchecked")
-	public ArrayIterator(E[] array) {
-		if (array == null)
-			this.array = (E[])new Object[0];
-		else
-			this.array = array;
+//array[index>>1] and odd numbers are between doesnt work with set()
+public abstract class ArrayIterator<E> implements Iterator<E> {
+	@SafeVarargs
+	public static <E> ArrayIterator<E> iter(E... a) {
+		return new ArrayIterator<E>(){protected E[] getArray(){
+			return a;
+		}};
 	}
-
-	@Override//Iterable
-	public Iterator<E> iterator() {
-		return this;
+	public static <E> ArrayIterator<E> iter(Supplier<E[]> prod) {
+		return new ArrayIterator<E>(){protected E[] getArray(){
+			return prod.get();
+		}};
 	}
+	protected abstract E[] getArray();
+	int index=-1;//last
 
 	@Override//Iterator
 	public boolean hasNext() {
-		return (index+1 < array.length);
-	}
-	@Override//Iterator
+		return (index+1)>>1 < getArray().length;
+	}@Override//Iterator
 	public E next() {
 		index++;
-		if (index >= array.length)
+		if (index == getArray().length) {
+			index--;
 			return null;
-		return array[index]; 
+		}
+		return getArray()[index];
 	}
-	@Override//Iterator
-	public void remove() {
-		throw new UnsupportedOperationException();		
-	}
-
-	//@Override//ListIterator
-	public E set(E e) {
-		if (index == -1  ||  index >= array.length)
-			throw new IllegalStateException();
-		array[index] = e;
+	public E peek() {
+		E e = next();
+		index--;
 		return e;
 	}
-
-	/*
-	@Override//ListIterator
-	public void add(E arg0) {
-		throw new UnsupportedOperationException();
-	}
-	@Override//ListIterator
+	public void skip() {
+		index++;
+	}@Override//Iterator
+	public void remove() {
+		throw new UnsupportedOperationException();		
+	}//ListIterator
+	public void set(E e) {
+		if (index == -1)
+			throw new IllegalStateException();
+		getArray()[index>>1] = e;
+	}//ListIterator
 	public boolean hasPrevious() {
-		return (index>0);
-	}
-	@Override//ListIterator
+		return index != -1;
+	}//ListIterator
 	public int nextIndex() {
-		if (index==array.length)
-			return array.length;
 		return index+1;
-	}
-	@Override//ListIterator
+	}//ListIterator
 	public E previous() {
 		if (index==-1)
 			return null;
-		
-	}
-	@Override//ListIterator
+		return getArray()[index];
+	}//ListIterator
 	public int previousIndex() {
-		return index-1;
-	}*/
+		return index;
+	}
+
+
+	public static abstract class List<E> extends ArrayIterator<E> {
+		@Override//Iterator
+		public boolean hasNext() {
+			return (index+1)>>1 < getArray().length;
+		}@Override//Iterator
+		public E next() {
+			index++;
+			if (index>>1 == getArray().length) {
+				index--;
+				return null;
+			}
+			E e = getArray()[index>>1];
+			index++;
+			return e;
+		}
+		public E peek() {
+			E e = next();
+			index-=2;
+			return e;
+		}
+		public void skip() {
+			index+=2;
+		}//ListIterator
+		public void set(E e) {
+			if (index == -1)
+				throw new IllegalStateException();
+			getArray()[(index-1)>>1] = e;
+		}//ListIterator
+		public void add(E e) {
+			throw new UnsupportedOperationException();
+		}//ListIterator
+		public boolean hasPrevious() {
+			return index != -1;
+		}//ListIterator
+		public int nextIndex() {
+			return index+1;
+		}//ListIterator
+		public E previous() {
+			if (index==-1)
+				return null;
+			index--;
+			E e = getArray()[index];
+			index--;
+			return e;
+		}//ListIterator
+		public int previousIndex() {
+			return index-1;
+		}
+	}
+
+	//array[index>>1] and odd numbers are between doesnt work with set()
+	public static abstract class notsetable<E> extends List<E> implements ListIterator<E> {
+		@Override//ListIterator
+		public void set(E e) {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+
+
+	public static abstract class Full<E> extends ArrayIterator<E> implements ListIterator<E> {
+		private int next = 0;
+		@Override//Iterator
+		public E next() {
+			if (next==getArray().length)
+				return null;
+			if (next>index)
+				index++;
+			next=index+1;
+			return getArray()[index];
+		}@Override//ListIterator
+		public void set(E e) {
+			if (index == -1)
+				throw new IllegalStateException();
+			getArray()[index] = e;
+		}@Override//ListIterator
+		public int nextIndex() {
+			if (next>index)
+				return next;
+			return index;
+		}@Override//ListIterator
+		public E previous() {
+			if (next==-1)
+				return null;
+			if (next<index)
+				index--;
+			next=index-1;
+			return getArray()[index];
+		}@Override//ListIterator
+		public int previousIndex() {
+			if (next<index)
+				return next;
+			return index;
+		}
+	}
 }

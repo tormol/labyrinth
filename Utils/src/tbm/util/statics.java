@@ -1,5 +1,4 @@
 package tbm.util;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,53 +13,69 @@ import java.util.regex.Pattern;
 public class statics {
 	public static boolean char_letter(char c) {
 		return ((c>='a' && c<='z')  ||  (c>='A' && c<='Z')  ||  c=='_');
-	}
-	public static boolean char_num(char c) {
+	}public static boolean char_num(char c) {
 		return (c>='0' && c<='9');
-	}
-	public static boolean char_word(char c) {
+	}public static boolean char_word(char c) {
 		return (char_num(c) || char_letter(c));
-	}
-	public static boolean char_whitespace(char c) {
+	}public static boolean char_whitespace(char c) {
 		return (c==' ' || c=='\t' ||  c=='\n');
-	}
-	public static boolean char_mathches(char c, String regex) {
+	}public static boolean char_mathches(char c, String regex) {
 		return charToString(c).matches(regex);
-	}
-	public static boolean char_anyof(char c, String list) {
+	}public static boolean char_anyof(char c, String list) {
 		return list.indexOf(c) == -1;
-	}
-	public static boolean char_hex(char c) {
+	}public static boolean char_anyof(char c, char... list) {
+		for (char e : list)
+			if (c==e)
+				return true;
+		return false;
+	}public static boolean char_hex(char c) {
 		return char_num(c) || (c>='a' && c<='f') || (c>='A' && c<='F');
 	}
-	public static char char_asHex(char c) throws InvalidHexException {
-		if (char_num(c))
-			return(char)(c-'0');
+
+	public static class InvalidHexException extends Exception {
+		public InvalidHexException(char c) {
+			super("'"+c+"' is not a hexadecimal characther.");
+		}
+		private static final long serialVersionUID = 1L;
+	}public static int char_asHex(int c) {
+		if (c>='0' && c<='9')
+			return c-'0';
 		if (c>='a' && c<='f')
-			return(char)(c-'a'+10);
+			return c-'a'+10;
 		if (c>='A' && c<='F')
-			return(char)(c-'A'+10);
+			return c-'A'+10;
 		//cannot write if (c<16)return c; because '\t' and '\n' are less than 16
-		throw new InvalidHexException(c);
-	}
-	public static char char_asHex(char c1, char c2) throws InvalidHexException {
+		return -1;
+	}public static char char_asHex(char c) throws InvalidHexException {
+		c = char_asHex(c);
+		if (c==(char)-1)
+			throw new InvalidHexException(c);
+		return c;
+	}public static char char_asHex(char c1, char c2) throws InvalidHexException {
 		return(char) (16*char_asHex(c1) + char_asHex(c2));
+	}public static int char_toInt(char base, char c) {
+		if (base == 16) {
+			if (c >= 'a'  && c <= 'f')
+				return 10+c-'a';
+			if (c >= 'A'  && c <= 'F')
+				return 10+c-'A';
+		} else if (base < 2  ||  base > 10)
+			throw new RuntimeException("tbm.util.statics.char_toInt(): invalid base: "+base+"\nValid bases are 2-10, 16 and 256.");
+		c -= '0';
+		if (c < base)
+			return c;
+		return -1;
 	}
 
 	public static String charToString(char c) {
 		return String.valueOf(c);
-	}
-	public static String String_nchars(int n, char c) {
+	}public static String String_nchars(int n, char c) {
 		char[] arr = new char[n];
 		Arrays.fill(arr, c);
 		return new String(arr);
+	}public static boolean String_equal(String a, String b) {
+		return a==null ? false : a.equals(b);
 	}
-	public static boolean String_equal(String a, String b) {
-		if (a==null || b==null)
-			return false;
-		return a.equals(b);
-	}
-
 	/**Returns an array with all matches of regex i str.*/
 	public static String[] String_findAll(String str, String regex) {
 		LinkedList<String> found = new LinkedList<String>();
@@ -70,11 +85,16 @@ public class statics {
 		return found.toArray(new String[found.size()]);
 	}
 
+
 	@SafeVarargs//I'm not certain http://docs.oracle.com/javase/specs/jls/se7/html/jls-9.html#jls-9.6.3.7
 	//javas lack of syntactic sugar is ... WHAT! HOW CAN I FORGET THIS?!
 	/**a shorter initialization*/
-	public static <T> T[] array(T... e) {
-		return e;
+	public static <T> T[] array(T... a) {
+		return a;
+	}
+	@SafeVarargs
+	public static <T> List<T> list(T... a) {
+		return Arrays.asList(a);
 	}
 
 	@SafeVarargs
@@ -107,11 +127,9 @@ public class statics {
 		return to;
 	}
 
-
-	public static class InvalidHexException extends Exception {
-		public InvalidHexException(char c) {
-			super("'"+c+"' is not a hexadecimal characther.");
-		}
-		private static final long serialVersionUID = 1L;
+	static {
+		int i = -1;	//if i is final I get a warning: comparing identical expression, so this is probably guaranteed.
+		if ((char)i != (char)-1  ||  (char)i != 0xffff)
+			throw new RuntimeException("(char)((int)-1) != 0xffff");
 	}
 }

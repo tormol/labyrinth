@@ -1,5 +1,7 @@
 package tbm.util;
 import static tbm.util.statics.*;
+import tbm.util.parseNum;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -7,14 +9,26 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+
 import tbm.util.statics.InvalidHexException;
 
 public class Parser implements Closeable, AutoCloseable {
+	/**End of file, will always be -1*///because internal code depends on it;
+	public static final int END = -1;
+	public static char checkEnd(int c) {
+		if (c==END)
+			throw new EOS();
+		return (char)c;
+	}
+
 	public final File file;
 	private int line=0, col=0;
 	private BufferedReader src;
 	private final ArrayList<char[]> lines = new ArrayList<>();
+	/**Is newline a whitespace character?*/
 	public boolean newline_whitespace = false;
+	/**Should the int parsing methods detect other number systems?*/
+	public boolean int_other_systems = true;
 	private boolean end = false;
 	public Parser(File file) throws FileNotFoundException {
 		this.file = file;
@@ -30,27 +44,29 @@ public class Parser implements Closeable, AutoCloseable {
 			lines.add(line.toCharArray());
 	}
 	public boolean empty() throws IOException {
-		peek(false);
+		peek();
 		return end;
 	}
-	protected int peek(boolean throw_EOS) throws IOException {
+	public int ipeek() throws IOException {
 		if (line == lines.size()) {
 			read_line();
 			if (end)
-				if (throw_EOS)
-					throw new EOS();
-				else
-					return -1;
+				return END;
 		}
 		if (col == lines.get(line).length)
 			return '\n';
 		return lines.get(line)[col];
 	}
 	public char peek() throws IOException {
-		return (char)peek(true);
+		return checkEnd(ipeek());
+	}
+	public int inext() throws IOException {
+		int c = ipeek();
+		skip();
+		return c;
 	}
 	public char next() throws IOException {
-		char c = peek();
+		char c = checkEnd(ipeek());
 		skip();
 		return c;
 	}
@@ -75,16 +91,19 @@ public class Parser implements Closeable, AutoCloseable {
 		return this;
 	}
 	/**skip whitespace*/
-	public Parser skip_whitespace() throws IOException {
-		int ch = peek(false);
+	public Parser skip_whitespace(boolean newline_whitespace) throws IOException {
+		int ch = ipeek();
 		while (ch==' ' || ch=='\t' || (ch=='\n' && newline_whitespace)) {
 			skip();
-			ch = peek(false);
+			ch = ipeek();
 		}
 		return this;
 	}
+	public Parser skip_whitespace() throws IOException {
+		return skip_whitespace(newline_whitespace);
+	}
 	public Parser sw() throws IOException {
-		return skip_whitespace();
+		return skip_whitespace(newline_whitespace);
 	}
 	public Pos getPos() {
 		return new Pos(line, col);
@@ -116,29 +135,25 @@ public class Parser implements Closeable, AutoCloseable {
 			sb.append(lines.get(line), 0, col);
 		return sb.toString();
 	}
-	
 
-
-	public int _uint() throws IOException {
-		int num=0;
-		char c=sw().peek();
-		if (!char_num(c))
-			throw new NumberFormatException("no number at all");
-		do {
-			skip();
-			num = num*10 + c-'0';
-			c = peek();
-		} while (char_num(c));
+	private class PNSupply implements parseNum.CharSupplier<IOException> {
+		@Override public char get() throws IOException {
+			if (end)
+				throw new EOS();
+			return (char)inext();
+		}
+	}	
+	public int _uint(boolean negative, boolean other_systems) throws IOException, NumberFormatException {
+		int num = parseNum.unsigned(new PNSupply(), negative, other_systems);
+		back();
 		return num;
 	}
-	public int _int() throws IOException {
-		int sign=1;
-		if (sw().peek()=='-') {
-			sign = -1;
-			skip();
-		}
-		return sign*_uint();
+	public int _int(boolean other_systems) throws IOException, NumberFormatException {
+		int num = parseNum.signed(new PNSupply(), other_systems);
+		back();
+		return num;
 	}
+
 	public String next(CaptureChar c) throws IOException {
 		Pos start = getPos();
 		while (c.capture(peek()))
@@ -215,8 +230,8 @@ public class Parser implements Closeable, AutoCloseable {
 	}
 
 	public static class EOS extends RuntimeException {
-		private EOS() {
-			super();
+		public EOS() {
+			super("Unexpected end of stream.");
 		}
 		private static final long serialVersionUID = 1L;
 	}
