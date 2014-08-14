@@ -1,11 +1,12 @@
 package labyrinth.engine.method;
 import static labyrinth.engine.method.Value.*;
-
+import static tbm.util.statics.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
+import tbm.util.Parser.EOS;
+import tbm.util.Parser.Pos;
 import tbm.util.Parser.InvalidEscapeException;
 import labyrinth.engine.Mob;
 import labyrinth.engine.Parser;
@@ -59,7 +60,7 @@ public class Script {
 	private static List<Object> parse(Parser p, Mode m) throws IOException {
 		ArrayList<Object> ops = new ArrayList<>();
 		boolean stop = false;
-		while (!stop && !(p.sw().empty() && m==Mode.STATIC)) switch (p.next()) {
+		while (!stop && !(p.sw().empty() && m==Mode.STATIC))  switch (p.next()) {
 			case'.':
 				if (!isStartVar(p.peek()))
 					throw p.error("Variable name required after a dot.");
@@ -70,10 +71,8 @@ public class Script {
 				else
 					ops.add(new Operation.Declare(name));
 				break;
+	
 			case'(':
-				if (ops.isEmpty())
-					throw p.error("cannot start a body with a '('");
-				Object toCall = ops.remove(ops.size()-1);
 				//TODO: description
 				//TODO: parameter validation
 				//ops.add(f.instance(params));
@@ -92,33 +91,85 @@ public class Script {
 			case':':
 				ops.add(new Procedure(parse(p, Mode.FUNCTION), null));
 				break;
-			case'"':
-				try {
-					ops.add(new Value.VString(p.escapeString()));
-				} catch (InvalidEscapeException e) {
-					throw p.error(e.getMessage());
-				} break;
-			case'\'':
-				try {
-					ops.add(new Value.VChar(p.escapeChar()));
-				} catch (InvalidEscapeException e) {
-					throw p.error(e.getMessage());
-				} break;
-			case'0':case'1':case'2':case'3':case'4':case'5':case'6':case'7':case'8':case'9':
-				p.back();
-				ops.add(new Value.VInt(p._uint()));
-				break;
-			default: //name
-				p.back();
-				ops.add(p.next( c->isContVar(c) ));
 		}
 		return ops;
 	}
 
+	private static Procedure method(Parser p) throws IOException {
+		Pos start = p.getPos();
+		Script.current = new Scope(Script.current);
+		ArrayList<Object> ops = new ArrayList<>();
+		
+		while (true) switch(p.sw().next()){
+		case')':
+			Script.current = Script.current.parent;
+			Pos end = p.getPos();
+			String desc = String.format("start %i:%i, end %i:%i", start.line, start.col, end.line, end.col);
+			return new Procedure(ops, desc);
+		case'.':
+			if ()
+		}
+	}
+
+	private static Object statement(Parser p, Mode m) throws IOException {
+		switch (p.next()) {
+			case'.':
+				if (!isStartVar(p.peek()))
+					throw p.error("Variable name required after a dot.");
+				String name = p.next(c->isContVar(c));
+				if (name.isEmpty())
+					return Operation.getLast;
+				if (m==Mode.PARAMETER)
+					;
+				return new Operation.Declare(name);
+			case'(':
+				return parse(p, Mode.PARAMETER);
+			case')':
+				throw p.error("Unexpected closing parenthesis");
+			case';'://end method
+				throw p.error("Unexpected semicolon");
+			case':'://method
+				return new Procedure(parse(p, Mode.FUNCTION), null);
+			case'"'://string
+				try {
+					return new Value.VString(p.escapeString());
+				} catch (InvalidEscapeException e) {
+					throw p.error(e.getMessage());
+				}
+			case'\''://char
+				try {
+					return new VChar(p.escapeChar());
+				} catch (InvalidEscapeException e) {
+					throw p.error(e.getMessage());
+				}
+			case'1':case'2':case'3':case'4':case'5':
+			case'6':case'7':case'8':case'9':case'0':
+				p.back();
+				return new VInt(parseInt(p, false));
+			case'-'://negative int if directly followed by a number
+				if (char_num((char)p.ipeek()))
+					return new VInt(parseInt(p, true));
+			default: //name
+				p.back();
+				return p.next( ch->isContVar(ch) );
+		}
+
+	}
+
 	private static boolean isContVar(char c) {
-		return "#.():; \t\n".indexOf(c)==-1;
+		return !char_anyof(c, '#','.','(',')',':',';',' ','\t','\n');
 	}
 	private static boolean isStartVar(char c) {
-		return isContVar(c) && "\"1234567890".indexOf(c)==-1;
+		return isContVar(c) && c!='"' && c!='\'' && !char_num(c);
+	}
+	private static int parseInt(Parser p, boolean negative) throws IOException {
+		int num;
+		try {
+			num = p._uint(negative, true);
+		} catch (NumberFormatException e) {
+			throw p.error(e.getMessage());
+		} if (isContVar((char)p.ipeek()))
+			throw p.error("Invalid number.");
+		return num;
 	}
 }

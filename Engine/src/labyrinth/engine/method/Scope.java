@@ -39,27 +39,20 @@ public class Scope {
 
 	public class Variable implements Value.VRef {
 		private Value value;
-		private boolean _final = false;
-		public final boolean _static;
-		Variable(boolean _static, Value initial) {
-			this._static = _static;
+		public final boolean _final;
+		Variable(boolean _final, Value initial) {
+			this._final = _final;
 			this.value = initial;
 		}
 		public boolean isFinal() {
 			return _final;
-		}
-		public boolean isStatic() {
-			return _static;
-		}
-		public void finalize() {
-			_final = true;
 		}
 		public Value get() {
 			return value;
 		}
 		public void set(Value v) {
 			if (_final)
-				throw Script.error("The variable has been finalized.");
+				throw Script.error("The variable is final.");
 			if (v == null)
 				throw Script.error("tried to set a variable to null");
 			value = v;
@@ -73,7 +66,7 @@ public class Scope {
 
 		@Override//Value
 		public void setRef(Value v) {
-			this.value = v;
+			set(v);
 		}
 		@Override//Value
 		public Value getRef() {

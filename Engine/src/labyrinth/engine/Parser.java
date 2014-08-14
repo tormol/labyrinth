@@ -12,7 +12,7 @@ public class Parser extends tbm.util.Parser {
 	@Override/**@super Additionally skips comments.*/
 	public Parser sw() throws IOException {
 		super.sw();
-		while (peek(false) == '#') {
+		while (ipeek(false) == '#') {
 			line();
 			super.sw();
 		}
