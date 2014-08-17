@@ -2,8 +2,8 @@ package tbm.util;
 import java.util.function.Supplier;
 import java.util.ListIterator;
 import java.util.Iterator;
-//array[index>>1] and odd numbers are between doesnt work with set()
-public abstract class ArrayIterator<E> implements Iterator<E> {
+
+public abstract class ArrayIterator<E> implements Iterator<E>, Iterable<E> {
 	@SafeVarargs
 	public static <E> ArrayIterator<E> iter(E... a) {
 		return new ArrayIterator<E>(){protected E[] getArray(){
@@ -59,6 +59,11 @@ public abstract class ArrayIterator<E> implements Iterator<E> {
 	}//ListIterator
 	public int previousIndex() {
 		return index;
+	}
+
+	/**Allows using this class with foreach loops*/@Override//Iterable
+	public Iterator<E> iterator() {
+		return this;
 	}
 
 

@@ -4,92 +4,228 @@ import tbm.util.parseNum;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.function.Supplier;
 
 import tbm.util.statics.InvalidHexException;
 
-public class Parser implements Closeable, AutoCloseable {
+public class Parser implements Closeable, AutoCloseable, CharSupplier<IOException>, Cloneable {
 	/**End of file, will always be -1*///because internal code depends on it;
 	public static final int END = -1;
-	public static char checkEnd(int c) {
+	public static char checkEnd(int c) throws EOFException {
 		if (c==END)
-			throw new EOS();
+			throw new EOFException(eof);
 		return (char)c;
 	}
+	protected static String eof = "Unexpected end of stream.";
 
-	public final File file;
-	private int line=0, col=0;
-	private BufferedReader src;
-	private final ArrayList<char[]> lines = new ArrayList<>();
+	protected final Base base;
+	private int line, col;
 	/**Is newline a whitespace character?*/
-	public boolean newline_whitespace = false;
+	public final boolean newline_whitespace;
 	/**Should the int parsing methods detect other number systems?*/
-	public boolean int_other_systems = true;
-	private boolean end = false;
-	public Parser(File file) throws FileNotFoundException {
-		this.file = file;
-		this.src = new BufferedReader(new FileReader(file));
+
+	private Parser(Base base, boolean newline_whitespace, int line, int col) {
+		this.base = base; 
+		this.newline_whitespace = newline_whitespace;
+		this.line = line;
+		this.col = col;
 	}
-	private void read_line() throws IOException {
-		if (end)
-			return;
-		String line = src.readLine();
-		if (line==null)
-			end = true;
-		else
-			lines.add(line.toCharArray());
+	protected Parser(Parser p, boolean newline_whitespace, int line, int col) {
+		this(p.base, newline_whitespace, line, col);
 	}
-	public boolean empty() throws IOException {
-		peek();
-		return end;
-	}
-	public int ipeek() throws IOException {
-		if (line == lines.size()) {
-			read_line();
-			if (end)
-				return END;
+
+	/**TODO: replace with interface, but then I need length(), get(line) and get(line, col)*/
+	private static class Base extends ArrayList<String> implements Closeable {
+		/**read a line from src*/
+		public boolean read_line() throws IOException {
+			return false;
 		}
-		if (col == lines.get(line).length)
-			return '\n';
-		return lines.get(line)[col];
+		@Override//Closeable
+		public void close() throws IOException {
+			do_nothing();
+		}
+		public String toString() {
+			return "";
+		}
+		private static final long serialVersionUID = 1L;
 	}
-	public char peek() throws IOException {
-		return checkEnd(ipeek());
+	public Parser(String str, boolean newline_whitespace) {
+		this(new Base(), newline_whitespace, 0, 0);
+		for (String line : str.split("\n"))
+			base.add(line);
+	}
+	private static class FileBase extends Base {
+		public final File file;
+		private BufferedReader src;
+		public FileBase(File file) throws FileNotFoundException {
+			this.file = file;
+			this.src = new BufferedReader(new FileReader(file));
+		}
+		public synchronized boolean read_line() throws IOException {
+			if (src == null)
+				return false;
+			String line = src.readLine();
+			if (line == null) {
+				close();
+				return false;
+			}
+			/**Might change this, String charAt() is faster than asArray()*/
+			add(line);
+			return true;
+		}
+		public String toString() {
+			return file.getPath() + ' ';
+		}
+		/**Close the file.*/@Override//Closeable
+		public synchronized void close() throws IOException {
+			if (src != null) {
+				src.close();
+				src = null;
+			}
+		}
+		private static final long serialVersionUID = 1L;
+	}
+	public Parser(File file, boolean newline_whitespace) throws FileNotFoundException {
+		this(new FileBase(file), newline_whitespace, 0, 0);
+	}
+
+	private static class SupplierBase extends Base {
+		public SupplierBase(Supplier<String> get) {
+			this.get = get;
+		}
+		public final Supplier<String> get;
+		@Override public boolean read_line() throws IOException {
+			String line = get.get();
+			if (line == null)
+				return false;
+			add(line);
+			return true;
+		}
+		private static final long serialVersionUID = 1L;
+	}
+	public Parser(Supplier<String> get, boolean newline_whitespace) {
+		this(new SupplierBase(get), newline_whitespace, 0, 0);
+	}
+	@Override//Cloneable
+	public Parser clone() {
+		return new Parser(base, newline_whitespace, line, col);
+	}
+	public Parser with_newline_whitespace(boolean newline_whitespace) {
+		return new Parser(base, newline_whitespace, line, col);
+	}
+	/**Set the line and col of to that of p.
+	 *@return this*/
+	public Parser setPos(Parser p) {
+		if (p.base != this.base)
+			throw new RuntimeException("The parser belong tho another source.");
+		this.line = p.line;
+		this.col  = p.col;
+		return this;
+	}
+	
+
+	@Override//Closeable, AutoCloseable
+	/**If this Parser is backed by a file or stream, it is closed, if not nothing happens*/
+	public void close() throws IOException {
+		base.close();
+	}
+
+	/**Read everything from the source and close it.*/
+	public void read_all() throws IOException {
+		while (base.read_line())
+			do_nothing();
+		base.close();
+	}
+
+	/**@return wheter the source is empty*/
+	public boolean empty() throws IOException {
+		if (line == base.size())
+			return !base.read_line();
+		return false;
+	}
+	/**Skip to the next char
+	 *@return this*/
+	public Parser skip() throws IOException {
+		if (!empty()) {
+			col++;
+			if (col > base.get(line).length()) {
+				col = 0;
+				line++;
+			}
+		}
+		return this;
+	}
+	/**Move to the previous char
+	 *@return this*/
+	public Parser back() {
+		if (col == 0) {
+			if (line == 0)
+				throw new RuntimeException("Cannot back() from the start of a file.");
+			line--;
+			col = base.get(line).length();
+		} else
+			col--;
+		return this;
+	}
+
+	/**get the char at the current positon without incrementing the position. returns -1 if there is nothing to read.*/
+	public int ipeek() throws IOException {
+		if (empty())
+			return END;
+		if (col == base.get(line).length())
+			return '\n';
+		return base.get(line).charAt(col);
+	}
+	/**get the char at the current positon without incrementing the position. returns -1 if there is nothing to read.*/
+	public char peek() throws IOException, EOFException {
+		int c = ipeek();
+		if (c == END)
+			throw new EOFException(eof);
+		return (char)c;
 	}
 	public int inext() throws IOException {
 		int c = ipeek();
 		skip();
 		return c;
 	}
-	public char next() throws IOException {
-		char c = checkEnd(ipeek());
+	public char next() throws IOException, EOFException {
+		int c = ipeek();
+		if (c == END)
+			throw new EOFException(eof);
 		skip();
-		return c;
+		return (char)c;
 	}
-	public Parser skip() throws IOException {
-		if (col == 0)
-			peek();
-		col++;
-		if (col > lines.get(line).length) {
-			col = 0;
-			line++;
-		}
+
+
+
+	public int getLine() {
+		return line;
+	}
+	public int getCol() {
+		return col;
+	}
+	public int length(int line) {
+		if (line < 0  || line >= base.size())
+			throw new IndexOutOfBoundsException("");
+		return base.get(line).length();
+	}
+
+	public Parser setPos(int line, int col) {
+		if (line<0 || line>=base.size())
+			throw new IndexOutOfBoundsException("Line out of range");
+		if (col<0 || col>=base.get(line).length())
+			throw new IndexOutOfBoundsException("col out of range");
+		this.line = line;
+		this.col = col;
 		return this;
 	}
-	public Parser back() {
-		if (col == 0) {
-			if (line == 0)
-				throw new RuntimeException("Cannot back() from the start of a file.");
-			line--;
-			col = lines.get(line).length;
-		} else
-			col--;
-		return this;
-	}
+
 	/**skip whitespace*/
 	public Parser skip_whitespace(boolean newline_whitespace) throws IOException {
 		int ch = ipeek();
@@ -99,162 +235,159 @@ public class Parser implements Closeable, AutoCloseable {
 		}
 		return this;
 	}
-	public Parser skip_whitespace() throws IOException {
+	public final Parser skip_whitespace() throws IOException {
 		return skip_whitespace(newline_whitespace);
 	}
-	public Parser sw() throws IOException {
+	public final Parser sw() throws IOException {
 		return skip_whitespace(newline_whitespace);
 	}
-	public Pos getPos() {
-		return new Pos(line, col);
-	}
-	public Parser setPos(int line, int col) {
-		if (line<0 || line>=lines.size())
-			throw new IndexOutOfBoundsException("Line out of range");
-		if (col<0 || col>=lines.get(line).length)
-			throw new IndexOutOfBoundsException("col out of range");
-		this.line = line;
-		this.col = col;
-		return this;
-	}
-	public String subString(Pos start) {
+
+	public String subString(Parser start) {
 		if (start.line == line)
 			if (start.col <= col)
-				return new String( lines.get(line), start.col, col-start.col);
+				return base.get(line).substring( start.col, col-start.col);
 			else
 				throw new IllegalArgumentException("start collumn is after current collumn");
 		if (start.line > line)
 			throw new IllegalArgumentException("start line is after current line");
-		char[] startLine = lines.get(start.line);
+		String startLine = base.get(start.line);
 		StringBuilder sb = new StringBuilder();
-		sb.append(startLine, start.col, startLine.length-start.col);
+		sb.append(startLine, start.col, startLine.length()-start.col);
 		sb.append('\n');
 		for (int l=start.line+1; l<line; l++)
-			sb.append(lines.get(l)).append('\n');
+			sb.append(base.get(l)).append('\n');
 		if (col > 0)
-			sb.append(lines.get(line), 0, col);
+			sb.append(base.get(line), 0, col);
 		return sb.toString();
 	}
 
-	private class PNSupply implements parseNum.CharSupplier<IOException> {
-		@Override public char get() throws IOException {
-			if (end)
-				throw new EOS();
-			return (char)inext();
-		}
-	}	
-	public int _uint(boolean negative, boolean other_systems) throws IOException, NumberFormatException {
-		int num = parseNum.unsigned(new PNSupply(), negative, other_systems);
+	public int _uint(boolean negative, boolean other_systems) throws IOException, EOFException, NumberFormatException {
+		int num = parseNum.unsigned(this, negative, other_systems);
 		back();
 		return num;
 	}
-	public int _int(boolean other_systems) throws IOException, NumberFormatException {
-		int num = parseNum.signed(new PNSupply(), other_systems);
+	public int _int(boolean other_systems) throws IOException, EOFException, NumberFormatException {
+		int num = parseNum.signed(this, other_systems);
 		back();
 		return num;
 	}
-
-	public String next(CaptureChar c) throws IOException {
-		Pos start = getPos();
-		while (c.capture(peek()))
-			skip();
-		return subString(start);
-	}
-	public String line() throws IOException {
-		peek();
-		char[] arr = lines.get(line);
-		String str = new String(arr, col, arr.length-col);
-		line++;
-		col=0;
-		return str;
-	}
-	public String escapeString() throws IOException, InvalidEscapeException {
-		StringBuilder sb = new StringBuilder();
-		char c;
-		while ((c=next())!='"')
-			if (c=='\\')
-				sb.append(escaped());
-			else if (c=='\n')
-				throw new InvalidEscapeException("line breaks must be escaped");
-			else
-				sb.append(c);
-		return sb.toString();
-	}
-
-	public char escapeChar() throws IOException, InvalidEscapeException {
-		char c = next();
-		if (c=='\n')
-			throw new InvalidEscapeException("line breaks must be escaped");
-		if (c=='\'')
-			return '\0';
-		if (c=='\\')
-			c = escaped();
-		if (peek() == '\'')
-			next();
-		return c;
-	}
-
-	private char escaped() throws IOException, InvalidEscapeException {
-		char c = next();
-		try{switch (c) {
-			case 't': return'\t';
-			case 's': return ' ';
-			case'\n': skip_whitespace();//a simple way to allow indentation
-			case 'n': return'\n';
-			case 'x': return char_asHex(next(), next());
-			case'a':case'b':case'c':case'd':case'e':case'f':
-				c -= 'a'-'A';
-			case'A':case'B':case'C':case'D':case'E':case'F':
-				c -= 'A'-'0'+10;
-			case'0':case'1':case'2':case'3':case'4':case'5':case'6':case'7':case'8':case'9':
-				return (char) (16*(c-'0') + char_asHex(next()));
-			//case '': return'\';
-			default: return c;
-		}} catch (InvalidHexException e) {
-			throw new InvalidEscapeException(e.getMessage());
-		}
-	}
-
-	public static class InvalidEscapeException extends Exception {
-		private InvalidEscapeException(String s, Object... o) {
-			super(String.format(s, o));
-		}
-		private static final long serialVersionUID = 1L;
-	}
-
-
-
 
 	public static interface CaptureChar {
 		boolean capture(char c);
 	}
 
-	public static class EOS extends RuntimeException {
-		public EOS() {
-			super("Unexpected end of stream.");
-		}
-		private static final long serialVersionUID = 1L;
+	public String next(CaptureChar c) throws IOException, EOFException {
+		Parser start = clone();
+		while (c.capture(peek()))
+			skip();
+		return subString(start);
 	}
-	public static class IORuntimeException extends RuntimeException {
-		private IORuntimeException(IOException e) {
-			super(e);
+	public String line() throws IOException, EOFException {
+		if (empty())
+			throw new EOFException(eof);
+		String str = base.get(line).substring(col);
+		line++;
+		col=0;
+		return str;
+	}
+	
+
+	public char escapeChar(boolean require_end) throws EOFException, IOException, ParseException {
+		char c = next();
+		if (c == '\\')
+			try {
+				c = char_escape(next(), this);
+			} catch (InvalidHexException e) {
+				throw new ParseException("Invalid hex escape sequence");
+			}
+		else if (c == '\n')
+			throw new ParseException("line breaks are not allowed in chars");
+		if (ipeek() == '\'')
+			skip();
+		else if (require_end)
+			throw new ParseException("missing '");
+		return c;
+	}
+
+	public String escapeString(char end) throws IOException, EOFException, ParseException {
+		if (peek() == end) {
+			skip();
+			if (ipeek() != end)
+				return "";
+			skip();
+			return textBody(end);
+		}
+		int start = col;
+		char c;
+		StringBuilder sb = new StringBuilder();
+		while ((c=next())!=end)
+			if (c=='\\') {
+				c = next();
+				if (c == '\n') {
+					sb.append(c);
+					do {//ignore equal indentation
+						c = next();
+					} while (col <= start  &&  (c=='\t' || c==' '));
+				}
+				try {
+					sb.append(char_escape(c, this));
+				} catch (InvalidHexException e) {
+					throw new ParseException("Invalid hex escape sequence");
+				}
+			} else if (c=='\n')
+				throw new ParseException("line breaks must be escaped");
+			else
+				sb.append(c);
+		return sb.toString();
+	}
+	private String textBody(char end) throws EOFException, IOException {
+		String stop = String.valueOf(new char[]{end, end, end});
+		int startCol = col;
+		String rest = line();
+		int endIndex = rest.indexOf(stop);
+		if (endIndex != -1) {
+			col = startCol + endIndex + stop.length();
+			line--;
+			return rest.substring(0, endIndex);
+		}
+		if (!rest.trim().isEmpty())
+			stop = rest.trim();
+		StringBuilder sb = new StringBuilder();
+		for (String line = line();  !line.startsWith(stop);  line = line())
+			sb.append(line).append('\n');
+		if (base.get(this.line-1).length() != stop.length()) {
+			this.line--;
+			col = stop.length();
+		}
+		return StringBuilder_removeLast(sb).toString();
+	}
+
+
+
+	/***/
+	public class ParseException extends Exception {
+		public ParseException(String f, Object... a) {
+			super(base.toString() + "Line " + (line+1) + ':' + col + ' ' + String.format(f, a));
 		}
 		private static final long serialVersionUID = 1L;
 	}
 
-	public static class Pos {
-		public final int line, col;
-		private Pos(int line, int col) {
-			this.line = line;
-			this.col = col;
-		}
+	/**An easy way to throw a exception, prepends message with line number and column.*/
+	public ParseException error(String f, Object... a) {
+		return new ParseException(f, a);
 	}
 
-	@Override//Closeable
-	public void close() throws IOException {
-		if (src != null) {
-			src.close();
-			src = null;
-		}
+	@Override
+	public String toString() {
+		return base.toString() + "Line: " + (line+1) + ", col: " + col + ", is newline whitespace? " + newline_whitespace;
+	}
+
+	@Deprecated @Override//CharSupplier
+	/**For implementing CharSupplier, which is used internally.
+	 *Equals next(), but the EOFExcetion is thrown on the second END.*/
+	public int get() throws IOException {
+		if (empty())
+			throw new EOFException(eof);
+		return inext();
 	}
 }

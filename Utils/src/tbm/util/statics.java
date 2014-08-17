@@ -21,6 +21,8 @@ public class statics {
 		return (c==' ' || c=='\t' ||  c=='\n');
 	}public static boolean char_mathches(char c, String regex) {
 		return charToString(c).matches(regex);
+	}public static char[] char_array(char... a) {
+		return a;
 	}public static boolean char_anyof(char c, String list) {
 		return list.indexOf(c) == -1;
 	}public static boolean char_anyof(char c, char... list) {
@@ -40,10 +42,9 @@ public class statics {
 	}public static int char_asHex(int c) {
 		if (c>='0' && c<='9')
 			return c-'0';
+		c |= 0x20;//makes upper-case letters lower-case.
 		if (c>='a' && c<='f')
 			return c-'a'+10;
-		if (c>='A' && c<='F')
-			return c-'A'+10;
 		//cannot write if (c<16)return c; because '\t' and '\n' are less than 16
 		return -1;
 	}public static char char_asHex(char c) throws InvalidHexException {
@@ -54,17 +55,28 @@ public class statics {
 	}public static char char_asHex(char c1, char c2) throws InvalidHexException {
 		return(char) (16*char_asHex(c1) + char_asHex(c2));
 	}public static int char_toInt(char base, char c) {
+		if (c >= '0'  &&  c  <= '9'  &&  c-'0' < base)
+			return c - '0';
 		if (base == 16) {
+			c |= 0x20; 
 			if (c >= 'a'  && c <= 'f')
 				return 10+c-'a';
-			if (c >= 'A'  && c <= 'F')
-				return 10+c-'A';
 		} else if (base < 2  ||  base > 10)
 			throw new RuntimeException("tbm.util.statics.char_toInt(): invalid base: "+base+"\nValid bases are 2-10, 16 and 256.");
-		c -= '0';
-		if (c < base)
-			return c;
 		return -1;
+	}
+	public static <EX extends Throwable> char char_escape(char first, CharSupplier<EX> get) throws EX, InvalidHexException {
+		switch (first) {
+			case 't':return'\t';
+			case 's':return ' ';
+			case 'n':return'\n';
+			case 'x':return char_asHex((char)get.get(), (char)get.get());
+			case '0':return'\0';
+			case 'e':return 0x1b;//escape
+			case 'b':return'\b';
+			case 'r':return'\r';
+			default :return first;
+		}
 	}
 
 	public static String charToString(char c) {
@@ -72,9 +84,11 @@ public class statics {
 	}public static String String_nchars(int n, char c) {
 		char[] arr = new char[n];
 		Arrays.fill(arr, c);
-		return new String(arr);
+		return String.valueOf(arr);
 	}public static boolean String_equal(String a, String b) {
 		return a==null ? false : a.equals(b);
+	}public static String String_valueOf(char[] arr, int offset) {
+		return String.valueOf(arr, offset, arr.length-offset);
 	}
 	/**Returns an array with all matches of regex i str.*/
 	public static String[] String_findAll(String str, String regex) {
@@ -83,6 +97,10 @@ public class statics {
 		while (m.find())
 			found.add(m.group());
 		return found.toArray(new String[found.size()]);
+	}
+
+	public static StringBuilder StringBuilder_removeLast(StringBuilder sb) {
+		return sb.deleteCharAt(sb.length()-1);
 	}
 
 
@@ -126,6 +144,7 @@ public class statics {
 			to.add(convert.apply(e));
 		return to;
 	}
+
 
 	static {
 		int i = -1;	//if i is final I get a warning: comparing identical expression, so this is probably guaranteed.
