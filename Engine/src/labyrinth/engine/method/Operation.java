@@ -33,13 +33,26 @@ public interface Operation extends Action {
 
 	public static class Declare implements Operation {
 		public final String name;
-		public Declare(String name) {
+		public final boolean _final;
+		public Declare(String name, boolean _final) {
+			this.name = name;
+			this._final = _final;
+		}
+		@Override
+		public Value perform() {
+			return Script.current.declare(name, _final);
+		}
+	}
+
+	public static class UnDeclare implements Operation {
+		public final String name;
+		public UnDeclare(String name) {
 			this.name = name;
 		}
 		@Override
 		public Value perform() {
-			Script.current.declare(name);
-			return Script.current.search(name);
+			Script.current.remove(name);
+			return Value.Void;
 		}
 	}
 

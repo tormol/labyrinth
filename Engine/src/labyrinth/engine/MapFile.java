@@ -2,15 +2,15 @@ package labyrinth.engine;
 //import static tbm.util.statics.*;
 import static labyrinth.engine.method.Value.*;
 import java.awt.FileDialog;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
-import tbm.util.Parser.EOS;
+import tbm.util.Parser.ParseException;
 import labyrinth.engine.TileMap.InvalidMapException;
 import labyrinth.engine.method.*;
-
 
 public class MapFile {
 	public static File choose() {
@@ -34,21 +34,23 @@ public class MapFile {
 	 *TODO: UTF-8*/
 	public static void read(File path) {
 		try (Parser p = new Parser(path)) {
-			p.newline_whitespace = true;
 			Queue<char[]> map = new LinkedList<char[]>();
 			while (!p.empty() && (p.peek() != '\n' || map.isEmpty()))
 				map.add(p.line().toCharArray());
 			TileMap.start(map);
-			Script.parseFile(p);
+			Script.parse_static(p);
 		} catch (FileNotFoundException e) {
 			throw Window.error("%s: File not Found.", path);
+		} catch (EOFException e) {
+			e.printStackTrace();
+			throw Window.error("Unexpected end of file %s", path.toString());
+		} catch (ParseException e) {
+			e.printStackTrace();
+			throw Window.error("Unexpected end of file %s", path.toString());
 		} catch (IOException e) {
 			throw Window.error("%s: Error reading file\n%s", path, e.getMessage());
 		} catch (InvalidMapException e) {
 			throw Window.error(e.getOffsetMessage(1));
-		} catch (EOS e) {
-			e.printStackTrace();
-			throw Window.error("Unexpected end of file %s", path.toString());
 		}
 
 

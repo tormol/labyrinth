@@ -10,10 +10,10 @@ public class Scope {
 	public Scope(Scope parent) {
 		this.parent = parent;
 	}
-	public Variable declare(String name) {
+	public Variable declare(String name, boolean _final) {
 		if (vars.containsKey(name))
 			throw Script.error("The variable \"%s\" is already declared.", name);
-		return vars.put(name, new Variable(true, Value.Void));
+		return vars.put(name, new Variable(_final, Value.Void));
 	}
 	/**for inbuilt variables*/
 	public void define(String name, Value inbuilt) {
@@ -33,6 +33,10 @@ public class Scope {
 			throw Script.error("The variable \"%s\" is not defined.", name);
 		return v.value;
 	}
+	public void remove(String name) {
+		if (vars.remove(name) == null)
+			throw Script.error("The variable \"%s\" is not defined.", name);
+	}
 	Scope outerClass() {
 		return this;
 	}
@@ -51,7 +55,7 @@ public class Scope {
 			return value;
 		}
 		public void set(Value v) {
-			if (_final)
+			if (_final  &&  value != Value.Void)
 				throw Script.error("The variable is final.");
 			if (v == null)
 				throw Script.error("tried to set a variable to null");

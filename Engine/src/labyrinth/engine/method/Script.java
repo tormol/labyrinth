@@ -1,17 +1,17 @@
 package labyrinth.engine.method;
 import static labyrinth.engine.method.Value.*;
 import static tbm.util.statics.*;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import tbm.util.Parser.EOS;
-import tbm.util.Parser.Pos;
-import tbm.util.Parser.InvalidEscapeException;
+import tbm.util.Parser.ParseException;
 import labyrinth.engine.Mob;
 import labyrinth.engine.Parser;
 import labyrinth.engine.Tile;
 import labyrinth.engine.Window;
+import labyrinth.engine.method.Scope.Variable;
 
 public class Script {
 	public static Scope current = new Scope(null);
@@ -27,7 +27,7 @@ public class Script {
 		last = Void;
 		Value v = current.get(name);
 		if (!(v instanceof VFunc))
-			Window.error("The variable %s is not a function.", name);
+			Script.error("The variable %s is not a function.", name);
 		mob = m;
 		tile = t;
 		return v.call(new LinkedList<Value>());
@@ -47,114 +47,100 @@ public class Script {
 		}
 	}
 
-	public static enum Mode {
-		STATIC, FUNCTION, PARAMETER; 
-	}
 
-	public static void parseFile(Parser p) throws IOException {
+	public static Scope parse_static(Parser p) throws EOFException, IOException, ParseException {
 		Method.start();
 		Script.current = Script.root = new Scope(Script.root);
-		Script.run(Script.parse(p, Mode.STATIC));
-	}
-
-	private static List<Object> parse(Parser p, Mode m) throws IOException {
-		ArrayList<Object> ops = new ArrayList<>();
-		boolean stop = false;
-		while (!stop && !(p.sw().empty() && m==Mode.STATIC))  switch (p.next()) {
-			case'.':
-				if (!isStartVar(p.peek()))
-					throw p.error("Variable name required after a dot.");
-				String name = p.next(c->isContVar(c));
-				if (name.isEmpty())
-					ops.add(Operation.getLast);
-				//else if (m==Mode.PARAMETER)
-				else
-					ops.add(new Operation.Declare(name));
-				break;
-	
-			case'(':
-				//TODO: description
-				//TODO: parameter validation
-				//ops.add(f.instance(params));
-				ops.add(new Operation.Call(toCall, parse(p, Mode.PARAMETER)));
-				break;
-			case')':
-				if (m != Mode.PARAMETER)
-					throw p.error("Unexpected closing parenthesis");
-				stop = true;
-				break;
-			case';':
-				if (m != Mode.FUNCTION)
-					throw p.error("';' inside a call or file");
-				stop = true;
-				break;
-			case':':
-				ops.add(new Procedure(parse(p, Mode.FUNCTION), null));
-				break;
+		if (p.sw().ipeek() == '(')
+			throw p.error("A file cannot start with a '('.");
+		int c;
+		while (true) switch (c = p.sw().inext()) {
+		  case';':
+		  case Parser.END:
+			return current;
+		  default:
+			Object st = statement((char)c, p);
+			if (!(st instanceof Operation.Declare)) {//is already declared
+				Value ret = Value.get(st);
+				if (ret != Value.Void)
+					Script.last = ret;
+			}
 		}
-		return ops;
 	}
 
-	private static Procedure method(Parser p) throws IOException {
-		Pos start = p.getPos();
+	private static Procedure parse_method(Parser p) throws IOException, EOFException, ParseException {
+		Parser start = p.clone();
 		Script.current = new Scope(Script.current);
+		if (p.sw().peek() == '(') {
+			parse_param(p);
+		}
 		ArrayList<Object> ops = new ArrayList<>();
-		
-		while (true) switch(p.sw().next()){
-		case')':
+		char c;
+		while (true) switch(c = p.sw().next()){
+		  case';':
 			Script.current = Script.current.parent;
-			Pos end = p.getPos();
-			String desc = String.format("start %i:%i, end %i:%i", start.line, start.col, end.line, end.col);
+			String desc = String.format("start %i:%i, end %i:%i", start.getLine(), start.getCol(), p.getLine(), p.getCol());
 			return new Procedure(ops, desc);
-		case'.':
-			if ()
+		  default:
+			ops.add(statement(c, p));
 		}
 	}
 
-	private static Object statement(Parser p, Mode m) throws IOException {
-		switch (p.next()) {
-			case'.':
-				if (!isStartVar(p.peek()))
-					throw p.error("Variable name required after a dot.");
-				String name = p.next(c->isContVar(c));
-				if (name.isEmpty())
-					return Operation.getLast;
-				if (m==Mode.PARAMETER)
-					;
-				return new Operation.Declare(name);
-			case'(':
-				return parse(p, Mode.PARAMETER);
-			case')':
-				throw p.error("Unexpected closing parenthesis");
-			case';'://end method
-				throw p.error("Unexpected semicolon");
-			case':'://method
-				return new Procedure(parse(p, Mode.FUNCTION), null);
-			case'"'://string
-				try {
-					return new Value.VString(p.escapeString());
-				} catch (InvalidEscapeException e) {
-					throw p.error(e.getMessage());
-				}
-			case'\''://char
-				try {
-					return new VChar(p.escapeChar());
-				} catch (InvalidEscapeException e) {
-					throw p.error(e.getMessage());
-				}
-			case'1':case'2':case'3':case'4':case'5':
-			case'6':case'7':case'8':case'9':case'0':
-				p.back();
-				return new VInt(parseInt(p, false));
-			case'-'://negative int if directly followed by a number
-				if (char_num((char)p.ipeek()))
-					return new VInt(parseInt(p, true));
-			default: //name
-				p.back();
-				return p.next( ch->isContVar(ch) );
-		}
-
+	private static List<Object> parse_call(Parser p) {
+		return null;
 	}
+
+	private static List<Object> parse_param(Parser p) {
+		p.error("Parameters are not supported yet");
+		return null;
+	}
+
+	private static Object statement(char c, Parser p) throws EOFException, IOException, ParseException {switch (c) {
+	  case'.':
+		boolean _final = false; 
+		if (p.peek() == '.') {
+			_final = true;
+			p.skip();
+		}
+		if (!isStartVar(p.peek()))
+			throw p.error("Variable name required after declaration.");
+		String name = p.next(ch->isContVar(ch));
+		Variable v = current.search(name);
+		if (v.getScope() != current) {
+			current.declare(name, _final);
+			return new Operation.Declare(name, _final);
+		} if (!_final) {
+			current.remove(name);
+			return new Operation.UnDeclare(name);
+		} 
+		throw p.error("The variable %s is already declared", name);
+	  case'(':
+		return parse_call(p);
+	  case')':
+		throw p.error("Unexpected closing parenthesis");
+	  case';'://end method
+		throw p.error("Unexpected semicolon");
+	  case':'://method
+		return parse_method(p);
+	  case'"'://string
+		return new Value.VString(p.escapeString('"'));
+	  case'\''://char
+		return new VChar(p.escapeChar(false));
+	  case'1':case'2':case'3':case'4':case'5':
+	  case'6':case'7':case'8':case'9':case'0':
+		p.back();
+		return new VInt(parseInt(p, false));
+	  case'-'://negative int if directly followed by a number
+		if (char_num((char)p.ipeek()))
+			return new VInt(parseInt(p, true));
+	  default: //name
+		p.back();
+		String var = p.next( ch->isContVar(ch) );
+		if (Script.current.search(var) == null)
+			throw p.error("%s is not defined", var);
+		return var;
+	}}
+
 
 	private static boolean isContVar(char c) {
 		return !char_anyof(c, '#','.','(',')',':',';',' ','\t','\n');
@@ -162,7 +148,7 @@ public class Script {
 	private static boolean isStartVar(char c) {
 		return isContVar(c) && c!='"' && c!='\'' && !char_num(c);
 	}
-	private static int parseInt(Parser p, boolean negative) throws IOException {
+	private static int parseInt(Parser p, boolean negative) throws EOFException, IOException, ParseException {
 		int num;
 		try {
 			num = p._uint(negative, true);
