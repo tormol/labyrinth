@@ -42,6 +42,9 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 
 	/**TODO: replace with interface, but then I need length(), get(line) and get(line, col)*/
 	private static class Base extends ArrayList<String> implements Closeable {
+		public Base() {
+			add(null);//so the first line starts at one, null to fail fast.
+		}
 		/**read a line from src*/
 		public boolean read_line() throws IOException {
 			return false;
@@ -119,15 +122,6 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	public Parser with_newline_whitespace(boolean newline_whitespace) {
 		return new Parser(base, newline_whitespace, line, col);
 	}
-	/**Set the line and col of to that of p.
-	 *@return this*/
-	public Parser setPos(Parser p) {
-		if (p.base != this.base)
-			throw new RuntimeException("The parser belong tho another source.");
-		this.line = p.line;
-		this.col  = p.col;
-		return this;
-	}
 	
 
 	@Override//Closeable, AutoCloseable
@@ -165,7 +159,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	 *@return this*/
 	public Parser back() {
 		if (col == 0) {
-			if (line == 0)
+			if (line == 1)
 				throw new RuntimeException("Cannot back() from the start of a file.");
 			line--;
 			col = base.get(line).length();
@@ -203,28 +197,60 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	}
 
 
-
+	/**@return the current line number, starts at one*/
 	public int getLine() {
 		return line;
 	}
+	/**@return the position in the current line, starts at zero*/
 	public int getCol() {
 		return col;
 	}
-	public int length(int line) {
-		if (line < 0  || line >= base.size())
-			throw new IndexOutOfBoundsException("");
-		return base.get(line).length();
+	/**@return the length of the specified line*/
+	public int length(int line) throws IndexOutOfBoundsException {
+		try {
+			return base.get(line).length();
+		} catch (IndexOutOfBoundsException e) {
+			throw new IndexOutOfBoundsException("Invalid line number: "+line+", the line might not have been read yet.");
+		}
+	}
+
+	/**Check that the parameter is valid, and go to the start of the specified line.
+	 *@return this*/
+	public Parser setLine(int line) throws IndexOutOfBoundsException {
+		if (line<=0 || line>=base.size())
+			throw new IndexOutOfBoundsException("Line out of range");
+		this.line = line;
+		this.col = 0;
+		return this;
+	}
+
+	/**check that the*/
+	public Parser setCol(int col) throws IndexOutOfBoundsException {
+		int length = base.get(line).length();
+		if (col < 0)
+			this.col = length - col;
+		else if (col >= length)
+			this.col = length - 1;
+		else
+			this.col = col;
+		return this;
 	}
 
 	public Parser setPos(int line, int col) {
-		if (line<0 || line>=base.size())
-			throw new IndexOutOfBoundsException("Line out of range");
-		if (col<0 || col>=base.get(line).length())
-			throw new IndexOutOfBoundsException("col out of range");
-		this.line = line;
-		this.col = col;
+		return setLine(line).setCol(col);
+	}
+
+	/**Set the line and col of to that of p.
+	 **Only works if this and p share the same base;
+	 *@return this*/
+	public Parser setPos(Parser p) throws RuntimeException {
+		if (p.base != this.base)
+			throw new RuntimeException("The parser belong tho another source.");
+		this.line = p.line;
+		this.col  = p.col;
 		return this;
 	}
+
 
 	/**skip whitespace*/
 	public Parser skip_whitespace(boolean newline_whitespace) throws IOException {
