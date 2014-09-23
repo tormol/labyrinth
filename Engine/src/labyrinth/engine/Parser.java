@@ -13,11 +13,15 @@ public class Parser extends tbm.util.Parser {
 
 	@Override/**@super Additionally skips comments.*/
 	public Parser skip_whitespace(boolean newline) throws IOException {
-		super.skip_whitespace();
-		while (ipeek() == '#') {
-			line();
-			super.skip_whitespace();
-		}
+		super.skip_whitespace(newline);
+		if (ipeek() == '#')
+			if (!newline)
+				setPos(getLine(), length(getLine()));
+			else
+				do {
+					line();
+					super.skip_whitespace(newline);
+				} while (ipeek() == '#');
 		return this;
 	}
 
