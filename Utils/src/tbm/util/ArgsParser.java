@@ -114,13 +114,14 @@ public class ArgsParser {
 	 * Adds the option to a list in case help() is called.
 	 * Searches a list of set options, and calls opt.got() when an option matches.
 	 * @param opt a class implementing Opt_interface
-	 * @return the parameter
+	 * @return opt, the parameter
 	 */
 	public <T extends Opt_interface> T opt(T opt) {
 		OptCore inf = new OptCore(opt.getShort(), opt.getLong(), opt.getHelp());
+		//cannot remove in a foreach
 		Iterator<ParsedOpt> itr = opts.iterator();
-		ParsedOpt po;
-		while ((po=itr.next()) != null)
+		while (itr.hasNext()) {
+			ParsedOpt po = itr.next();
 			if (po.matches(inf._Short, inf._Long)) {
 				String error = opt.got(po);
 				if (error != null)
@@ -131,6 +132,7 @@ public class ArgsParser {
 				}
 				itr.remove();
 			}
+		}
 		validOpts.add(inf);
 		return opt;
 	}

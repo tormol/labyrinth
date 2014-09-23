@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -79,15 +80,23 @@ public class statics {
 		}
 	}
 
+	@Deprecated/**replace with char2str*/
 	public static String charToString(char c) {
 		return String.valueOf(c);
-	}public static String String_nchars(int n, char c) {
+	}/**six letters shorter than String.valueOf*/
+	public static String char2str(char c) {
+		return String.valueOf(c);
+	}/**Fill a String with n characters of c*/
+	public static String String_nchars(int n, char c) {
 		char[] arr = new char[n];
 		Arrays.fill(arr, c);
 		return String.valueOf(arr);
-	}public static boolean String_equal(String a, String b) {
+	}/**Compare two Strings without throwing NullPointerException.
+	  * if both are null the result is false.*/
+	public static boolean String_equals(String a, String b) {
 		return a==null ? false : a.equals(b);
-	}public static String String_valueOf(char[] arr, int offset) {
+	}/**Create a String from arr starting at the nth character.*/
+	public static String String_valueOf(char[] arr, int offset) {
 		return String.valueOf(arr, offset, arr.length-offset);
 	}
 	/**Returns an array with all matches of regex i str.*/
@@ -99,6 +108,9 @@ public class statics {
 		return found.toArray(new String[found.size()]);
 	}
 
+	/**Remove the last character from a StringBuilder
+	 * Useful when you're creating a list and want to remove the last comma.
+	 *@return the StringBuilder*/
 	public static StringBuilder StringBuilder_removeLast(StringBuilder sb) {
 		return sb.deleteCharAt(sb.length()-1);
 	}
@@ -110,12 +122,12 @@ public class statics {
 	public static <T> T[] array(T... a) {
 		return a;
 	}
-	@SafeVarargs
+	/**A shorter alias of Arrays.asList()*/@SafeVarargs
 	public static <T> List<T> list(T... a) {
 		return Arrays.asList(a);
 	}
 
-	@SafeVarargs
+	/**Create a HashMap and fill it with entries*/@SafeVarargs
 	public static <K,V> HashMap<K,V> map_init(K[] keys, V... values) {
 		if (keys.length != values.length)
 			throw new IllegalArgumentException("keys.length != values.length");
@@ -133,11 +145,11 @@ public class statics {
 		return null;
 	}
 
-	/**Intentionally do nothing*/
+	/**Intentionally do nothing.*/
 	public static void do_nothing()
 		{}
 
-	/**Convert elements in a collection from one type to another and put them into a List*/
+	/**Convert elements in a collection from one type to another and put them into a List.*/
 	public static <F, T> List<T> convert(Collection<F> from, Function<F, T> convert) {
 		List<T> to = new ArrayList<>(from.size());
 		for (F e : from)
@@ -145,7 +157,32 @@ public class statics {
 		return to;
 	}
 
+	/**@return value1==null ? value2 : value1*/
+	public static <T> T nonNull(T value1, T value2) {
+		return value1==null ? value2 : value1;
+	}/**return value1 if it's not null then the same for value2. Throws an exception if both ar null.*/
+	public static <T> T nonNull_throw(T value1, T value2) throws NullPointerException {
+		if (value1 != null)
+			return value1;
+		if (value2 != null)
+			return value2;
+		throw new NullPointerException("Both values are null");
+	}/**Won't call value2 if value1 returns null. Will only call once.*/
+	public static <T> T nonNull(Supplier<T> value1, Supplier<T> value2) {
+		T value = value1.get();
+		if (value != null)
+			return value;
+		return value2.get();
+	}/**Won't call value2 if value1 returns null. Will only call once. throws an exception if both return null.*/
+	public static <T> T nonNull_throw(Supplier<T> value1, Supplier<T> value2) throws NullPointerException {
+		T value = nonNull(value1, value2);
+		if (value != null)
+			return value;
+		throw new NullPointerException("Both values are null");
+	}
 
+
+	/**Check that int -1 == char 255*/
 	static {
 		int i = -1;	//if i is final I get a warning: comparing identical expression, so this is probably guaranteed.
 		if ((char)i != (char)-1  ||  (char)i != 0xffff)

@@ -1,6 +1,8 @@
 #generated files
 #/tbm/util/geom/.gitignore
 *.ignore
+*~
+*.bak
 
 ##https://github.com/github/gitignore
 ##annet

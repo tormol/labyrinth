@@ -2,7 +2,6 @@
 //&int = float
 package tbm.util.geom;
 import static java.lang.Math.*;
-
 import java.awt.geom.Point2D;
 import java.io.Serializable;
 
@@ -106,7 +105,7 @@ public class Point implements Serializable, Cloneable {
 		case  EAST:	return -x;
 		default:	throw new AssertionError("Unhandled Direction "+d.toString());
 	}}
-	
+
 
 	public Point withX(int x) {return new Point(x, this.y);}
 	public Point withY(int y) {return new Point(this.x, y);}
@@ -118,6 +117,10 @@ public class Point implements Serializable, Cloneable {
 
 	/***/
 	public boolean equals(int x, int y) {return (this.x==x && this.y==y);}
+	/***/
+	public boolean equals(Point p) {return (p.x==x && p.y==y);}
+	/***/
+	public boolean equals(java.awt.Point p) {return (p.x==x && p.y==y);}
 	/***/
 	public String toString() {return x+", "+y;}
 	/***/
