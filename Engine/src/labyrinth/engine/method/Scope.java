@@ -19,6 +19,8 @@ public class Scope {
 	public void define(String name, Value inbuilt) {
 		vars.put(name, new Variable(true, inbuilt));
 	}
+	/**search this and parents for the variable
+	 *@return the reference or null if it's not found*/
 	public Variable search(String name) {
 		for (Scope s=this; s!=null; s=s.parent) {
 			Variable v = s.vars.get(name);
@@ -27,12 +29,19 @@ public class Scope {
 		}
 		return null;
 	}
+	/**Is the valiable declared in this scope?*/
+	public boolean has(String name) {
+		return vars.get(name) != null;
+	}
+	/**search this and parents for the variable, and create an error if not declared
+	 *@return the value*/
 	public Value get(String name) {
 		Variable v = search(name);
 		if (v==null)
 			throw Script.error("The variable \"%s\" is not defined.", name);
 		return v.value;
 	}
+	/**remove the variable if it's declared in this scope*/
 	public void remove(String name) {
 		if (vars.remove(name) == null)
 			throw Script.error("The variable \"%s\" is not defined.", name);

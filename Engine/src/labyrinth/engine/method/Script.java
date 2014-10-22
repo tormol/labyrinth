@@ -105,15 +105,22 @@ public class Script {
 		if (!isStartVar(p.peek()))
 			throw p.error("Variable name required after declaration.");
 		String name = p.next(ch->isContVar(ch));
-		Variable v = current.search(name);
-		if (v.getScope() != current) {
+		Class type = null;
+		if (p.ipeek() == '.') {//Has type
+			String typename = p.next(ch->isContVar(ch));
+			if (typename.isEmpty())
+				throw p.error("Empty type in declaration of variable %s", name);
+			
+		}
+		if (!current.has(name)) {
 			current.declare(name, _final);
 			return new Operation.Declare(name, _final);
-		} if (!_final) {
-			current.remove(name);
-			return new Operation.UnDeclare(name);
-		} 
-		throw p.error("The variable %s is already declared", name);
+		} else if (_final)
+			throw p.error("Cannot re-declare a variable as final. (%s)", name);
+		else if (current.search(name).isFinal())
+			throw p.error("Cannot remove the final variable %s", name);
+		current.remove(name);
+		return new Operation.UnDeclare(name);
 	  case'(':
 		return parse_call(p);
 	  case')':

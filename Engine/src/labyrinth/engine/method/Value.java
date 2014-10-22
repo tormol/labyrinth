@@ -1,6 +1,9 @@
 package labyrinth.engine.method;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import tbm.util.geom.Point;
+import static tbm.util.statics.*;
 
 public interface Value {
 	/** a point has members x and y, to support structs, etc*/
@@ -137,4 +140,9 @@ public interface Value {
 	public static boolean equalType(Value a, Value b) {
 		return true;
 	}
+
+	public static Map<String, Class<? extends Value>> types = map_init(
+			"void,boolean,char,string,integer,point,reference".split(","),
+			array(VVoid.class, VBool.class, VChar.class, VString.class, VInt.class, VPoint.class, VRef.class)
+			);
 }
