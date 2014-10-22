@@ -59,7 +59,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		private static final long serialVersionUID = 1L;
 	}
 	public Parser(String str, boolean newline_whitespace) {
-		this(new Base(), newline_whitespace, 0, 0);
+		this(new Base(), newline_whitespace, 1, 0);
 		for (String line : str.split("\n"))
 			base.add(line);
 	}
@@ -95,7 +95,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		private static final long serialVersionUID = 1L;
 	}
 	public Parser(File file, boolean newline_whitespace) throws FileNotFoundException {
-		this(new FileBase(file), newline_whitespace, 0, 0);
+		this(new FileBase(file), newline_whitespace, 1, 0);
 	}
 
 	private static class SupplierBase extends Base {
@@ -113,7 +113,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		private static final long serialVersionUID = 1L;
 	}
 	public Parser(Supplier<String> get, boolean newline_whitespace) {
-		this(new SupplierBase(get), newline_whitespace, 0, 0);
+		this(new SupplierBase(get), newline_whitespace, 1, 0);
 	}
 	@Override//Cloneable
 	public Parser clone() {
@@ -134,7 +134,6 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	public void read_all() throws IOException {
 		while (base.read_line())
 			do_nothing();
-		base.close();
 	}
 
 	/**@return wheter the source is empty*/
@@ -393,7 +392,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	/***/
 	public class ParseException extends Exception {
 		public ParseException(String f, Object... a) {
-			super(base.toString() + "Line " + (line+1) + ':' + col + ' ' + String.format(f, a));
+			super(base.toString() + "Line " + line + ':' + col + ' ' + String.format(f, a));
 		}
 		private static final long serialVersionUID = 1L;
 	}
@@ -405,7 +404,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 
 	@Override
 	public String toString() {
-		return base.toString() + "Line: " + (line+1) + ", col: " + col + ", is newline whitespace? " + newline_whitespace;
+		return base.toString() + "Line: " + line + ", col: " + col + ", is newline whitespace? " + newline_whitespace;
 	}
 
 	@Deprecated @Override//CharSupplier
