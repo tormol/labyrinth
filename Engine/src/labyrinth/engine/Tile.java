@@ -94,7 +94,7 @@ public class Tile extends javax.swing.JPanel {
 
 	public Point pos() {
 		if (pos==null)
-			new Point();//no-op FIXME: Why?
+			return Point.p(0, 0);//TODO: Why?
 		return pos;
 	}
 

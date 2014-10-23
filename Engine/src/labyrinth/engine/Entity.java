@@ -1,13 +1,11 @@
 package labyrinth.engine;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-
 import javax.imageio.ImageIO;
 
 public class Entity {
-	//private static ThreadGroup durationcounter; 
+	//private static ThreadGroup durationCounter; 
 	public final String name;
 	public final BufferedImage image;
 	//public final long duration;

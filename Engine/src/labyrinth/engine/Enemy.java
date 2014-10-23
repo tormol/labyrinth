@@ -107,8 +107,8 @@ public abstract class Enemy extends Mob implements Runnable {
 
 		@Override//Fiende
 		protected Tile findTile() {
-			direction = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Tile to = TileMap.get( tile().pos().move(direction) );
+			direction = Direction.find( (int)(Math.random()*4),  0, 1, 2, 3);
+			final Tile to = TileMap.get( tile().pos().plus(direction) );
 			if (to.canEnter(this, false)  &&  !(to.mob() instanceof Enemy))
 				return to;
 			return null;
@@ -123,8 +123,8 @@ public abstract class Enemy extends Mob implements Runnable {
 
 		@Override//Enemy
 		protected Tile findTile() {
-			direction = Direction.d( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Tile to = TileMap.get( tile().pos().move(direction) );
+			direction = Direction.find( (int)(Math.random()*4),  0, 1, 2, 3);
+			final Tile to = TileMap.get( tile().pos().plus(direction) );
 			if (!to.isType("outside")  &&  !(to.mob() instanceof Enemy))
 				return to;
 			return null;
@@ -141,31 +141,35 @@ public abstract class Enemy extends Mob implements Runnable {
 		/**Finds player, find the distance, turn toward the axis with longest distance,
 		 *  and moves to reduce the smallest nonzero distance.*/
 		protected Tile findTile() {
-			Point distance = new Point();
+			Point distance = Point.p(0, 0);
 			Point pos = tile().pos();
 			for (Mob e : Mob.mobs)
 				if (e instanceof Player) {
-					distance = tile().pos().diff(pos);
+					distance = tile().pos().minus(pos);
 					break;
 				}
-			Point dir = new Point( (int)Math.signum(distance.x), (int)Math.signum(distance.y));
+			Point dir = distance.sign();
 			Point[] alt;
+			//alt = [axis with biggest distance, other axis]
+			//direction = direction with smallest distance
+			//TODO: use distance.directions() to simplify
 			if (Math.abs(distance.x) > Math.abs(distance.y)) {
-				direction = Direction.d( dir.x,  0, 0, -1, 1);
-				alt = new Point[]{ new Point(0, dir.y),  new Point(dir.x, 0)};
+				direction = Direction.find( dir.x,  0, 0, -1, 1);
+				alt = new Point[]{ dir.withY(0), dir.withX(0)};
 			} else {
-				direction = Direction.d( dir.y,  -1, 1, 0, 0);
-				alt = new Point[]{ new Point(dir.x, 0),  new Point(0, dir.y)};
+				direction = Direction.find( dir.y,  -1, 1, 0, 0);
+				alt = new Point[]{ dir.withX(0), dir.withY(0)};
 			}
 
-			for (Point p : alt) {
-				if (p.equals(0, 0))
+			for (Point move : alt) {
+				if (move.equals(0, 0))
 					continue;
-				Tile tile = TileMap.get(pos.x+p.x, pos.y+p.y);
+				Tile tile = TileMap.get(pos.plus(move));
 				if (tile.canEnter(this, false)
 				 && !(tile.mob() instanceof Enemy))
 					return tile;
 			}
+			//cannot move: TODO: throw? return current tile?
 			return null;
 		}
 	}

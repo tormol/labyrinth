@@ -89,7 +89,8 @@ public interface Value {
 
 	public static class VPoint extends Point implements Value {
 		public VPoint(Point p) {
-			super(p);
+			//TODO: make all values use static constructor.
+			super(p.x, p.y);
 		}
 		public VPoint(int x, int y) {
 			super(x,y);

@@ -15,39 +15,39 @@ public class LoS {
 			t = TileMap.get(p);
 			if (a != null)
 				a.accept(t);
-			p=p.move(d);
+			p=p.plus(d);
 		} while (!t.getType().solid && len<max);
 		return len-1;
 	}
 	public static void triangle(Point start, Direction forward, Consumer<Tile> a) {
 		int max = line(start, forward, Integer.MAX_VALUE, a);
-		Direction back = forward.back();
+		Direction back = forward.opposite();
 		Queue<Line> lines = new ArrayDeque<>();
 		lines.add(new Line(start, forward.left() , max));
 		lines.add(new Line(start, forward.right(), max));
 		while (!lines.isEmpty()) {
 			Line l = lines.remove();
-			Point p = l.start.move(l.side);
+			Point p = l.start.plus(l.side);
 			int i, opening=0;
 			for (i=0;  i<l.max||opening>0;  i++) {
 				Tile t = TileMap.get(p);
 				a.accept(t);
 				if (t.getType().solid) {
 					if (opening>0) 
-						lines.add(new Line(p.move(back, opening-1), l.side, opening-2));
+						lines.add(new Line(p.plus(back, opening-1), l.side, opening-2));
 					opening = 0;
 				} else
 					opening++;
-				p=p.move(forward);
+				p=p.plus(forward);
 			}
 			if (i==l.max)
 				a.accept(TileMap.get(p));
 		}
 
 		//Look behind
-		a.accept(TileMap.get(start.move(back)));
-		a.accept(TileMap.get(start.move(back).move(forward.left())));
-		a.accept(TileMap.get(start.move(back).move(forward.right())));
+		a.accept(TileMap.get(start.plus(back)));
+		a.accept(TileMap.get(start.plus(back).plus(forward.left())));
+		a.accept(TileMap.get(start.plus(back).plus(forward.right())));
 	}
 
 

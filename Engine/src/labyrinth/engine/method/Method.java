@@ -42,7 +42,7 @@ public class Method implements VFunc {
 			Type type = Type.t(symbol);
 			target.setType(type);
 			if (type.method)
-				target.method = charToString(symbol);
+				target.method = char2str(symbol);
 			else
 				target.method = null;
 			return Void;
@@ -196,7 +196,7 @@ public class Method implements VFunc {
 		public Point point() {
 			int i_bak = i;
 			if (i+1<param.length && get() instanceof VInt && get() instanceof VInt)
-				return new Point(param[this.i-2].Int(), param[this.i-1].Int());
+				return Point.p(param[this.i-2].Int(), param[this.i-1].Int());
 			else i = i_bak;
 			return get().Point();
 		}
