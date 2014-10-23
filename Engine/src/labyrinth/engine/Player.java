@@ -17,6 +17,14 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 	public Player(String imagePath, Consumer<Player> moveTo) {
 		super("Player", imagePath);
 		this.onMove = moveTo;
+
+		String viewDistance = Constant.get("synsvidde");
+		if (viewDistance != null)
+			if (viewDistance.trim().equals("av"))
+				for (Tile tile : TileMap.all())
+					tile.visible();
+			else
+				throw Window.error("Limited viewDistance is not supported yet.");
 	}
 
 	public void start() {

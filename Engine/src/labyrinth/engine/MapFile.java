@@ -67,18 +67,6 @@ public class MapFile {
 			else
 				Method.add( Constant.fillIn(line) );
 		}
-
-		String wiewDistance = Constant.get("synsvidde");
-		if (wiewDistance != null) {
-			wiewDistance = wiewDistance.trim();
-			if (wiewDistance.equals("av"))
-				wiewDistance = "0";
-			try {
-				TileMap.synsvidde( Integer.parseInt(wiewDistance) );
-			} catch (NumberFormatException e) {
-				throw Window.error("The Constant $synsvidde is not a number.\n%s", wiewDistance);
-			}
-		}
 		
 		TileMap.findMethods();
 		MapFile.line=-1;
