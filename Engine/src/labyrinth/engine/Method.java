@@ -114,26 +114,26 @@ public class Method {
 				return new Var.VInt(num);
 			case POINT:
 				ss.whitespace();
-				java.awt.Point p = new java.awt.Point();
+				int x, y;
 				boolean parenthes = false;
 				if (ss.peek() == '(') {//optional to lighten the syntax.
 					ss.next();
 					parenthes = true;
 				}
 				try {
-					p.x = ss._int();
+					x = ss._int();
 					if (ss.next_nw() != ',')
 						throw Window.error("invalid point");
-					p.y = ss._int();
+					y = ss._int();
 				} catch (NumberFormatException e) {
 					throw Window.error("not a number point");
 				}
 				if (parenthes  &&  ss.next_nw() != ')')
 					throw Window.error("Poit missing closeing parenthese");
 				Dimension d = TileMap.dimesions();
-				if (p.x<0 || p.y<0 || p.x>=d.width || p.y>=d.height)
-					throw Window.error("(%d,%d) is outside the map", p.x, p.y);
-				return new Var.VPoint(new Point(p));
+				if (x<0 || y<0 || x>=d.width || y>=d.height)
+					throw Window.error("(%d,%d) is outside the map", x, y);
+				return new Var.VPoint(Point.p(x, y));
 			case VOID:
 				throw new RuntimeException("cannot parse a VOID");
 			default:

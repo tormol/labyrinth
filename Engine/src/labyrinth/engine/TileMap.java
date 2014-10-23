@@ -53,7 +53,7 @@ public class TileMap {
 				Type type = Type.get(tegn[y][x]);
 				if (type == null)
 					throw Window.error("Kolonne %d: Ugyldig tegn '%c'", x, tegn[y][x]);
-				map[y][x] = new Tile(type, new Point(x, y));
+				map[y][x] = new Tile(type, Point.p(x, y));
 				if (type.method)
 					findMethod = new FindMethod(tegn[y][x], map[y][x], findMethod);
 				panel.add(map[y][x]);
@@ -126,14 +126,7 @@ public class TileMap {
 
 	@Deprecated/**Hvor mange felt spilleren ser i hver retning. 0=ser alle*/
 	private static int synsvidde = 2;
-	@Deprecated
-	/**Gjør alle ruter i et kvadrat med radius Brett.synsvidde sentrert på p synlige
-	 * Må kalles fra SwingUtilities.invokeLater()*/
-	public static void removeShroud(Point p) {
-		for (int x=p.x-synsvidde; x<=p.x+synsvidde; x++)
-			for (int y=p.y-synsvidde; y<=p.y+synsvidde; y++)
-				get(x, y).visible();
-	}
+
 	@Deprecated
 	public static void synsvidde(int synsvidde) {
 		if (synsvidde<0)

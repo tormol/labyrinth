@@ -1,6 +1,7 @@
 package labyrinth;
 import static java.awt.Color.*;
 import static java.awt.event.KeyEvent.*;
+import static tbm.util.geom.Direction.*;
 import java.io.File;
 import java.awt.event.KeyEvent;
 import java.util.concurrent.LinkedTransferQueue;
@@ -34,7 +35,6 @@ public class Labyrinth {
 		});
 		
 		TileMap.all("exit", t->t.visible());
-		TileMap.panel.repaint();
 
 		Player p = new Player(l+"player.png", player->{
 			if (player.tile().isType("exit")) {
@@ -50,12 +50,12 @@ public class Labyrinth {
 				if (!TileMap.anyTiles("dot"))
 					Window.won();
 			}
-		}
-		);
+		});
 		Window.display();
 		Tile start = findStart(p);
 		p.moveTo( start );
-		for (Direction d : Direction.values())
+		//see in all directions, except NONE
+		for (Direction d : new Direction[]{NORTH, SOUTH, EAST, WEST})
 			LoS.triangle(p.tile().pos(), d, t -> t.visible());
 		p.start();
 		Mob.pauseAll(false);

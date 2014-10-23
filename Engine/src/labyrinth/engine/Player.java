@@ -26,14 +26,14 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 
 	@Override//KeyListener
 	public void keyPressed(KeyEvent e) {
-		Direction direction = Direction.d(e.getKeyCode(), VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT);
-		if (direction==null || pause) {
+		Direction direction = Direction.find(e.getKeyCode(), VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT);
+		if (direction==Direction.NONE || pause) {
 			if (e.getKeyCode() == VK_ESCAPE)
 				Mob.pauseAll(!pause);
 			return;
 		}
 		this.direction = direction;
-		final Point newPos = tile().pos().move(direction);
+		final Point newPos = tile().pos().plus(direction);
 		
 		final Tile to = TileMap.get(newPos);
 		if (to.canEnter(this, true)) {
