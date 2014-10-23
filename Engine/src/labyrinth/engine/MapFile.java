@@ -1,6 +1,5 @@
 package labyrinth.engine;
 //import static tbm.util.statics.*;
-import static labyrinth.engine.method.Value.*;
 import java.awt.FileDialog;
 import java.io.EOFException;
 import java.io.File;
@@ -51,19 +50,6 @@ public class MapFile {
 			throw Window.error("%s: Error reading file\n%s", path, e.getMessage());
 		} catch (InvalidMapException e) {
 			throw Window.error(e.getOffsetMessage(1));
-		}
-
-
-		Scope.Variable viewDistance = Script.root.search("viewDistance");
-		if (viewDistance != null) {
-			Value vd = viewDistance.get();
-			if (vd instanceof VString  &&  vd.String().equals("disabled")  ||  vd == Value.False)
-				vd = new Value.VInt(0);
-			if (!(vd instanceof VInt))
-				throw Window.error("The variable viewDistance is not an integer.\n");
-			if (vd.Int() < 0)
-				throw Window.error("viewDistance cannot be negative");
-			TileMap.synsvidde( vd.Int() );
 		}
 	}
 }

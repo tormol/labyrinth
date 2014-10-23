@@ -1,14 +1,14 @@
 package labyrinth.engine;
 import static java.awt.event.KeyEvent.*; 
-
 import javax.swing.SwingUtilities;
-
 import tbm.util.geom.Direction;
 import tbm.util.geom.Point;
 import tbm.util.awtKeyListen;
-
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
+import labyrinth.engine.method.Script;
+import labyrinth.engine.method.Value;
+import labyrinth.engine.method.Value.*;
 
 public class Player extends Mob implements awtKeyListen.Pressed {
 	public final Consumer<Player> onMove;
@@ -17,6 +17,16 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 	public Player(String imagePath, Consumer<Player> moveTo) {
 		super("Player", imagePath);
 		this.onMove = moveTo;
+
+		Value vd = Script.root.search("viewDistance");
+		if (vd != null)
+			if (vd instanceof VString  &&  vd.String().trim().equals("disabled")  ||  vd == Value.False)
+				for (Tile tile : TileMap.all())
+					tile.visible();
+			else if (vd instanceof VInt)
+				throw Window.error("Limited viewDistance is not supported yet.");
+			else
+				throw Window.error("viewDistance has wrong type.");
 	}
 
 	public void start() {

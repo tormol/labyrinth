@@ -1,6 +1,5 @@
 package labyrinth.engine;
 import javax.swing.JPanel;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -117,21 +116,6 @@ public class TileMap {
 	public static void visible(Iterable<Tile> tiles) {
 		for (Tile t : tiles)
 			t.visible();
-	}
-
-
-
-	@Deprecated/**Hvor mange felt spilleren ser i hver retning. 0=ser alle*/
-	private static int synsvidde = 2;
-
-	@Deprecated
-	public static void synsvidde(int synsvidde) {
-		if (synsvidde<0)
-			throw Window.error("Brett.synsvidde kan ikke være negativ");
-		TileMap.synsvidde = synsvidde;
-		if (synsvidde==0)
-			for (Tile rute : all())
-				rute.visible();
 	}
 
 	public static class InvalidMapException extends Exception {
