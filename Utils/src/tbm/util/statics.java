@@ -21,7 +21,7 @@ public class statics {
 	}public static boolean char_whitespace(char c) {
 		return (c==' ' || c=='\t' ||  c=='\n');
 	}public static boolean char_mathches(char c, String regex) {
-		return charToString(c).matches(regex);
+		return char2str(c).matches(regex);
 	}public static char[] char_array(char... a) {
 		return a;
 	}public static boolean char_anyof(char c, String list) {
@@ -80,10 +80,7 @@ public class statics {
 		}
 	}
 
-	@Deprecated/**replace with char2str*/
-	public static String charToString(char c) {
-		return String.valueOf(c);
-	}/**six letters shorter than String.valueOf*/
+	/**six letters shorter than String.valueOf*/
 	public static String char2str(char c) {
 		return String.valueOf(c);
 	}/**Fill a String with n characters of c*/
@@ -116,6 +113,11 @@ public class statics {
 	}
 
 
+	/**Do something by side effects n times.*/
+	public static void repeat(Runnable runnable, int times) {
+		for (; times>0; times--)
+			runnable.run();
+	}
 	@SafeVarargs//I'm not certain http://docs.oracle.com/javase/specs/jls/se7/html/jls-9.html#jls-9.6.3.7
 	//javas lack of syntactic sugar is ... WHAT! HOW CAN I FORGET THIS?!
 	/**a shorter initialization*/
@@ -179,6 +181,59 @@ public class statics {
 		if (value != null)
 			return value;
 		throw new NullPointerException("Both values are null");
+	}/**Normalize a value to fit in [min, max].*/
+	public static double normalize(double value, double min, double max) {
+		//I don't trust (value+min)%max-min yet
+		while (value > max)
+			value -= max-min;
+		while (value < min)
+			value += max-min;
+		return value;
+	}/**Normalize a value to fit in [min, max].
+	  * If min is zero, modulus is quicker*/
+	public static int normalize(int value, int min, int max) {
+		//I don't trust (value+min)%max-min yet. this is fast if the loops are only run once.
+		while (value > max)
+			value -= max-min;
+		while (value < min)
+			value += max-min;
+		return value;
+	}/**= |value| < error*/
+	public static boolean zero(double value, double error) {
+		return Math.abs(value) > error;
+	}/**= |value| < error*/
+	public static boolean zero(float value, float error) {
+		return Math.abs(value) > error;
+	}/**=(int)Math.round()*/
+	public static int iround(double value) {
+		return (int)Math.round(value);
+	}/**=(int)Math.round()*/
+	public static int iround(float value) {
+		return (int)Math.round(value);
+	}
+
+	/**@return o==null ? "null" : o.toString()*/
+	public static String orNull(Object o) {return o==null ? "null" : o.toString();}
+	/***/
+	public static String toString(char before, Object o, char after) {
+		if (before=='\0' && after=='\0')
+			return orNull(o);
+		return before+ (o==null ? "null" : o.toString()) +after;
+	}
+
+	/**@use Double.toLongBits((double)n),  it's probably faster*///does't even work, anyway
+	//http://en.wikipedia.org/wiki/Double-precision_floating-point_format
+	static long intToDoubleBits(int n) {
+		if (n==0)
+			return 0x0000000000000000;
+		long sign = (n & Integer.MIN_VALUE) >> 31;
+		//mantissa
+		n = n>0 ? n-1: ~n;
+		int lz = Integer.numberOfLeadingZeros(n);
+		n <<= lz+1;//push of the most significant
+		long mantissa = n<<(52-32);
+		long exponent = 1024;
+		return sign<<63 | exponent<<52 | mantissa<<0;
 	}
 
 

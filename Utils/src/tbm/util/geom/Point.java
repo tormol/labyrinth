@@ -1,140 +1,237 @@
-//&Point = FPoint
-//&int = float
 package tbm.util.geom;
+import static tbm.util.geom.Direction.*;
+import static tbm.util.statics.*;
 import static java.lang.Math.*;
 import java.awt.geom.Point2D;
 import java.io.Serializable;
+import tbm.util.Bracket;
 
+/**An immutable alternative to java.awt.Point.
+ * Also has many more functions.
+ * No methods accept null
+ * Use static constructor wrappers, I might add object caching
+ * The class isn't final, but don't make it mutable*/
+public class Point implements Serializable {
+	/**the horizontal axis, positive is right*/
+	public final int x;
+	/**the vertical  axis, positive is down*/
+	public final int y;
 
-/***/
-public class Point implements Serializable, Cloneable {
-	public final int x,y;
+	protected Point(int x, int y) {this.x=x; this.y=y;}
 
-	/***/
-	public Point() {this(0, 0);}
-	/***/
-	public Point(int x, int y) {this.x=x; this.y=y;}
-	/***/
-	public Point(Point p) {this(p.x, p.y);}
-	/***/
-	public Point(Point2D p) {this((int)p.getX(), (int)p.getY());}
-	/***/
-	public Point(int[] a) {this(a[0], a[1]);}
-	/***/
-	public Point(String str) {this(Helper.parsePoint(str));}
-	/***/
-	public Point(Axis a) {
-		if (a==null) {
-			x=0; y=0;
-		} else switch (a) {
-			case  X:	x=1; y=0; break;
-			case  Y:	x=0; y=1; break;
-			default:	throw new AssertionError("Unhandled Axis "+a.toString());
-		}
-	}
-	/***/
-	public Point(Direction d) {
-		if (d==null) {
-			x=0; y=0;
-		} else switch (d) {
-			case NORTH: x= 0; y=-1; break;
-			case SOUTH:	x= 0; y=+1; break;
-			case  WEST:	x=-1; y= 0; break;
-			case  EAST:	x=+1; y= 0; break;
-			default:	throw new AssertionError("Unhandled Direction "+d.toString());
-		}
-	}
-	/***/
-	public Point move(int x, int y) {return new Point(this.x+x, this.y+y);}
-	/***/
-	public Point move(Point p) {return move(p.x, p.y);}
-	/***/
-	public Point move(Axis a, int value) {switch (a) {
-		case X: return move(value, 0);
-		case Y: return move(0, value);
-		default: throw new AssertionError("Unhandled Axis "+a.toString());
-	}}
-	/***/
-	public Point move(Direction d) {return move(d, 1);}
-	/***/
-	public Point move(Direction d, int n) {return move(new Point(d).times(n));}
-	/***/
-	public <T> Point move(T direction, T xa, T xs, T ya, T ys) {return move(direction, xa, xs, ya, ys, 1);}
-	/***/
-	public <T> Point move(T direction, T xa, T xs, T ya, T ys, int n) {return move( Direction.d(direction, ys, ya, xs, xa),  n);}
+	/**new Point = this+[x, y] = [this.x+x, this.y+y]*/
+	public Point plus(int x, int y) {return p(this.x+x, this.y+y);}
+	/**new Point = this+p = [this.x+p.x, this.y+p.y]*/
+	final public Point plus(Point p) {return plus(p.x, p.y);}
+	/**new Point = X->[x+v, y] Y->[x, y+v]*/
+	public Point plus(Axis a, int v) {return plus(p(a).x*v, p(a).y*v);}
+	/**new Point = North->[x, y-1] South->[x, y+1] West->[x-1, y] East->[x+1, y]*/
+	public Point plus(Direction d) {return plus(p(d));}
+	/**new Point = North->[x, y-n] South->[x, y+n] West->[x-n, y] East->[x+n, y]*/
+	public Point plus(Direction d, int n) {return plus(p(d).x*n, p(d).y*n);}
+	/**new Point = this-[x,y] = [this.x-x, this.y-y]*/
+	final public Point minus(int x, int y) {return plus(-x, -y);}
+	/**new Point = this-p = [this.x-p.x, this.y-p.y]*/
+	final public Point minus(Point p) {return minus(p.x, p.y);}
+	/**new Point = [-x, -y]*/
+	public Point minus() {return p(-x, -y);}
+	/**new Point = n*this = [x*n, y*n]*/
+	public Point times(int n) {return p(x*n, y*n);}
+	/**new Point = [x*this.x, y*this.y]*/
+	public Point times(int x, int y) {return p(this.x*x, this.y*y);}
+	/**new Point = [p.x*x, p.y*y]*/
+	final public Point times(Point p) {return times(p.x, p.y);}
 
-	/***/
-	public Point negate() {return new Point(-x, -y);}
-	/***/
-	public Point sign() {return new Point((int)signum(x), (int)signum(y));}
-	/***/
-	public Point times(int n) {return new Point(x*n, y*n);}
-	/***/
-	public Point times(Point p) {return new Point(x*p.x, y*p.y);}
-	/***/
-	public Point mask(Axis a) {return times(new Point(a));}
-	/***/
-	public Point mask(Direction d) {return times(new Point(d));}
+	/**new Point = [sign(x), sign(y)]*/
+	public Point sign() {return p(Integer.signum(x), Integer.signum(y));}
+	/**new Point = [y, x]*/
+	public Point inverse() {return p(y, x);}
 
-	/***/
-	public Point diff(int x, int y) {return move(-x, -y);}
-	/***/
-	public Point diff(Point p) {return diff(p.x, p.y);}
+	/**= |x|+|y| = Number of horizontal and vertical moves needed to reach origin.*/
+	final public int tileDistance() {return tileDistance(0, 0);}
+	/**= |this.x-x|+|this.y-y| = Number of horizontal and vertical moves needed to reach this coordinate.*/
+	public int tileDistance(int x, int y) {return Math.abs(this.x-x) + Math.abs(this.y-y);}
+	/**= |x-p.x|+|y-p.y| = Number of horizontal and vertical moves needed to reach this point.*/
+	final public int tileDistance(Point p) {return tileDistance(p.x, p.y);}
+	/**= |this| = sqrt(x^2, y^2)*/
+	public double length() {return sqrt(x*x + y*y);}
+	/**= |this-[x,y]| = sqrt((this.x-x)^2, (this.y-y)^2)*/
+	public double length(int x, int y) {return sqrt((this.x-x)*(this.x-x) + (this.y-y)*(this.y-y));}
+	/**= |this-p| = sqrt((x-p.x)^2, (y-p.y)^2)*/
+	public double length(Point p) {return length(p.x, p.y);}
+	/**X->x Y->y*/
+	public int length(Axis a) {return p(a).x*x + p(a).y*y;}
+	/**NORTH->-y SOUTH->y WEST->-x EAST->x NONE->0,but you shouldn't pass that*/
+	public int length(Direction d) {return p(d).x*x + p(d).y*y;}
 
-	/**Number of horisontal and vertical moves needed.*/
-	public int movesTo(int x, int y) {
-		return Math.abs(this.x-x) + Math.abs(this.y-y);
-	}
-	/***/
-	public int movesTo(Point p) {return movesTo(p.x, p.y);}
-	/***/
-	public double abs() {return sqrt(x*x + y*y);}
+	/**The angle relative to positive x, 
+	 *@see Math.atan2(double, double)*/
+	public double arg() {return atan2(y, x);}
+	/**=this.arg()-angle, in (-pi, pi]*/
+	public double angle(double angle) {return normalize(atan2(y, x)-angle, nextUp(-PI), PI);}
+	/**=this.arg()-p.arg(), in (-pi, pi]*/
+	final public double angle(Point p) {return angle(p.arg());}
+	/**=this.arg()-d.angle, in (-pi, pi], NONE->NaN*/
+	public double angle(Direction d) {return angle(d.angle);}
+	//angle(int x, int y) doesn't make much sense
 
+	/**new Point = [|this|*cos arg(this),  |this|*sin arg(this)
+	 * Exact for multiples of pi/2*/
+	public Point rotate(Double d) {
+		if (Double.isNaN(d))
+			return this;
+		if (d%(PI/2) != 0)//non-exact is complicated, d will usually be exact
+			return p(length(), arg()+d);
+		d = normalize(d, nextUp(-PI), PI);//-pi would be an extra case to test for.
+		return d==0?this : d==PI?p(-x, -y) : d==PI/2?p(y, -x) : p(-y, x);}
+	//rotate(Direction) would be non-obivious, just use rotate(direction.angle)
 
+	/**this.x*x+this.y*y = dot product*/
+	public int dot(int x, int y) {return this.x*x + this.y*y;}
+	/**x*p.x+y*p.y = dot product*/
+	public int dot(Point p) {return dot(p.x, p.y);}
+
+	//If you want to write a little more.
 	public int getX() {return x;}
 	public int getY() {return y;}
-	public int get(Axis a) {switch (a) {
-		case X: return x;
-		case Y: return y;
-		default: throw new AssertionError("Unhandled Axis "+a.toString());
-	}}
-	public int get(Direction d) {switch (d) {
-		case NORTH:	return -y;
-		case SOUTH:	return +y;
-		case  WEST:	return -x;
-		case  EAST:	return -x;
-		default:	throw new AssertionError("Unhandled Direction "+d.toString());
-	}}
+	/**Return the direction of the axis with the highest absolute value; NONE if both are zero;*/
+	public Direction direction() {
+		if (abs(x) > abs(y))
+			return x>0 ? EAST : WEST;
+		if (abs(x) < abs(y))
+			return y>0 ? SOUTH : NORTH;
+		return NONE;
+	}
+	/**Return the directions with the highest and lowest absolute value; NONE if zero.
+	 * (1, -2) -> [NORTH, EAST*, (-5, 5)->[WEST, SOUTH], (0, 1)->[NORTH, NONE]*/
+	public Direction[] directions() {
+		Direction X = x>0 ? EAST  : x<0 ? WEST  : NONE;
+		Direction Y = y>0 ? SOUTH : y<0 ? NORTH : NONE;
+		if (abs(x) >= abs(y))
+			return new Direction[]{X, Y};
+		else
+			return new Direction[]{Y, X};
+	}
 
+	/**new Point = [x, this.y]*/
+	public Point withX(int x) {return p(x, this.y);}
+	/**new Point = [this.x, y]*/
+	public Point withY(int y) {return p(this.x, y);}
+	/**new Point = North->[x, -v] South->[x, v] West->[-v, y] East->[v, y]*/
+	public Point with(Direction d, int v) {return p(x*p(d.axis.flip()).x+p(d).x*v, y*p(d.axis.flip()).y+p(d).y*v);}
+	/**new Point = X->[v, y] Y->[x, v]*/
+	public Point with(Axis a, int v) {return p(x*p(a.flip()).x+p(a).x*v, y*p(a.flip()).y+p(a).y*v);}
+	/**new Point = sqrt(x^2+y^2)[cos(arg), sin(arg)]*/
+	public Point with_arg(double arg) {return rotate(arg-arg());}
+	/**new Point = length[cos(arg), sin(arg)] = length/length() [x, y]*/
+	public Point with_length(double length) {return p(round(x*length/length()), round(y*length/length()));}
 
-	public Point withX(int x) {return new Point(x, this.y);}
-	public Point withY(int y) {return new Point(this.x, y);}
-	public Point with(Axis a, int v) {switch (a) {
-		case X: return new Point(v, y);
-		case Y: return new Point(x, v);
-		default: throw new AssertionError("Unhandled Axis "+a.toString());
-	}}
-
-	/***/
+	/**returns false if null*/
+	public boolean equals(java.awt.Point p) {return p==null ? false : (p.x==x && p.y==y);}
+	/**returns false if null*/
+	public boolean equals(Point2D p) {return p==null ? false : (p.getX()==x && p.getY()==y);}
+	/**returns false if null*/
+	public boolean equals(Point p) {return p==null ? false : (p.x==x && p.y==y);}
 	public boolean equals(int x, int y) {return (this.x==x && this.y==y);}
-	/***/
-	public boolean equals(Point p) {return (p.x==x && p.y==y);}
-	/***/
-	public boolean equals(java.awt.Point p) {return (p.x==x && p.y==y);}
-	/***/
+	/**returns false if null or not instance of this class*/@Override
+	public boolean equals(Object p) {
+		//Cannot compare with awt.Point or Point2D, because equals(Object) should be symmetric;
+		//a.equals(b)==b.equals(a). And I cannot modify those to compare with my class. 
+		if (!(p instanceof Point))
+			return false;
+		return (((Point)p).x==x && ((Point)p).y==y);
+	}
+	/**@return y*/
+	public int hashCode() {return y;}
+	
+	/**=x+", "+y*/
 	public String toString() {return x+", "+y;}
-	/***/
-	public String toString(char o, char c) {return Helper.toString(o, this, c);}
-	/***/
-	public Point toPoint() {return new Point(x, y);}
-	/***/
+	/**=before+x+", "+y+after*/
+	public String toString(char before, char after) {return before+x+", "+y+after;}
+	/**={x, y}*/
 	public int[] toArray() {return new int[]{x, y};}
 
-	@Deprecated	public Point add(int x, int y) {return move(x, y);}
-	@Deprecated	public Point add(Point p) {return move(p);}
-	@Deprecated	public Point add(Axis a, int value) {return move(a, value);}
-	@Deprecated	public int flyttAvstand(int x, int y) {return movesTo(x, y);}
-	@Deprecated	public int flyttAvstand(Point p) {return movesTo(p);}
-	@Deprecated	public Point enhet() {return sign();}
+	/**Create a new Point, or return a cached one.*/
+	public static Point p(int x, int y) {
+		if (x==0) switch (y) {
+			case  0: return origin;
+			case +1: return south;
+			case -1: return north;
+		} else if (y==0) switch (x) {
+			case -1: return west;
+			case +1: return east;
+		} 
+		return new Point(x, y);
+	}
+	/**@throws NullPointerException if null
+	 **@return the parameter if instance of Point, else new*/
+	public static Point p(Point p) {
+		if (p==null)
+			throw new NullPointerException();
+		if (p instanceof Point)
+			return (Point)p;
+		return p(p.x, p.y);
+	}
+	/**Create a new Point
+	 *@throws NullPointerException if null*/
+	public static Point p(Point2D p) {return p((int)p.getX(), (int)p.getY());}
+	/**Create a new Point
+	 *@throws NullPointerException if null*/
+	public static Point p(java.awt.Point p) {return p(p.x, p.y);}
+	/**Create a point from the string
+	 *@throws NullPointerException if null
+	 *@return null if the body is "null"*/
+	public static Point p(String str) throws PointFormatException {
+		str = str.replace("\t", "").replace(" ", "");
+		Bracket b = Bracket.get(str.charAt(0));
+		if (b != null)
+			if (str.indexOf(b.close) == -1) 
+				throw new PointFormatException("Point \""+str+"\": missing '"+b.close+"'.");
+			else
+				str = str.substring(1, str.indexOf(b.close)-1);
+
+		if (str.toLowerCase().equals("null"))
+			return null;
+		String val[] = str.split(",");
+		if (val.length != 2)
+			throw new PointFormatException("too "+ (val.length>2 ?"many":"few") +" numbers in " + str);
+		int x, y;
+		try {x=Integer.parseInt( val[0] );
+		} catch (NumberFormatException e) {
+			throw new PointFormatException("Invalid number for x; " + e.getMessage());}
+		try {y = Integer.parseInt( val[1] );
+		} catch (NumberFormatException e) {
+			throw new PointFormatException("Invalid number for y; " + e.getMessage());}
+		return p(x, y);
+	}
+	/**Return the unit vector of the axis.
+	 *@throws NullPointerException if null*/
+	public static Point p(Axis a) {switch (a) {
+		case  X:	return south;
+		case  Y:	return  west;
+		default:	throw new AssertionError("Unhandled Axis "+a.toString());
+	}}
+	/**Return the unit vector of the direction.
+	 *@throws NullPointerException if null*/
+	public static Point p(Direction d) {switch (d) {
+		case NORTH: return  north;
+		case SOUTH:	return  south;
+		case  WEST:	return   west;
+		case  EAST:	return   east;
+		case  NONE: return origin;
+		default:	throw new AssertionError("Unhandled Direction "+d.toString());
+	}}
+	/**Round numbers to the nearest integer*/
+	public static Point p(double length, double argument) {
+		double x = length*cos(argument);
+		double y = length*sin(argument);
+		return p(iround(x), iround(y));
+	}
+
+	static final Point origin= new Point( 0,  0);
+	static final Point north = new Point( 0, -1);
+	static final Point south = new Point( 0, +1);
+	static final Point east  = new Point(+1,  0);
+	static final Point west  = new Point(-1,  0);
 	private static final long serialVersionUID = 1L;
 }

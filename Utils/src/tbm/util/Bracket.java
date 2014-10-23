@@ -19,6 +19,11 @@ public enum Bracket {
 		return str.substring(0, index);
 	}
 
+	//might change to Object
+	public String enclose(String string) {
+		return open + string.toString() + close;
+	}
+
 
 	/**return the Bracket with that opener, or null if none have it.*/
 	public static Bracket get(char opener) {switch (opener) {
