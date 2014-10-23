@@ -270,7 +270,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	public String subString(Parser start) {
 		if (start.line == line)
 			if (start.col <= col)
-				return base.get(line).substring( start.col, col-start.col);
+				return base.get(line).substring( start.col, col);
 			else
 				throw new IllegalArgumentException("start collumn is after current collumn");
 		if (start.line > line)
