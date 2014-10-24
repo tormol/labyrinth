@@ -1,6 +1,5 @@
 package labyrinth.engine.method;
 import java.util.ArrayList;
-import java.util.List;
 import labyrinth.engine.Action;
 
 //interface action in code called from code void(TIle, Mob)
@@ -16,16 +15,16 @@ public interface Operation extends Action {
 
 	public static class Call implements Operation {
 		public final Object toCall;
-		public final List<Object> param;
-		public Call(Object toCall, List<Object> parameters) {
+		public final Iterable<Object> param;
+		public Call(Object toCall, Iterable<Object> params) {
 			this.toCall = toCall;
-			this.param = parameters;
+			this.param = params;
 		}
 		@Override
 		public Value perform() {
 			//must do it in order
 			Value call = Value.get(toCall);
-			ArrayList<Value> p = new ArrayList<>(param.size());
+			ArrayList<Value> p = new ArrayList<>();
 			param.forEach(e->p.add(Value.get(e))); 
 			return call.call(p);
 		}
@@ -56,5 +55,16 @@ public interface Operation extends Action {
 		}
 	}
 
-	public static Operation getLast = ()->Script.last;
+	public static Operation GetLast = ()->Script.last;
+
+	public static class GetRef implements Operation {
+		public final String name;
+		public GetRef(String name) {
+			this.name = name;
+		}
+		@Override
+		public Value perform() {
+			return Script.current.search(name);
+		}
+	}
 }
