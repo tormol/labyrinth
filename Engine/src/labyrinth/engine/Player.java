@@ -18,9 +18,9 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 		super("Player", imagePath);
 		this.onMove = moveTo;
 
-		Value vd = Script.root.search("viewDistance");
+		VRef vd = Script.root.search("viewDistance");
 		if (vd != null)
-			if (vd instanceof VString  &&  vd.String().trim().equals("disabled")  ||  vd == Value.False)
+			if (vd.getRef() instanceof VString  &&  vd.getRef().String().trim().equals("disabled")  ||  vd == Value.False)
 				for (Tile tile : TileMap.all())
 					tile.visible();
 			else if (vd instanceof VInt)

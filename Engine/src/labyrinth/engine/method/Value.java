@@ -1,13 +1,13 @@
 package labyrinth.engine.method;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import tbm.util.geom.Point;
 import static tbm.util.statics.*;
 
 public interface Value {
-	/** a point has members x and y, to support structs, etc*/
-	default Value member(String name) {throw Script.error("this type have no members");}
+	/**for support structures etc. f.ex Point has x and y, String.length*/
+	default Value getMember(String name) {throw Script.error("this type have no members");}
+	default void setMember(String name, Value v) {throw Script.error("this type have no members");}
 	default int Int() {throw Script.error("not an Integer");}
 	default Point Point() {throw Script.error("not a Point");}
 	default char Char() {throw Script.error("not a characther");}
@@ -61,7 +61,7 @@ public interface Value {
 			return c==v.Char();
 		}
 	}
-	public static class VString implements Value {
+	public static class VString implements Imutable {
 		public final String str;
 		public VString(String str) {
 			this.str=str;
@@ -71,7 +71,11 @@ public interface Value {
 		}@Override
 		public boolean eq(Value v) {
 			return str.equals(v.String());
-		}
+		}@Override
+		public Value getMember(String member) {switch (member) {
+			case"length": return new VInt(str.length());
+			default: throw Script.error("Strings have no member \"%s\"", member);
+		}}
 	}
 	
 	public static class VInt implements Value {
@@ -87,7 +91,7 @@ public interface Value {
 		}
 	}
 
-	public static class VPoint extends Point implements Value {
+	public static class VPoint extends Point implements Imutable {
 		public VPoint(Point p) {
 			//TODO: make all values use static constructor.
 			super(p.x, p.y);
@@ -98,10 +102,10 @@ public interface Value {
 		public Point Point() {
 			return this;
 		}@Override
-		public Value member(String m) {switch (m) {
+		public Value getMember(String m) {switch (m) {
 			case"x":	return new Value.VInt(x);
 			case"y":	return new Value.VInt(y);
-			default:	throw Script.error("Points has no member %s", m);
+			default:	throw Script.error("Points have no member \"%s\"", m);
 		}}@Override
 		public boolean eq(Value v) {
 			return super.equals(v.Point());
@@ -124,6 +128,14 @@ public interface Value {
 		@Override default boolean eq(Value v) {
 			return this.getRef() == v.getRef();
 		}
+	}
+
+	static interface Imutable extends Value {
+		@Override Value getMember(String member);
+		@Override default void setMember(String name, Value v) {
+			getMember(name);//throw if it doesn't even exist.
+			throw Script.error("%ss are immutable.", map_firstKey(types, this.getClass()));
+		}	//             plural s, eg strings not string
 	}
 
 

@@ -13,7 +13,9 @@ public class Scope {
 	public Variable declare(String name, boolean _final) {
 		if (vars.containsKey(name))
 			throw Script.error("The variable \"%s\" is already declared.", name);
-		return vars.put(name, new Variable(_final, Value.Void));
+		Variable var = new Variable(_final, Value.Void);
+		vars.put(name, var);//put() return the previous value, which is null.
+		return var;
 	}
 	/**for inbuilt variables*/
 	public void define(String name, Value inbuilt) {
