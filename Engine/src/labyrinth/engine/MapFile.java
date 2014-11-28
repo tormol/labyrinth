@@ -37,7 +37,7 @@ public class MapFile {
 			while (!p.empty() && (p.peek() != '\n' || map.isEmpty()))
 				map.add(p.line().toCharArray());
 			TileMap.start(map);
-			Script.parse_static(p);
+			Parser.parse_static(p);
 		} catch (FileNotFoundException e) {
 			throw Window.error("%s: File not Found.", path);
 		} catch (EOFException e) {
@@ -45,7 +45,7 @@ public class MapFile {
 			throw Window.error("Unexpected end of file %s", path.toString());
 		} catch (ParseException e) {
 			e.printStackTrace();
-			throw Window.error("Unexpected end of file %s", path.toString());
+			throw Window.error(e.getMessage());
 		} catch (IOException e) {
 			throw Window.error("%s: Error reading file\n%s", path, e.getMessage());
 		} catch (InvalidMapException e) {

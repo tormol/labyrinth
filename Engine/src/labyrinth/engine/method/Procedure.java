@@ -2,6 +2,7 @@ package labyrinth.engine.method;
 import java.util.List;
 //import static tbm.util.statics.*;
 
+/**script-created functions*/
 public class Procedure implements Operation {
 	private Iterable<Object> operations;
 	public final String description;
@@ -16,6 +17,12 @@ public class Procedure implements Operation {
 		return new Instance(Script.current);
 	}
 
+	public String toString() {
+		return description;
+	}
+
+	/**A function defined inside one block and assigned to an outer variable might be used from anothe block.
+	 * Each time the code the function is declared in is run, the code is the same but with different values in scopes*/
 	public class Instance implements Value.VFunc, Operation {
 		public final Scope parent;
 		public Instance(Scope parent) {
@@ -24,7 +31,7 @@ public class Procedure implements Operation {
 
 		@Override//Operation, Value
 		public Value perform() {
-			Script.current = new Scope(Script.current);
+			Script.current = new Scope(Script.current, description);
 			Script.run(operations);
 			Script.current = Script.current.parent;
 			return Script.last;
@@ -35,6 +42,10 @@ public class Procedure implements Operation {
 			if (param.size() != 0)
 				throw Script.error("this function takes no parameters");
 			return perform();
+		}
+
+		public String toString() {
+			return description + " - " + parent.toString();
 		}
 	}
 }

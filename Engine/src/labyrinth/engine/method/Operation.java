@@ -16,9 +16,11 @@ public interface Operation extends Action {
 	public static class Call implements Operation {
 		public final Object toCall;
 		public final Iterable<Object> param;
-		public Call(Object toCall, Iterable<Object> params) {
+		public final String description;
+		public Call(Object toCall, Iterable<Object> params, String description) {
 			this.toCall = toCall;
 			this.param = params;
+			this.description = description;
 		}
 		@Override
 		public Value perform() {
@@ -30,16 +32,20 @@ public interface Operation extends Action {
 		}
 	}
 
+	/**Declare a variable*/
 	public static class Declare implements Operation {
 		public final String name;
 		public final boolean _final;
-		public Declare(String name, boolean _final) {
+		public final Class<? extends Value> type;
+		//Would it be possible to use Scope.Variable as a Declare Operation?
+		public Declare(String name, boolean _final, Class<? extends Value> type) {
 			this.name = name;
 			this._final = _final;
+			this.type = type;
 		}
 		@Override
 		public Value perform() {
-			return Script.current.declare(name, _final);
+			return Script.current.declare(name, _final, type);
 		}
 	}
 
@@ -64,7 +70,7 @@ public interface Operation extends Action {
 		}
 		@Override
 		public Value perform() {
-			return Script.current.search(name);
+			return Script.current.get_variable(name);
 		}
 	}
 }

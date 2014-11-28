@@ -18,15 +18,19 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 		super("Player", imagePath);
 		this.onMove = moveTo;
 
-		VRef vd = Script.root.search("viewDistance");
-		if (vd != null)
-			if (vd.getRef() instanceof VString  &&  vd.getRef().String().trim().equals("disabled")  ||  vd == Value.False)
+		//Make all tiles visible if the variable "viewDistance" is false or "disabled"
+		//or (TODO) limit line of sight to n tiles if it's an integer.
+		VRef vd_var = Script.root.get_variable("viewDistance");
+		if (vd_var != null) {
+			Value vd = vd_var.getRef();
+			if (vd == Value.False  ||  (vd instanceof VString && vd.String().equals("disabled")))
 				for (Tile tile : TileMap.all())
 					tile.visible();
 			else if (vd instanceof VInt)
 				throw Window.error("Limited viewDistance is not supported yet.");
 			else
 				throw Window.error("viewDistance has wrong type.");
+		}
 	}
 
 	public void start() {

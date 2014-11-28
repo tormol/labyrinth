@@ -5,7 +5,7 @@ import tbm.util.geom.Point;
 import static tbm.util.statics.*;
 
 public interface Value {
-	/**for support structures etc. f.ex Point has x and y, String.length*/
+	/**for maps, not directly exposed to script code*/
 	default Value getMember(String name) {throw Script.error("this type have no members");}
 	default void setMember(String name, Value v) {throw Script.error("this type have no members");}
 	default int Int() {throw Script.error("not an Integer");}
@@ -16,20 +16,28 @@ public interface Value {
 	default Value call(List<Value> param) {throw Script.error("not a function");}
 	default void setRef(Value v) {throw Script.error("not a reference");}
 	default Value getRef() {throw Script.error("not a reference");}
-	default boolean equals(Value v) {
-		//if (!v.class.getName().equals(this.class.getName()))
-			return false;
+	default boolean sameType(Value v) {
+		return v.getClass().getName().equals(this.getClass().getName());
 	}
 	boolean eq(Value v);
 
-
-	public static class VVoid implements Value {@Override
+	//Must be a class to use instanceof, static.class and .getClass to get name from the types map.
+	public static class VVoid implements Value {
+		private VVoid() {;}
+		@Override
 		public boolean eq(Value v) {
+			//return false would make it impossible to check if a variable is void in a script.
 			return v==Void;
 		}
 	}
-	public static VVoid Void = new VVoid();
+	public static final VVoid Void = new VVoid();
 
+	//for Method definiton paramater lists
+	/**The previous argument is optional and can be repeated.
+	 *Must be the last element in the array.*/
+	static final Class<Value> vararg = null;
+
+	/**Boolean, private constructor; use VBool.v()*/
 	public static class VBool implements Value {
 		public final boolean bool;
 		private VBool(boolean bool) {
@@ -39,19 +47,20 @@ public interface Value {
 			return bool;
 		}@Override
 		public boolean eq(Value v) {
+			//return v==this is a premature optimization that would bite in the ass if another type ovverride .Bool()
 			return bool==v.Bool();
 		}
 		public static VBool v(boolean b) {
 			return b?True:False;
 		}
 	}
-	public static VBool True  = new VBool(true );
-	public static VBool False = new VBool(false);
+	public static final VBool True  = new VBool(true );
+	public static final VBool False = new VBool(false);
 
 
 	public static class VChar implements Value {
 		public final char c;
-		public VChar(char c) {
+		private VChar(char c) {
 			this.c=c;
 		}@Override
 		public char Char() {
@@ -60,10 +69,18 @@ public interface Value {
 		public boolean eq(Value v) {
 			return c==v.Char();
 		}
+		public static VChar v(char ch) {
+			if (ch < 0  ||  ch > 128)
+				return new VChar(ch);
+			if (flyweight[ch] == null)//Avoid creating objects until they're needed.
+				flyweight[ch] = new VChar(ch);
+			return flyweight[ch];
+		}
+		private static final VChar[] flyweight = new VChar[128];
 	}
-	public static class VString implements Imutable {
+	public static class VString implements Immutable, VList {
 		public final String str;
-		public VString(String str) {
+		private VString(String str) {
 			this.str=str;
 		}@Override
 		public String String() {
@@ -71,16 +88,30 @@ public interface Value {
 		}@Override
 		public boolean eq(Value v) {
 			return str.equals(v.String());
-		}@Override
-		public Value getMember(String member) {switch (member) {
-			case"length": return new VInt(str.length());
-			default: throw Script.error("Strings have no member \"%s\"", member);
-		}}
+		}
+		public static VString v(String str) {
+			return new VString(str);
+		}
+		@Override
+		public int length() {
+			return str.length();
+		}
+		public VChar getN(int index) {
+			return VChar.v(str.charAt(index));
+		}
+		@Override
+		public void setN(int index, Value v)
+			{;}//will never be called since Immutable is implemented
+		@Override
+		public Class<? extends Value> elementType() {
+			return VChar.class;
+		}
 	}
-	
+
+
 	public static class VInt implements Value {
 		public final int n;
-		public VInt(int n) {
+		private VInt(int n) {
 			this.n=n;
 		}@Override
 		public int Int() {
@@ -89,26 +120,35 @@ public interface Value {
 		public boolean eq(Value v) {
 			return n==v.Int();
 		}
+		public static VInt v(int n) {
+			if (n < start  ||  n > flyweight.length+start)
+				return new VInt(n);
+			if (flyweight[n-start] == null)//Avoid creating objects until they're needed.
+				flyweight[n-start] = new VInt(n);
+			return flyweight[n-start];
+		}
+		//premature but I want to.
+		private static final VInt[] flyweight = new VInt[256];
+		private static final int start = -32;//asymetric because I think positive values are used more frequently than smaller ones
 	}
 
-	public static class VPoint extends Point implements Imutable {
-		public VPoint(Point p) {
-			//TODO: make all values use static constructor.
-			super(p.x, p.y);
-		}
-		public VPoint(int x, int y) {
+
+	public static class VPoint extends Point implements Value {
+		private VPoint(int x, int y) {
 			super(x,y);
 		}@Override
 		public Point Point() {
 			return this;
-		}@Override
-		public Value getMember(String m) {switch (m) {
-			case"x":	return new Value.VInt(x);
-			case"y":	return new Value.VInt(y);
-			default:	throw Script.error("Points have no member \"%s\"", m);
-		}}@Override
-		public boolean eq(Value v) {
+		}public boolean eq(Value v) {
 			return super.equals(v.Point());
+		}
+		public static VPoint v(Point p) {
+			if (p instanceof VPoint)
+				return (VPoint)p;
+			return v(p.x, p.y);
+		}
+		public static VPoint v(int x, int y) {
+			return new VPoint(x, y);
 		}
 		private static final long serialVersionUID = 1L;
 	}
@@ -130,19 +170,63 @@ public interface Value {
 		}
 	}
 
-	static interface Imutable extends Value {
-		@Override Value getMember(String member);
+	/**Implement setMember to throw if key exist*/
+	static interface Immutable extends Value {
+		/***/
 		@Override default void setMember(String name, Value v) {
-			getMember(name);//throw if it doesn't even exist.
+			getMember(name);//throws if name doesn't even exist or not a map
 			throw Script.error("%ss are immutable.", map_firstKey(types, this.getClass()));
 		}	//             plural s, eg strings not string
+		//a default setN here would be nice, but subclasses implementing this and VList must implement it anyway.
+	}
+
+	/***///TODO: resizeable
+	static interface VList extends VFunc {//TODO: extend java.util.List<Value>
+		@Override default Value call(List<Value> param) {
+			if (param == null  ||  param.isEmpty()  ||  param.size() > 2)
+				Script.error("Lists must have one or two parameters.");
+			int index = param.get(0).Int();
+			if (index < 0)
+				index = length()-index;
+			if (index >= length()  ||  index < 0)
+				throw Script.error("This List only have %d elements", length());
+			if (param.size() == 2) {
+				if (this instanceof Immutable)
+					throw Script.error("This list is Immutable");
+				Value _new = param.get(1);
+				if (!elementType().isInstance(_new))
+					throw Script.error("Element %s is not a subtype of %s", _new, types.get(elementType()));
+				setN(index, _new);
+			}
+			return getN(index);
+		}
+		default VList slice(int start, int end) {
+			throw Script.error("Slices are not implementted yet");
+		}
+
+		//Lists are comparable
+		/**Slow, special implementations should override*/
+		default boolean eq(Value v) {
+			if (v.getClass() != this.getClass()
+			 || ((VList)v).elementType() != elementType()
+			 || ((VList)v).length() != length())
+				return false;
+			for (int i=length(); i>=0; i--)
+				if (((VList)v).getN(i).eq(getN(i)))
+					return false;
+			return true;
+		}
+		int length();
+		Value getN(int index);
+		void setN(int index, Value v);
+		Class<? extends Value> elementType();
 	}
 
 
 	public static Value get(Object o) {
 		if (o instanceof String) {
 			Script.name = (String)o;
-			return Script.current.get((String)o);
+			return Script.current.value((String)o);
 		} if (o instanceof Value)
 			return (Value)o;
 		if (o instanceof Operation)
@@ -157,5 +241,5 @@ public interface Value {
 	public static Map<String, Class<? extends Value>> types = map_init(
 			"void,boolean,char,string,integer,point,reference".split(","),
 			array(VVoid.class, VBool.class, VChar.class, VString.class, VInt.class, VPoint.class, VRef.class)
-			);
+		);
 }
