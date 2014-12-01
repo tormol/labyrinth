@@ -1,5 +1,4 @@
 package labyrinth.engine;
-
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -8,11 +7,10 @@ import javax.swing.JOptionPane;
 public class Window {
 	public static JFrame window = null;
 	private static JLabel text = new JLabel();
-	public static void start(String vinduTittel) {
-		window = new JFrame(vinduTittel);
+	public static void start(String windowTitle) {
+		window = new JFrame(windowTitle);
 	}
 
-	/**@param args første argument er et filnavn som lastes i stedet for å spørre.*/
 	public static void display() {
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.getContentPane().setLayout(new BoxLayout(
@@ -42,11 +40,10 @@ public class Window {
 
 
 	public static void won() {
-		//TODO: last et nytt brett fra en konstant
-		end("Du vant!");
+		end("You won!");
 	}
 	public static void lost() {
-		end("du tapte");
+		end("You lost");
 	}
 
 	public static void end(String text) {
@@ -58,28 +55,25 @@ public class Window {
 		window.dispose();
 	}
 
-	/**Gjør det enkelt å gi en feilmelding
-	 *Legger til linjenummer før feilmeldingen.*/
+	/**An easy way to give an error message and exit.*/
 	public static ErrorDialog error(String f, Object... a) {
-		if (MapFile.line == -1)
-			return new ErrorDialog(f, a);
-		return new ErrorDialog("Line %d: %s", MapFile.line, String.format(f, a));
+		return new ErrorDialog(f, a);
 	}
 
 
-	@SuppressWarnings("serial")
 	public static class ErrorDialog extends RuntimeException {
 		private ErrorDialog(String f, Object... a) {
 			this(String.format(f, a));
 		}
 		private ErrorDialog(String message) {
 			JOptionPane.showMessageDialog(window,
-					message, "Labyrint - feil", JOptionPane.ERROR_MESSAGE
+					message, "Labyrinth - error", JOptionPane.ERROR_MESSAGE
 				);
-			//Siden det er flere tråder blir ikke programmet
-			//avsluttet av et unntak i én tråd.
+			//this exception won't stop other threads,
+			//Don't know whether this code does that, or I got stuck.
 			if (window != null)
 				window.dispose();
 		}
+		private static final long serialVersionUID = 1L;
 	}
 }

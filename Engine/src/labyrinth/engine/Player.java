@@ -1,14 +1,14 @@
 package labyrinth.engine;
 import static java.awt.event.KeyEvent.*; 
-
 import javax.swing.SwingUtilities;
-
 import tbm.util.geom.Direction;
 import tbm.util.geom.Point;
 import tbm.util.awtKeyListen;
-
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
+import labyrinth.engine.method.Script;
+import labyrinth.engine.method.Value;
+import labyrinth.engine.method.Value.*;
 
 public class Player extends Mob implements awtKeyListen.Pressed {
 	public final Consumer<Player> onMove;
@@ -18,13 +18,19 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 		super("Player", imagePath);
 		this.onMove = moveTo;
 
-		String viewDistance = Constant.get("synsvidde");
-		if (viewDistance != null)
-			if (viewDistance.trim().equals("av"))
+		//Make all tiles visible if the variable "viewDistance" is false or "disabled"
+		//or (TODO) limit line of sight to n tiles if it's an integer.
+		VRef vd_var = Script.scr.root.get_variable("viewDistance");
+		if (vd_var != null) {
+			Value vd = vd_var.getRef();
+			if (vd == Value.False  ||  (vd instanceof VString && vd.String().equals("disabled")))
 				for (Tile tile : TileMap.all())
 					tile.visible();
-			else
+			else if (vd instanceof VInt)
 				throw Window.error("Limited viewDistance is not supported yet.");
+			else
+				throw Window.error("viewDistance has wrong type.");
+		}
 	}
 
 	public void start() {

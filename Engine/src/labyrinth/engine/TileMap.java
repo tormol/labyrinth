@@ -1,12 +1,11 @@
 package labyrinth.engine;
 import javax.swing.JPanel;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.Queue;
 import java.util.function.Consumer;
-
+import static tbm.util.statics.*;
 import tbm.util.Wrapper;
 import tbm.util.geom.Point;
 
@@ -17,45 +16,45 @@ public class TileMap {
 	private static Tile[][] map;
 	/**Panelet som inneholder rutene*/
 	public static final JPanel panel = new JPanel(); 
-	/**Er en linket liste*/
-	private static FindMethod findMethod = null;
 	
 
-	/**Empty map*/
-	public static void start(int width, int height) {
+	/**Empty map
+	 * @throws InvalidMapException */
+	public static void start(int width, int height) throws InvalidMapException {
 		char[][] map = new char[height][width];
 		for (int y=0; y<height; y++)
 			for (int x=0; x<width; x++)
 				map[y][x] = ' ';
 		start(map);
 	}
-	/***/
-	public static void start(String[] lines) {
+	/**
+	 * @throws InvalidMapException */
+	public static void start(String[] lines) throws InvalidMapException {
 		char[][] symbol = new char[lines.length][];
 		for (int i=0; i<symbol.length; i++)
 			symbol[i] = lines[i].toCharArray();
 		start(symbol);
 	}
-	public static void start(Queue<char[]> symbol) {
+	public static void start(Queue<char[]> symbol) throws InvalidMapException {
 		start(symbol.toArray(new char[symbol.size()][]));
 	}
-	public static void start(char[][] tegn) {
+	public static void start(char[][] tegn) throws InvalidMapException {
 		Type.add("outside", true, false, null, Color.CYAN, "");
 		int collumns = tegn[0].length;
 		map = new Tile[tegn.length][collumns];
 		panel.setLayout(new GridLayout( map.length, map[0].length));
 
 		//lager Ruter
-		for (int y=0;  y<map.length;  y++, MapFile.line++) {
+		for (int y=0;  y<map.length;  y++) {
 			if (tegn[y].length != collumns)
-				throw Window.error("lengden passynsvidde ikke med resten.");
+				throw new InvalidMapException(y, "Length doesn't match the previous rows");
 			for (int x=0; x<map[0].length; x++) {
 				Type type = Type.get(tegn[y][x]);
 				if (type == null)
-					throw Window.error("Kolonne %d: Ugyldig tegn '%c'", x, tegn[y][x]);
+					throw new InvalidMapException(y, "collumn %d: Unknown symbol '%c'", x, tegn[y][x]);
 				map[y][x] = new Tile(type, Point.p(x, y));
 				if (type.method)
-					findMethod = new FindMethod(tegn[y][x], map[y][x], findMethod);
+					map[y][x].method = char2str(tegn[y][x]);
 				panel.add(map[y][x]);
 			}
 		}
@@ -79,14 +78,15 @@ public class TileMap {
 	public static Dimension dimesions() {
 		return new Dimension(map[0].length, map.length);
 	}
-	/**Returnerer hvor mange ruter det er på brettet.*/
+	/**@return map width*height*/
 	public static int numberOfTiles() {
 		return map[0].length * map.length;
 	}
-	
+
+	/**Are there any tiles of this type?*/
 	public static boolean anyTiles(String type) {
 		Wrapper<Boolean> any = new Wrapper<>(false);
-		all(type, (t)->any.v=true);
+		all(type, t->any.v=true);
 		return any.v;
 	}
 
@@ -112,26 +112,29 @@ public class TileMap {
 					consumer.accept(t);
 	}
 
+	/**make tiles visible*/
 	public static void visible(Iterable<Tile> tiles) {
 		for (Tile t : tiles)
 			t.visible();
 	}
 
-	/**Metode trenger å vite størrelsen på brettet for å sjekke at koordinater er gyldige, Brett trenger Metode for å lage ruter med metorer
-	 * Løsning: start brett, les inn metoder, legg metoder irutene med finnMetoder()*/
-	public static void findMethods() {
-		for (; findMethod != null;  findMethod = findMethod.next)
-			findMethod.tile.method = Method.get( String.valueOf(findMethod.method) );
-	}
-}
-
-/**For å legge metoder til ruter i labyrinten før metodene er lest inn.*/
-class FindMethod {
-	/**Linket liste*/
-	public final FindMethod next;
-	public final char method;
-	public final Tile tile;
-	public FindMethod(char method, Tile tile, FindMethod ext) {
-		this.method = method;	this.tile = tile;	this.next = ext;
+	public static class InvalidMapException extends Exception {
+		public final int row;
+		private InvalidMapException(int row, String f, Object... a) {
+			super(String.format(f, a));
+			this.row = row;
+		}
+		@Override
+		public String getMessage() {
+			return String.format("Row %d %s", row, super.getMessage());
+		}
+		public String getOffsetMessage(int lineOffset) {
+			return String.format("Line %d %s", lineOffset+row, super.getMessage());
+		}
+		//TODO: LocalizedMessage
+		public int getRow() {
+			return row;
+		}
+		private static final long serialVersionUID = 1L;
 	}
 }
