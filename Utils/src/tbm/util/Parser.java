@@ -1,7 +1,6 @@
 package tbm.util;
 import static tbm.util.statics.*;
 import tbm.util.parseNum;
-
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -11,11 +10,10 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.function.Supplier;
-
 import tbm.util.statics.InvalidHexException;
 
 public class Parser implements Closeable, AutoCloseable, CharSupplier<IOException>, Cloneable {
-	/**End of file, will always be -1*///because internal code depends on it;
+	/**End of file, will always be -1*///because some methods depend on it;
 	public static final int END = -1;
 	public static char checkEnd(int c) throws EOFException {
 		if (c==END)
@@ -286,13 +284,14 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		return sb.toString();
 	}
 
-	public int _uint(boolean negative, boolean other_systems) throws IOException, EOFException, NumberFormatException {
-		int num = parseNum.unsigned(this, negative, other_systems);
+	/**@param spaces A list of characthers that will be skipped, can be null*/
+	public int _uint(boolean negative, boolean other_systems, String spaces) throws IOException, EOFException, NumberFormatException {
+		int num = parseNum.unsigned_int(this, negative, other_systems, spaces);
 		back();
 		return num;
 	}
-	public int _int(boolean other_systems) throws IOException, EOFException, NumberFormatException {
-		int num = parseNum.signed(this, other_systems);
+	public int _int(boolean other_systems, String spaces) throws IOException, EOFException, NumberFormatException {
+		int num = parseNum.signed_int(this, other_systems, spaces);
 		back();
 		return num;
 	}
@@ -410,7 +409,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	@Deprecated @Override//CharSupplier
 	/**For implementing CharSupplier, which is used internally.
 	 *Equals next(), but the EOFExcetion is thrown on the second END.*/
-	public int get() throws IOException {
+	public int get() throws EOFException, IOException {
 		if (empty())
 			throw new EOFException(eof);
 		return inext();

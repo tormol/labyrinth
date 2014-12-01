@@ -1,4 +1,5 @@
 package tbm.util;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,6 +12,9 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//TODO: use Character statics to support more than ASCII
+/**static methods for simple things, som
+ * char_ methods only work for ASCII characters*/
 public class statics {
 	public static boolean char_letter(char c) {
 		return ((c>='a' && c<='z')  ||  (c>='A' && c<='Z')  ||  c=='_');
@@ -36,8 +40,13 @@ public class statics {
 	}
 
 	public static class InvalidHexException extends Exception {
+		public final char nonhex;
 		public InvalidHexException(char c) {
 			super("'"+c+"' is not a hexadecimal characther.");
+			this.nonhex = c;
+		}
+		public static void check(char c) throws InvalidHexException {
+			char_asHex(c);
 		}
 		private static final long serialVersionUID = 1L;
 	}public static int char_asHex(int c) {
@@ -55,15 +64,17 @@ public class statics {
 		return c;
 	}public static char char_asHex(char c1, char c2) throws InvalidHexException {
 		return(char) (16*char_asHex(c1) + char_asHex(c2));
-	}public static int char_toInt(char base, char c) {
-		if (c >= '0'  &&  c  <= '9'  &&  c-'0' < base)
+	}public static int char_toNum(char base, char c) {
+		if (c >= '0'  &&  c  <= '9'  &&  c-'0' < base) {
+			if (base == 1)
+				throw new RuntimeException("tbm.util.statics.char_toInt(): invalid base: "+base+"\nValid bases are 2-10 and 16.");	
 			return c - '0';
-		if (base == 16) {
-			c |= 0x20; 
+		} if (base == 16) {
+			c |= 0x20;//uppercase become lowercase
 			if (c >= 'a'  && c <= 'f')
 				return 10+c-'a';
 		} else if (base < 2  ||  base > 10)
-			throw new RuntimeException("tbm.util.statics.char_toInt(): invalid base: "+base+"\nValid bases are 2-10, 16 and 256.");
+			throw new RuntimeException("tbm.util.statics.char_toInt(): invalid base: "+base+"\nValid bases are 2-10 and 16.");
 		return -1;
 	}
 	public static <EX extends Throwable> char char_escape(char first, CharSupplier<EX> get) throws EX, InvalidHexException {
@@ -79,8 +90,21 @@ public class statics {
 			default :return first;
 		}
 	}
+	/**Is char printable?
+	 * Uses Characther.UnicodeBlock, If you want to check if char is printable with the current font, use Font.canDisplay(int)*/
+	//http://stackoverflow.com/questions/220547/printable-char-in-java
+	public static boolean char_printable(char c) {
+	    Character.UnicodeBlock block = Character.UnicodeBlock.of( c );
+	    return (!Character.isISOControl(c))
+	        &&  c != KeyEvent.CHAR_UNDEFINED
+	        &&  block != null
+	        &&  block != Character.UnicodeBlock.SPECIALS;
+	}
 
-	/**six letters shorter than String.valueOf*/
+	/**Shorter than String.format()*/
+	public static String format(String f, Object... a) {
+		return String.format(f, a);
+	}/**six letters shorter than String.valueOf*/
 	public static String char2str(char c) {
 		return String.valueOf(c);
 	}/**Fill a String with n characters of c*/
@@ -104,6 +128,7 @@ public class statics {
 			found.add(m.group());
 		return found.toArray(new String[found.size()]);
 	}
+	
 
 	/**Remove the last character from a StringBuilder
 	 * Useful when you're creating a list and want to remove the last comma.
@@ -234,6 +259,34 @@ public class statics {
 		long mantissa = n<<(52-32);
 		long exponent = 1024;
 		return sign<<63 | exponent<<52 | mantissa<<0;
+	}
+
+	public static int lower_int(long v) {
+		return (int)(v & 0xffffffff);
+	}
+	public static int higher_int(long v) {
+		return (int)(v>>32);
+	}
+	public static short lower_short(int v) {
+		return (short)(v & 0xffff);
+	}
+	public static short higher_short(int v) {
+		return (short)(v>>16);
+	}
+	public static int lower_byte(short v) {
+		return (byte)(v & 0xff);
+	}
+	public static int higher_byte(short v) {
+		return (byte)(v>>8);
+	}
+
+	/**round up to the nearest power of two*/
+	static int nextPower2(int v) {
+		if (v == 0)
+			return 1;
+		int h = Integer.highestOneBit(v);
+		return h==v ? v : h<<1;
+		//alternatively https://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 	}
 
 
