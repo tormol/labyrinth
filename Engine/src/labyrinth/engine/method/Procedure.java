@@ -14,7 +14,7 @@ public class Procedure implements Operation {
 	@Override//Operation
 	/**Creates a new Instance*/
 	public Value perform() {
-		return new Instance(Script.current);
+		return new Instance(Script.scr.current);
 	}
 
 	public String toString() {
@@ -23,7 +23,7 @@ public class Procedure implements Operation {
 
 	/**A function defined inside one block and assigned to an outer variable might be used from anothe block.
 	 * Each time the code the function is declared in is run, the code is the same but with different values in scopes*/
-	public class Instance implements Value.VFunc, Operation {
+	public class Instance implements VFunc, Operation {
 		public final Scope parent;
 		public Instance(Scope parent) {
 			this.parent = parent;
@@ -31,10 +31,10 @@ public class Procedure implements Operation {
 
 		@Override//Operation, Value
 		public Value perform() {
-			Script.current = new Scope(Script.current, description);
+			Script.scr.current = new Scope(Script.scr.current, description);
 			Script.run(operations);
-			Script.current = Script.current.parent;
-			return Script.last;
+			Script.scr.current = Script.scr.current.parent;
+			return Script.scr.last;
 		}
 
 		@Override//Value
@@ -46,6 +46,12 @@ public class Procedure implements Operation {
 
 		public String toString() {
 			return description + " - " + parent.toString();
+		}
+
+		@Override//VFunc
+		public void validateCall(List<Class<? extends Value>> param,  Class<? extends Value> last) {
+			if (!param.isEmpty())
+				throw Script.error("This function take no parameters");
 		}
 	}
 }

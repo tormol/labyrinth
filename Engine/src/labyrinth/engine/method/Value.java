@@ -1,6 +1,7 @@
 package labyrinth.engine.method;
 import java.util.List;
 import java.util.Map;
+
 import tbm.util.geom.Point;
 import static tbm.util.statics.*;
 
@@ -153,15 +154,6 @@ public interface Value {
 		private static final long serialVersionUID = 1L;
 	}
 
-	public static interface VFunc extends Value {
-		@Override
-		Value call(List<Value> param);
-		@Override
-		default boolean eq(Value v) {
-			return v==this;
-		}
-	}
-
 	public static interface VRef extends Value {
 		@Override void setRef(Value v);
 		@Override Value getRef();
@@ -204,8 +196,13 @@ public interface Value {
 			throw Script.error("Slices are not implementted yet");
 		}
 
+		@Override
+		default void validateCall(List<Class<? extends Value>> param,  Class<? extends Value> last) {
+			//TODO, not used yet, make call() use this method
+		}
+
 		//Lists are comparable
-		/**Slow, special implementations should override*/
+		/**Slow, special implementations should override*/@Override
 		default boolean eq(Value v) {
 			if (v.getClass() != this.getClass()
 			 || ((VList)v).elementType() != elementType()
@@ -225,8 +222,8 @@ public interface Value {
 
 	public static Value get(Object o) {
 		if (o instanceof String) {
-			Script.name = (String)o;
-			return Script.current.value((String)o);
+			Script.scr.name = (String)o;
+			return Script.scr.current.value((String)o);
 		} if (o instanceof Value)
 			return (Value)o;
 		if (o instanceof Operation)

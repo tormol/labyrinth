@@ -20,7 +20,7 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 
 		//Make all tiles visible if the variable "viewDistance" is false or "disabled"
 		//or (TODO) limit line of sight to n tiles if it's an integer.
-		VRef vd_var = Script.root.get_variable("viewDistance");
+		VRef vd_var = Script.scr.root.get_variable("viewDistance");
 		if (vd_var != null) {
 			Value vd = vd_var.getRef();
 			if (vd == Value.False  ||  (vd instanceof VString && vd.String().equals("disabled")))

@@ -37,7 +37,7 @@ public class MapFile {
 			while (!p.empty() && (p.peek() != '\n' || map.isEmpty()))
 				map.add(p.line().toCharArray());
 			TileMap.start(map);
-			Parser.parse_static(p);
+			new Script(p, path.getName(), StandardLibrary.get(), LabyrinthLibrary.get());
 		} catch (FileNotFoundException e) {
 			throw Window.error("%s: File not Found.", path);
 		} catch (EOFException e) {

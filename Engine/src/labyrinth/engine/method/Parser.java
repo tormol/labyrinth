@@ -48,40 +48,35 @@ public class Parser extends tbm.util.Parser {
 
 
 
-	public static Scope parse_static(Parser p) throws EOFException, IOException, ParseException {
-		Method.start();
-		Script.current = Script.root = new Scope(Script.root, "parse_static()");
+	static Deque<Object> parse_static(Parser p, Script scr) throws EOFException, IOException, ParseException {
 		int c = p.sw().inext();
 		if (c == '(')
 			//might be used for program arguments
 			throw p.error("A file cannot start with a '('.");
 		ArrayDeque<Object> ops = new ArrayDeque<>();
 		while (c != ';'  &&  c != Parser.END) {
-			statement((char)c, p, ops);
+			statement((char)c, p, ops, scr);
 			c = p.sw().inext();
 		}
-		Script.current = Script.root = new Scope(Script.root.parent, "script root");//remove declared variables
-		//if I keep the Scope and run everything except declares and undeclares, removed variables would give errors
-		Script.run(ops);
-		return Script.current;
+		return ops;
 	}
 
-	private static Procedure parse_method(Parser p) throws IOException, EOFException, ParseException {
+	private static Procedure parse_method(Parser p, Script scr) throws IOException, EOFException, ParseException {
 		Parser start = p.clone();
-		Script.current = new Scope(Script.current, "parse_method()");
+		scr.current = new Scope(scr.current, "parse_method()");
 		if (p.sw().peek() == '(') {
 			parse_param(p);
 		}
 		ArrayDeque<Object> ops = new ArrayDeque<>();
 		char c;
 		while ((c = p.sw().next()) != ';')
-			statement(c, p, ops);
-		Script.current = Script.current.parent;
+			statement(c, p, ops, scr);
+		scr.current = scr.current.parent;
 		String desc = String.format("start %d:%d, end %d:%d", start.getLine(), start.getCol(), p.getLine(), p.getCol());
 		return new Procedure(ops, desc);
 	}
 
-	private static Deque<Object> parse_call(Parser p) throws EOFException, IOException, ParseException {
+	private static Deque<Object> parse_call(Parser p, Script scr) throws EOFException, IOException, ParseException {
 		ArrayDeque<Object> params = new ArrayDeque<>();
 		char c='\0';
 		while (c != ')') switch (c = p.sw().next()) {
@@ -93,11 +88,11 @@ public class Parser extends tbm.util.Parser {
 					else
 						p.error("Expected variable name");
 				String name = p.next(ch->isContVar(ch));
-				if (Script.current.get_variable(name) == null)
+				if (scr.current.get_variable(name) == null)
 					p.error("%s is not declared.", name);
 				params.add(new GetRef(name));
 			case')': break;
-			default: statement(c, p, params);
+			default: statement(c, p, params, scr);
 		}
 		return params;
 	}
@@ -107,7 +102,7 @@ public class Parser extends tbm.util.Parser {
 		return null;
 	}
 
-	static void statement(char c, Parser p, Deque<Object> ops) throws EOFException, IOException, ParseException {
+	static void statement(char c, Parser p, Deque<Object> ops, Script scr) throws EOFException, IOException, ParseException {
 		switch (c) {
 		  case'.':
 			boolean _final = false; 
@@ -127,15 +122,15 @@ public class Parser extends tbm.util.Parser {
 				if (type == null)
 					throw p.error("Unknown type %s for variable %s", typeName, name);
 			}
-			if (!Script.current.defined_here(name)) {//if another declared outside this scope has the same name shadow it.
-				Script.current.declare(name, _final, type);
+			if (!scr.current.defined_here(name)) {//if another declared outside this scope has the same name shadow it.
+				scr.current.declare(name, _final, type);
 				ops.add(new Declare(name, _final, type));
 				break;
 			} else if (_final)
 				throw p.error("Cannot re-declare a variable as final. (%s)", name);
-			else if (Script.current.get_variable(name).isFinal())
+			else if (scr.current.get_variable(name).isFinal())
 				throw p.error("Cannot remove the final variable %s", name);
-			Script.current.remove(name);
+			scr.current.remove(name);
 			ops.add(new UnDeclare(name));
 			break;
 		  case'(':
@@ -143,7 +138,7 @@ public class Parser extends tbm.util.Parser {
 			if (ops.isEmpty())
 				throw p.error("Cannot start with a parenthesis.");
 			Object toCall = ops.removeLast();
-			Deque<Object> params = parse_call(p);
+			Deque<Object> params = parse_call(p, scr);
 			String desc = toCall instanceof String ? (String)toCall : "<unknown>";//name was already used
 			desc = String.format("%s() from start %d:%d, end %d:%d", desc,
 			                     start.getLine(), start.getCol(), p.getLine(), p.getCol());
@@ -159,7 +154,7 @@ public class Parser extends tbm.util.Parser {
 		  case';'://end method
 			throw p.error("Unexpected semicolon");
 		  case':'://method
-			ops.add(parse_method(p));
+			ops.add(parse_method(p, scr));
 			break;
 		  case'"'://string
 			ops.add(VString.v(p.escapeString('"')));
@@ -180,7 +175,7 @@ public class Parser extends tbm.util.Parser {
 		  default: //name
 			p.back();
 			String var = p.next( ch->isContVar(ch) );
-			if (Script.current.get_variable(var) == null)
+			if (scr.current.get_variable(var) == null)
 				throw p.error("%s is not defined", var);
 			ops.add(var);
 		}
