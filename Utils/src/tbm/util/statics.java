@@ -16,26 +16,41 @@ import java.util.regex.Pattern;
 /**static methods for simple things, som
  * char_ methods only work for ASCII characters*/
 public class statics {
+	/**A more visible !something*/
+	public static boolean not(boolean b) {
+		return !b;
+	}
+
+	/**Is c an ascii letter or underscore?*/
 	public static boolean char_letter(char c) {
 		return ((c>='a' && c<='z')  ||  (c>='A' && c<='Z')  ||  c=='_');
-	}public static boolean char_num(char c) {
+	}/**@return (c>='0' && c<='9')*/
+	public static boolean char_num(char c) {
 		return (c>='0' && c<='9');
-	}public static boolean char_word(char c) {
+	}/**Is c an ascii letter, underscore or digit?*/
+	public static boolean char_word(char c) {
 		return (char_num(c) || char_letter(c));
-	}public static boolean char_whitespace(char c) {
+	}/**Is c a space tab or newline?*/
+	public static boolean char_whitespace(char c) {
 		return (c==' ' || c=='\t' ||  c=='\n');
-	}public static boolean char_mathches(char c, String regex) {
+	}/**Does c match a regex?
+	   *Probably want to use char_anyof()*/
+	public static boolean char_mathches(char c, String regex) {
 		return char2str(c).matches(regex);
-	}public static char[] char_array(char... a) {
+	}/**because new char[]{'a', 'b', 'c'} looks ugly.*/
+	public static char[] char_array(char... a) {
 		return a;
-	}public static boolean char_anyof(char c, String list) {
+	}/**Is c any of the chars in list?*/
+	public static boolean char_anyof(char c, String list) {
 		return list.indexOf(c) == -1;
-	}public static boolean char_anyof(char c, char... list) {
+	}/**Is c any of the chars in list?*/
+	public static boolean char_anyof(char c, char... list) {
 		for (char e : list)
 			if (c==e)
 				return true;
 		return false;
-	}public static boolean char_hex(char c) {
+	}/**Is c a digit or lower or uppercase letter between a and f?*/
+	public static boolean char_hex(char c) {
 		return char_num(c) || (c>='a' && c<='f') || (c>='A' && c<='F');
 	}
 
@@ -90,7 +105,7 @@ public class statics {
 			default :return first;
 		}
 	}
-	/**Is char printable?
+	/**Is c printable?
 	 * Uses Characther.UnicodeBlock, If you want to check if char is printable with the current font, use Font.canDisplay(int)*/
 	//http://stackoverflow.com/questions/220547/printable-char-in-java
 	public static boolean char_printable(char c) {
@@ -127,6 +142,25 @@ public class statics {
 		while (m.find())
 			found.add(m.group());
 		return found.toArray(new String[found.size()]);
+	}/**Return the index of the first non-whitespace character or .length() if only whitespace.*/
+	public static int String_start(String line) {
+		int i=0;
+		while (line.length()>i
+		  &&(  line.charAt(i)==' '
+		   ||  line.charAt(i)=='\t'))
+			i++;
+		return i;
+	}/**Return the index+1 of the last non-whitespace character or 0 if only whitespace.
+	line.substring(String_start(line), String_end(line)).equals(line.trim()) except if there is only whitespace, then String_end < String_start*/
+	public static int String_end(String line) {
+		int i=line.length();
+		if (line.charAt(i-1)=='\n')
+			i--;
+		while (line.length()>=0
+		  &&(  line.charAt(i)==' '
+		   ||  line.charAt(i)=='\t'))
+			i--;
+		return i+1;
 	}
 	
 

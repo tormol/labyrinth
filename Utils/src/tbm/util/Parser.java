@@ -315,7 +315,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		return str;
 	}
 	
-
+	/**escape a single character and skip or require a following '*/
 	public char escapeChar(boolean require_end) throws EOFException, IOException, ParseException {
 		char c = next();
 		if (c == '\\')
@@ -333,6 +333,14 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		return c;
 	}
 
+	/**read a string with escape sequences stopping at an unescaped end.
+	 *  if the two first chars==end, a special mode similar to bash << input redirect is activated:
+	 *  	(here stop is a string with three end chars)
+	 *  	Escape sequences are ignored.
+	 *  	If another stop is on the same line, stop after it.
+	 *  	else if there is any more text on the line, that becomes the text terminator.
+	 *  	if all lines start with the same spaces and tabs those are skipped.
+	 *  	*/
 	public String escapeString(char end) throws IOException, EOFException, ParseException {
 		if (peek() == end) {
 			skip();
@@ -364,26 +372,41 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 				sb.append(c);
 		return sb.toString();
 	}
+	/**see escapeString()*/
 	private String textBody(char end) throws EOFException, IOException {
-		String stop = String.valueOf(new char[]{end, end, end});
+		String endx3 = String.valueOf(new char[]{end, end, end});
 		int startCol = col;
-		String rest = line();
-		int endIndex = rest.indexOf(stop);
-		if (endIndex != -1) {
-			col = startCol + endIndex + stop.length();
-			line--;
-			return rest.substring(0, endIndex);
-		}
-		if (!rest.trim().isEmpty())
-			stop = rest.trim();
-		StringBuilder sb = new StringBuilder();
-		for (String line = line();  !line.startsWith(stop);  line = line())
-			sb.append(line).append('\n');
-		if (base.get(this.line-1).length() != stop.length()) {
+		String line = line();
+		int endIndex = line.indexOf(endx3);
+		if (endIndex != -1) {//only one line
+			col = startCol + endIndex + endx3.length();
 			this.line--;
-			col = stop.length();
+			return line.substring(0, endIndex);
 		}
-		return StringBuilder_removeLast(sb).toString();
+		String stop = line.trim();
+		if (stop.isEmpty())
+			stop = endx3;
+
+		line = line();
+		//get the starting whitespace
+		String indent = line.substring(0, String_start(line));
+		boolean indented = !indent.isEmpty();
+
+		StringBuilder sb = new StringBuilder();
+		while (line.indexOf(stop) == -1) {
+			sb.append(line).append('\n');
+			line = line();
+			if (indented && !line.startsWith(indent))
+				indented = false;
+		}
+		sb.append(line.substring(0, line.indexOf(stop)));
+		if (indented)//remove indent after each newline
+			for (int i=sb.indexOf("\n");  i != -1;  i=sb.indexOf("\n", i))
+				sb.delete(i+1, i+1+indent.length());
+
+		col = line.indexOf(stop) + stop.length();
+		this.line--;
+		return sb.toString();
 	}
 
 
