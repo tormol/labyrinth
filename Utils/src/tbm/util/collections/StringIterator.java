@@ -1,5 +1,7 @@
-package tbm.util;
+package tbm.util.collections;
 import java.util.Iterator;
+import tbm.util.CharSupplier;
+import tbm.util.WillNeverThrowException;
 
 public class StringIterator implements Iterator<Character>, CharSupplier<WillNeverThrowException> {
 	protected final String str;

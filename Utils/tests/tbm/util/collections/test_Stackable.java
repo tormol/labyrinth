@@ -1,5 +1,5 @@
-package tbm.util.test;
-import tbm.util.Stackable;
+package tbm.util.collections;
+import tbm.util.collections.Stackable;
 public class test_Stackable {
 	static class Test extends Stackable<Test> {
 		public final String word;

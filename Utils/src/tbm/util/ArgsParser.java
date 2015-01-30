@@ -1,6 +1,7 @@
 package tbm.util;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -17,28 +18,27 @@ import java.util.TreeSet;
  */
 public class ArgsParser {
 	/***/
-	private SortedSet<ParsedOpt> opts;
+	protected SortedSet<ParsedOpt> opts;
 	/***/
-	private ArrayList<OptCore> validOpts = new ArrayList<OptCore>();
+	protected ArrayList<OptCore> validOpts = new ArrayList<OptCore>();
 	/**All arguments that are not an option.
 	 * Sort before open.*/
 	public SortedSet<Argument> arg;
-	private boolean unused_arg = true;
+	protected boolean unused_arg = true;
 	//a log
-	private StringBuilder errors = new StringBuilder();
+	protected StringBuilder errors = new StringBuilder();
 
 	/**Parse args with default parameters.
 	 * @param args the String[] passed to main().
 	 */
 	public ArgsParser(String... args) {
-		this(null, args);
+		this(new Builder(), args);
 	}
 	/**Parse args with parameters set in ArgsParser.Builder.
 	 * @param args the String[] passed to main().
 	 */
 	public ArgsParser(Builder b, String... args) {
-		if (b==null)
-			b = new Builder();
+		Objects.requireNonNull(b);
 		final boolean windows = System.getProperty("os.name").startsWith("Windows");
 		final String helpStr = "(\\?|h|help)";
 		if (args.length==1
@@ -46,6 +46,7 @@ public class ArgsParser {
 		  || (windows && args[0].matches("/"+helpStr)) ) )
 			args[0] = "--help";
 
+		//TreeSet because sorted by index, which might not be the order they are added
 		arg = new TreeSet<Argument>();
 		opts = new TreeSet<ParsedOpt>();
 		boolean stopopt = false;

@@ -1,14 +1,13 @@
-package tbm.util;
+package tbm.util.collections;
 import java.security.InvalidParameterException;
-import java.lang.Iterable;
 import java.util.Iterator;
 import java.util.Collection;
 @SuppressWarnings("unchecked")//(E)Stackable<E>
-public class Stack<E extends Stack.Stackable<E>> implements Iterable<E>, Iterator<E>, Collection<E> {
+public class Stack<E extends Stack.Stackable<E>> implements Iterator<E>, Collection<E> {
 	public static class Stackable<E extends Stack.Stackable<E>> {
 		E next;
 	}
-	private E top;
+	protected E top;
 	public Stack() {
 		top = null;
 	}

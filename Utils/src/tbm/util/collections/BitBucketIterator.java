@@ -1,4 +1,4 @@
-package tbm.util;
+package tbm.util.collections;
 
 import java.util.ListIterator;
 

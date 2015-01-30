@@ -38,7 +38,7 @@ public class PrimitivePreProcessor {
 		//init types, create files, open javap 
 		ArgsParser ap = new ArgsParser(args);
 		clean = ap.optFlag('c', "clean", "Remove the files that would normally been created.");
-		append_new = ap.optFlag('n', "--append_new", "Only print new files");
+		append_new = ap.optFlag('n', "append_new", "Only print new files");
 		ap.handle_version(version);
 		ap.handle_help(help);
 		args = ap.getArgs();

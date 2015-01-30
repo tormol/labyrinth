@@ -2,6 +2,8 @@ package tbm.util;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.Scanner;
+
+import tbm.util.collections.StringIterator;
 import static tbm.util.statics.char_printable;
 
 /**Parsing numbers from a stream*/
