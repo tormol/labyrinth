@@ -22,6 +22,23 @@ import tbm.util.ArgsParser;
  * 
  */
 public class Core {
+	/**A class to store the index along with an non-option argument.*/
+	protected static class Argument implements Comparable<Argument> {
+		/**The arguments index in args[].*/
+		public final int index;
+		/**The argument*/
+		public final String str;
+		public Argument(int index, String str) {
+			this.index = index;
+			this.str = str;
+		}
+		@Override//Comparable
+		public int compareTo(Argument arg) {
+			return this.index-arg.index;
+		}
+	}
+
+	
 	/***/
 	private SortedSet<ParsedOpt> opts;
 	/***/
@@ -117,7 +134,7 @@ public class Core {
 	 * @param opt a class implementing Opt_interface
 	 * @return the parameter
 	 */
-	public <OI extends Opt_interface> OI opt(OI opt) {
+	public <T> OI opt(OI opt) {
 		Iterator<ParsedOpt> itr = opts.iterator();
 		ParsedOpt po;
 		while ((po=itr.next()) != null)
@@ -276,31 +293,7 @@ public class Core {
 	}
 
 
-	/**A class to store the index along with an non-option argument.*/
-	protected static class Argument implements Comparable<Argument> {
-		/**The arguments index in args[].*/
-		public final int index;
-		/**The argument*/
-		public final String str;
-		protected Argument(int index, String str) {
-			this.index = index;
-			this.str = str;
-		}
-		@Override//Comparable
-		public int compareTo(Argument arg) {
-			return this.index-arg.index;
-		}
-	}
 
-	@SuppressWarnings("serial")
-	public static class ArgException extends Exception {
-		public ArgException(String str) {
-			super(str);
-		}
-		public ArgException(String f, Object... a) {
-			super(String.format(f, a));
-		}
-	}
 	public static class Opt<AT> implements Opt_interface<String> {
 		public AT arg = null;
 		

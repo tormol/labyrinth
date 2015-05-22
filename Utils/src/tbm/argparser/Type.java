@@ -1,32 +1,37 @@
 package tbm.argparser;
-
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.regex.Pattern;
+import java.util.function.Function;
 
 import tbm.argparser.Core.ArgException;
 
 public interface Type<T> {
 	T parse(String arg) throws ArgException;
-	String help();
+	String type_help();
 
 
-	public static class Int implements Type<Integer> {
-		public final int min, max;
-		public Int(int min, int max) {
+	public static class Int implements Type<Long> {
+		static public Function<String, Long> parser = str->Long.parseLong(str.trim());
+		public final long min, max;
+		public Int(long min, long max) {
 			this.min=min;
 			this.max=max;
 		}
+		
 		@Override
-		public Integer parse(String arg) throws ArgException {
+		public Long parse(String arg) throws ArgException {
 			try {
-				int n = Integer.parseInt(arg.trim());
+				Long n = parser.apply(arg);
 				if (n>max || n<min)
-					throw new ArgException(help());
+					throw new ArgException(type_help());
 				return n;
 			} catch (NumberFormatException e) {
-				throw new ArgException(help());
+				throw new ArgException(type_help());
 			}
 		}
-		public String help() {
+		@Override
+		public String type_help() {
 			if (min==0 && max==Integer.MAX_VALUE)
 				return "must be a positive integer";
 			if (min==Integer.MIN_VALUE && max==Integer.MAX_VALUE)
@@ -54,7 +59,7 @@ public interface Type<T> {
 			throw new ArgException("is invalid");
 		}
 		/**@return "" because you cant give much help from a regex*/
-		public String help() {
+		public String type_help() {
 			return "";
 		}
 		public static Str any = new Str(null);
@@ -67,6 +72,46 @@ public interface Type<T> {
 				regex.append(Pattern.quote(option)).append('|');
 			regex.deleteCharAt(/*regex.length()*/-1);
 			return new Str(regex.toString());
+		}
+	}
+
+	static public class List<T> implements Type<T> {
+		protected final T[] values;
+		@SafeVarargs
+		public List(T... values) {
+			this.values = Objects.requireNonNull(values);
+		}
+		@Override
+		public T parse(String arg) throws ArgException {
+			for (T valid : values)
+				if (arg.equals(valid.toString()))
+					return valid;
+			throw new ArgException("Must be one of " + type_help());
+		}
+		@Override
+		public String type_help() {
+			return Arrays.toString(values);
+		}
+	}
+	public static class Enums<E extends Enum> implements Type<E> {
+		public final Class<E> _enum;
+		public Enums(Class<E> _enum) {
+			this._enum = _enum;
+		}
+		@Override
+		public E parse(String arg) throws ArgException {
+			try {
+				return Enum.valueOf(c, string.trim().toUpperCase());
+			} catch (IllegalArgumentException e) {
+				throw new ArgException("Must be one of " + type_help());
+			}
+		}
+
+		@Override
+		public String type_help() {
+			E[] consts = _enum.getEnumConstants();
+			StringBuilder sb = new StringBuilder();
+			return sb.toString();
 		}
 	}
 }
