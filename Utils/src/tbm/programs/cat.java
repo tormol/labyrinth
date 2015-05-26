@@ -22,7 +22,7 @@ public class cat {
 		ap.handle_errors(1);
 
 		try {
-			if (outFile != null  &&  !outFile.equals('-'))
+			if (outFile != null  &&  !outFile.equals("-"))
 				new PrintStream(outFile);
 			for (String file : args)
 				readFile(file);

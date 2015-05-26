@@ -118,6 +118,13 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements Map<K,V>, Iter
 	}
 
 
+	/**So inner classes can get size()
+	 *@return <tt>this</tt>*/
+	protected LeanHashMap<K,V> outer() {
+		return this;
+	}
+	
+
 	public Collection<V> values() {
 		return new ValueCollection();
 	}
@@ -127,7 +134,7 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements Map<K,V>, Iter
 			return new Iter<V>(-1);//gives offset indexes, => values
 		}
 		@Override public int size() {
-			return size();
+			return outer().size();
 		}
 	}
 
@@ -141,12 +148,11 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements Map<K,V>, Iter
 			return new Iter<K>(-2);
 		}
 		@Override public int size() {
-			return size();
+			return outer().size();
 		}
 	}
 
 
-	
 	/**{@inheritDoc}
 	 *Guaranteed fresh Entry instances, also immutable.*/
 	public Set<Map.Entry<K, V>> entrySet() {
@@ -162,7 +168,7 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements Map<K,V>, Iter
 			};
 		}
 		@Override public int size() {
-			return size();
+			return outer().size();
 		}
 	}
 

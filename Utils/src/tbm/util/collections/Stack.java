@@ -2,21 +2,36 @@ package tbm.util.collections;
 import java.security.InvalidParameterException;
 import java.util.Iterator;
 import java.util.Collection;
-@SuppressWarnings("unchecked")//(E)Stackable<E>
+
+/**A more memory efficient version of LinkedList*/
 public class Stack<E extends Stack.Stackable<E>> implements Iterator<E>, Collection<E> {
 	public static class Stackable<E extends Stack.Stackable<E>> {
-		E next;
+		protected E next;
+		protected Stackable()
+			{next = null;}
 	}
+
 	protected E top;
+
 	public Stack() {
 		top = null;
 	}
 	public Stack(E e) {
 		top = e;
 	}
-	public Stack(Stack<E> s) {
-		top = s.top;
+	/**Adds elements in the same order as the collection, ie oppositie of push()*/
+	public Stack(Iterable<E> c) {
+		Stackable<E> startref = new Stackable<E>();
+		Stackable<E> prev = startref;
+		for (E e : c)
+			if (e != null) {
+				prev.next = e;
+				prev = e;
+			} else
+				throw new IllegalArgumentException("Stacks cannot store null elements.");
+		top = startref.next;
 	}
+
 	public E push(E e) {
 		if (e == null)
 			throw new InvalidParameterException("Null elements are not supported.");
@@ -29,10 +44,11 @@ public class Stack<E extends Stack.Stackable<E>> implements Iterator<E>, Collect
 		return top;
 	}
 	public E pop() {
-		E e = (E)top;
-		if (top != null)
-			top = top.next;
-		e.next = null;
+		E e = top;
+		if (e != null) {
+			top = e.next;
+			e.next = null;
+		}
 		return e;
 	}
 	public void skip() {
@@ -143,6 +159,8 @@ public class Stack<E extends Stack.Stackable<E>> implements Iterator<E>, Collect
 		}
 		return a;
 	}
+
+	@SuppressWarnings("unchecked")
 	@Override//Collection
 	public <T> T[] toArray(T[] a) {
 		int i=0;

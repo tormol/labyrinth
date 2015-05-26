@@ -1,5 +1,6 @@
 package tbm.util;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.SortedSet;
@@ -194,7 +195,7 @@ public class ArgsParser {
 			errors.append("Invalid option " + o.trigger() + ".\n");
 		//unused arguments
 		if (unused_arg  &&  getArgs().length > 0)
-			errors.append("Unused arguments: " + getArgs().toString());
+			errors.append("Unused arguments: " + Arrays.toString(getArgs()));
 		return errors.toString();
 	}
 

@@ -85,14 +85,14 @@ public class Convert {
 		for (Unit u : units)
 			if (u.getType().compareTo(type) == 0)
 				l.add(u);
-		return (Unit[])l.toArray();
+		return l.toArray(new Unit[l.size()]);
 	}
 	public static Unit[] get_alternatives(Unit exclude) {
 		List<Unit> l = new ArrayList<>();
 		for (Unit u : units)
 			if (u.getType().compareTo(exclude.getType()) == 0  &&  !u.equals(exclude))
 				l.add(u);
-		return (Unit[])l.toArray();
+		return l.toArray(new Unit[l.size()]);
 	}
 
 	static double convert(double value, Unit from, Unit to) {

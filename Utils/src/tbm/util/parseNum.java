@@ -1,10 +1,4 @@
 package tbm.util;
-import java.io.IOException;
-import java.security.InvalidParameterException;
-import java.util.Scanner;
-
-import tbm.util.collections.StringIterator;
-import static tbm.util.statics.char_printable;
 
 /**Parsing numbers from a stream*/
 public class parseNum {
@@ -31,7 +25,7 @@ public class parseNum {
 		this.spaces = null;
 		return this;
 	}
-	
+
 	public <EX extends Throwable> long parse_long(CharSupplier<EX> ch) throws NumberFormatException, EX {
 		if (negative)
 			return parseNum.signed_long(ch, other_systems, spaces);
@@ -39,19 +33,25 @@ public class parseNum {
 			return parseNum.unsigned_long(ch, false, other_systems, spaces);
 	}
 
+	public <EX extends Throwable> int parse_int(CharSupplier<EX> ch) throws NumberFormatException, EX {
+		if (negative)
+			return parseNum.signed_int(ch, other_systems, spaces);
+		else
+			return parseNum.unsigned_int(ch, false, other_systems, spaces);
+	}
 
-	/***/
-	public static void main(String[] args) throws IOException {
-		Scanner sc = new Scanner(System.in);
-		while (true)
-			try {
-				System.out.println(signed_long(new StringIterator(sc.nextLine()), true, " _,"));
-			} catch (NumberFormatException e) {
-				System.err.println(e.getMessage());
-				if (e.getMessage().startsWith("Not"))
-					break;
-			}
-		sc.close();
+	public <EX extends Throwable> short parse_short(CharSupplier<EX> ch) throws NumberFormatException, EX {
+		if (negative)
+			return parseNum.signed_short(ch, other_systems, spaces);
+		else
+			return parseNum.unsigned_short(ch, false, other_systems, spaces);
+	}
+
+	public <EX extends Throwable> byte parse_byte(CharSupplier<EX> ch) throws NumberFormatException, EX {
+		if (negative)
+			return parseNum.signed_byte(ch, other_systems, spaces);
+		else
+			return parseNum.unsigned_byte(ch, false, other_systems, spaces);
 	}
 
 
@@ -69,36 +69,31 @@ public class parseNum {
 		return (int)parse_unsigned(ch, Integer.SIZE, negative, other_systems, spaces);
 	}
 
-	public static <EX extends Throwable> int signed_short(CharSupplier<EX> ch, boolean other_systems, String spaces) throws EX, NumberFormatException {
+	public static <EX extends Throwable> short signed_short(CharSupplier<EX> ch, boolean other_systems, String spaces) throws EX, NumberFormatException {
 		return (short)parse_signed(ch, Short.SIZE, other_systems, spaces);
 	}
-	public static <EX extends Throwable> int unsigned_short(CharSupplier<EX> ch, boolean negative, boolean other_systems, String spaces) throws EX, NumberFormatException {
+	public static <EX extends Throwable> short unsigned_short(CharSupplier<EX> ch, boolean negative, boolean other_systems, String spaces) throws EX, NumberFormatException {
 		return (short)parse_unsigned(ch, Short.SIZE, negative, other_systems, spaces);
 	}
 
-	public static <EX extends Throwable> char parse_char(CharSupplier<EX> ch, boolean signed, boolean printable, String spaces) throws EX, NumberFormatException {
-		int first = ch.get();
-		char c;
-		if (signed  &&  first == '-')
-			c = (char)parse(ch, ch.get(), Character.SIZE, true, true, true, spaces);
-		else
-			c = (char)parse(ch, first, Character.SIZE, false, false, true, spaces);
-		if (printable  &&  !char_printable(c))
-			throw new NumberFormatException(String.format("'%x' is not a printable characther.", c));
-		return c;
-	}
 
-
-	public static <EX extends Throwable> int signed_byte(CharSupplier<EX> ch, boolean other_systems, String spaces) throws EX, NumberFormatException {
+	public static <EX extends Throwable> byte signed_byte(CharSupplier<EX> ch, boolean other_systems, String spaces) throws EX, NumberFormatException {
 		return (byte)parse_signed(ch, Byte.SIZE, other_systems, spaces);
 	}
-	public static <EX extends Throwable> int unsigned_byte(CharSupplier<EX> ch, boolean negative, boolean other_systems, String spaces) throws EX, NumberFormatException {
+	public static <EX extends Throwable> byte unsigned_byte(CharSupplier<EX> ch, boolean negative, boolean other_systems, String spaces) throws EX, NumberFormatException {
 		return (byte)parse_unsigned(ch, Byte.SIZE, negative, other_systems, spaces);
 	}
 
 
+	private static <EX extends Throwable> int next(CharSupplier<EX> ch, String skip) throws EX {
+		int c;
+		do c = ch.get();
+			while (skip.indexOf(c) != -1);
+		return c;
+	}
+
 	private static <EX extends Throwable> long parse_signed(CharSupplier<EX> ch, int bits, boolean other_systems, String spaces) throws EX, NumberFormatException {
-		int first = ch.get();
+		int first = next(ch, spaces);
 		if (first == '-')
 			return parse(ch, ch.get(), bits, true, true, other_systems, spaces);
 		return parse(ch, first, bits, true, false, other_systems, spaces);
@@ -114,7 +109,7 @@ public class parseNum {
 	 * @param signed should the first bit in bits be used for sign
 	 * @param negative is this number negative
 	 * @param other_systems are binary(0b), hexadecimal(0x) or octal(0o) numbers allowed?
-	 * @param spaces a list of characters that wont stop parsing, but will be ignored. Can be null.
+	 * @param spaces a list of characters that wont stop parsing, but will be ignored. Cannot be null.
 	 * detects base, compute max value and max digits
 	 */
 	private static <EX extends Throwable> long parse (
@@ -124,8 +119,10 @@ public class parseNum {
 		byte base=10;
 		byte digits=0;
 		byte max_digits = -1;//not used with base 10;
+		if (spaces.indexOf(c) != -1)
+			c = next(ch, spaces);
 		if (other_systems && c=='0')
-			switch (c = ch.get()) {
+			switch (c = next(ch, spaces)) {
 				case'x':base =16;  break;
 				case'b':base = 2;  break;
 				case'o':base = 8;  break;
@@ -134,13 +131,13 @@ public class parseNum {
 
 		long max_value;
 		if (bits < 1)
-			throw new InvalidParameterException(bits+" bits doesn't make sense, bits must be between 2 and "+Long.SIZE);
+			throw new IllegalArgumentException(bits+" bits doesn't make sense, bits must be between 2 and "+Long.SIZE);
 		else if (bits < Long.SIZE)
 			max_value = (1L << bits) -1;
 		else if (bits == Long.SIZE)
 			max_value = -1;//<<64==<<0
 		else//if (bits > Long.SIZE)
-			throw new InvalidParameterException("Cannot store more than "+Long.SIZE+" bits.");
+			throw new IllegalArgumentException("Cannot store more than "+Long.SIZE+" bits.");
 
 		if (base != 10) {
 			c = ch.get();
@@ -152,8 +149,6 @@ public class parseNum {
 			if (negative)
 				max_value++;
 		}
-		if (spaces == null  ||  spaces.isEmpty())
-			spaces = null;
 		return do_parse(ch, c, base, negative, max_digits, digits, max_value, spaces);
 	}
 
@@ -169,7 +164,7 @@ public class parseNum {
 		while (true) {
 			int n = digit(base, c);
 			if (n == -1)
-				if (spaces != null  &&  spaces.indexOf(c) != -1) {
+				if (spaces.indexOf(c) != -1) {
 					c = ch.get();
 					continue;
 				} else

@@ -73,10 +73,10 @@ public class statics {
 		//cannot write if (c<16)return c; because '\t' and '\n' are less than 16
 		return -1;
 	}public static char char_asHex(char c) throws InvalidHexException {
-		c = char_asHex(c);
-		if (c==(char)-1)
+		int n = char_asHex((int)c);
+		if (n == -1)
 			throw new InvalidHexException(c);
-		return c;
+		return (char)n;
 	}public static char char_asHex(char c1, char c2) throws InvalidHexException {
 		return(char) (16*char_asHex(c1) + char_asHex(c2));
 	}public static int char_toNum(char base, char c) {
@@ -324,10 +324,10 @@ public class statics {
 	}
 
 
-	/**Check that int -1 == char 255*/
+	/*Check that int -1 == char 255*
 	static {
 		int i = -1;	//if i is final I get a warning: comparing identical expression, so this is probably guaranteed.
-		if ((char)i != (char)-1  ||  (char)i != 0xffff)
+		if ((char)i != (char)-1  ||  (char)i != 0xffff)//...and findbugs calls this a scary repeated test.
 			throw new RuntimeException("(char)((int)-1) != 0xffff");
-	}
+	}*/
 }
