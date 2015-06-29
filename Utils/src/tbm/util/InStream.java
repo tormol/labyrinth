@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 
+/**Looks like a bunch of functions for working with raw InputStreams*/
 public class InStream {
 	public static int read(InputStream is) throws IOException {
 		int c = is.read();

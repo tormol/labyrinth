@@ -1,7 +1,9 @@
 package tbm.util;
 
+import java.util.Objects;
+
 /**Parsing numbers from a stream, with the option of accepting other number systems, or ignoring spaces, tabs or any characters you want.*/
-public class parseNum {
+public class parseNum<EX extends Throwable> {
 	  //*******//
 	 // flags //
 	//*******//
@@ -19,7 +21,7 @@ public class parseNum {
 	/**if the number starts with 0b it's hexadecimal.*/
 	public static final int  OPT_HEX        = 0b0000_0000_0001_0000;
 	/**set the default radix, must be 2, 8, 10 or 16.*/
-	private static final int DEFAULT_RADIX(int radix) throws IllegalArgumentException {switch (radix) {
+	private static final int RADIX(int radix) throws IllegalArgumentException {switch (radix) {
 		case  2: return                       0b0000_0000_0010_0000;
 		case  8: return                       0b0000_0000_0100_0000;
 		case 10: return                       0b0000_0000_0000_0000;
@@ -63,49 +65,77 @@ public class parseNum {
 	///**Hexadecimal letters and radix identifier cannot be bost uppercase and lowercase.*/
 	//public static final int CONSISTENT_CASE = 0b0011 << 16;
 
+	//usage defaults
+	/**RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW*/
+	public static final int BITS_FLAGS = RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW; 
+	/**RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW_OTHER*/
+	public static final int ANY_FLAGS = RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW_OTHER; 
+	/**A good default: RADIX(10) MINUS*/
+	public static final int RANGE_FLAGS = RADIX(10) | MINUS; 
 
-	  //***********************//
-	 // public static methods //
-	//***********************//
 
-	/**A good default: DEFAULT_radix(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW_OTHER*/
-	public static final int ANY_FLAGS = DEFAULT_RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW_OTHER; 
+	/**If you are only using the object once, this is shorter than new NumParser<SomeException>(flags, cs)
+	 *@return {@code new NumParser<EX>(flags, cs);}
+	 *@param cs cannot be null.*/
+	public static <EX extends Throwable> parseNum<EX> with(int flags, CharSupplier<EX> cs) {
+		return new parseNum<EX>(flags, cs);
+	}
+
+
+	  //****************//
+	 // public methods //
+	//****************//
+	protected static final int NO_CHAR = -2;
+	protected static final int END_CHAR = -1;
+	protected final int flags;
+	protected int c;
+	protected CharSupplier<EX> cs;
+	protected byte radix;
+	protected byte digits;
+	public parseNum(int flags, CharSupplier<EX> cs) {
+		this.flags = flags;
+		this.cs = Objects.requireNonNull(cs);
+		this.c = NO_CHAR;
+	}
+	public parseNum<EX> first_char(char first) {
+		c = first;
+		return this;
+	}
+
 	/***/
-	public static <EX extends Throwable> long any_long(int flags, CharSupplier<EX> cs) throws EX, NumberFormatException, IllegalArgumentException {
-		return (long)bits(Long.SIZE, flags, cs);
-	}
-	public static <EX extends Throwable> long any_long(int flags, char first_char, CharSupplier<EX> cs) throws EX, NumberFormatException, IllegalArgumentException {
-		return (long)bits(Long.SIZE, flags, first_char, cs);
+	public long any_long() throws EX, NumberFormatException, IllegalArgumentException {
+		return (long)bits(Long.SIZE);
 	}
 
-
-	/**A good default: DEFAULT_radix(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW*/
-	public static final int BITS_FLAGS = DEFAULT_RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW; 
-	public static <EX extends Throwable> long bits(int bits, int flags, CharSupplier<EX> cs) throws EX, NumberFormatException {
-		return bits(bits, flags, cs.fetch(), cs);
-	}
-	public static <EX extends Throwable> long bits(int bits, int flags, int first_char, CharSupplier<EX> cs) throws EX, NumberFormatException {
+	/**parse a number with the given number of bits*/
+	public long bits(int bits) throws EX, NumberFormatException, IllegalArgumentException {
+		byte radix = start_radix();
 		if ( !isset(flags, OVERFLOW | MINUS))
 			throw new IllegalArgumentException("Must set either OVERFLOW or MINUS, else there is no way to enter a signed negative number.");
-		if ( !isset(flags, OVERFLOW_DEC | MINUS_DEC)  &&  (isset(flags, OPT_DEC) || start_radix(flags) == 10))
+		if ( !isset(flags, OVERFLOW_DEC | MINUS_DEC)  &&  (isset(flags, OPT_DEC) || radix == 10))
 			throw new IllegalArgumentException("Must set either OVERFLOW_DEC or MINUS_DEC, else there is no way to enter a signed negative decimal number.");
-		if ( !isset(flags, OVERFLOW_OTHER | MINUS_OTHER)  &&  (isset(flags, OPT_BIN|OPT_OCT|OPT_HEX|ZERO_OCT) || start_radix(flags) != 10))
+		if ( !isset(flags, OVERFLOW_OTHER | MINUS_OTHER)  &&  (isset(flags, OPT_BIN|OPT_OCT|OPT_HEX|ZERO_OCT) || radix != 10))
 			throw new IllegalArgumentException("Must set either OVERFLOW_OTHER or MINUS_OTHER, else there is no way to enter a signed negative non-decimal number.");
-
-		short digits=0;
-		byte radix = start_radix(flags);
-		short max_digits = radix == 10 ? -1 : (short)(bits/radix + bits%radix);
-		
 		if (radix == 16  &&  isset(flags, OPT_BIN | OPT_DEC))
 			throw new IllegalArgumentException("OPT_BIN and OPT_DEC is incompatible with DEFAULT_radix(16) since it's impossible to know if a b or d is a digit or means binary or decimal.");
 
-		int c = next(flags, first_char, cs);
+		digits = 0;
+		// radix                       	              	leadingz	31-
+		//0b0000_0000__0000_0000__0000_0000__0001_0000	27      	4
+		//0b0000_0000__0000_0000__0000_0000__0000_1000	28      	3
+		//0b0000_0000__0000_0000__0000_0000__0000_0010	30      	1
+		//0b0000_0000__0000_0000__0000_0000__0000_1010	28      	3
+		int bits_per_digit = 31-Integer.numberOfLeadingZeros(radix);
+		byte max_digits = (byte)(bits/radix + bits%radix);
+		
+
+		int c = next();
 		if (c == '0') {
-			c = next(flags, cs.fetch(), cs);
-			byte new_radix = zero_first(radix, flags, c);
+			c = next();
+			byte new_radix = zero_first(radix);
 			if (new_radix != -1) {
 				radix = new_radix;
-				c = next(flags, cs.fetch(), cs);
+				c = next();
 			} else
 				digits++;
 		}
@@ -125,23 +155,13 @@ public class parseNum {
 			max_digits = (byte) ((bits-1+radix_bits)/radix_bits);
 		}
 
-		return parse(bits, flags, first_char, cs);
+		return parse(bits, flags, cs);
 	}
 
-	/**A good default: DEFAULT_radix(10) MINUS*/
-	public static final int RANGE_FLAGS = DEFAULT_RADIX(10) | MINUS; 
-	public static <EX extends Throwable> long range_long(long min, long max, int flags, CharSupplier<EX> cs) throws EX, NumberFormatException, IllegalArgumentException {
-		long n = min < 0
-			? signed_long(ch, other_systems, spaces)
-			: unsigned_long(ch, false, other_systems, spaces);
-		if (n < min  ||  n > max)
-			throw new NumberFormatException(n +" is outside the accepted range of ["+min+", "+max);
-		return n;
-	}
-	
-	public static <EX extends Throwable> long range_long(long min, long max, int flags, int first_char, CharSupplier<EX> cs) throws EX, NumberFormatException, IllegalArgumentException {
-		byte radix = start_radix(flags);
-		int c = next(flags, first_char, cs);
+
+	public long range_long(long min, long max) throws EX, NumberFormatException, IllegalArgumentException {
+		byte radix = start_radix();
+		int c = next();
 
 		if (Long.compareUnsigned(min, max) > 0)
 			throw new IllegalArgumentException("min must be smaller or equal to max, but min="+min+" and max="+max);
@@ -156,11 +176,11 @@ public class parseNum {
 			throw new IllegalArgumentException("OPT_BIN and OPT_DEC is incompatible with DEFAULT_radix(16) since it's impossible to know if a b or d is a digit or means binary or decimal.");
 
 		if (c == '0') {
-			c = next(flags, cs.fetch(), cs);
-			byte new_radix = zero_first(radix, flags, c);
+			c = next();
+			byte new_radix = zero_first(c);
 			if (new_radix != -1) {
 				radix = new_radix;
-				c = next(flags, cs.fetch(), cs);
+				c = next();
 			} else
 				digits++;
 		}
@@ -168,19 +188,20 @@ public class parseNum {
 	}
 
 
-	  //************************//
-	 // private static methods //
-	//************************//
+	  //**************************//
+	 // private instance methods //
+	//**************************//
 
 	/**Is flag set in flags?
 	 *@return (flags & flag) != 0*/
-	private static boolean isset(int flags, int flag) {
+	protected final boolean isset(int flags, int flag) {
 		return (flags & flag) != 0;
 	}
 
 	/**Get next non-whitespace character.*/
-	private static <EX extends Throwable> int next(int flags, int c, CharSupplier<EX> cs) throws EX {
-		while ((c==' ' && isset(flags, SKIP_SPACE))
+	protected int next() throws EX {
+		while ( c==NO_CHAR
+		    || (c==' ' && isset(flags, SKIP_SPACE))
 		    || (c=='_' && isset(flags, SKIP_UNDERSCORE))
 		    || (c=='-' && isset(flags, SKIP_HYPEN))
 		    || (c==',' && isset(flags, SKIP_COMMA))
@@ -190,7 +211,7 @@ public class parseNum {
 	}
 	/**convert char to int
 	 *@return -1 if not a digit*/
-	private static int toNum(byte radix, int digit) {
+	protected int toNum(int digit) {
 		if (digit >= '0'  &&  digit <= '0'+radix-1  &&  digit<='9')
 			return digit-'0';
 		digit |= 0x20;//convert to lowercase
@@ -199,16 +220,16 @@ public class parseNum {
 		return -1;
 	}
 
-
-	private static byte start_radix(int flags) {
-		flags &= DEFAULT_RADIX(16); // both bits set
-		if (flags == DEFAULT_RADIX(16)) return 16;
-		if (flags == DEFAULT_RADIX(10)) return 10;
-		if (flags == DEFAULT_RADIX( 8)) return  8;
-		if (flags == DEFAULT_RADIX( 2)) return  2;
-		throw new RuntimeException("BUG: DEFAULT_radix( is inconsistent.");
+	/**get initial radix*/
+	protected final byte start_radix() {
+		int flags = this.flags & RADIX(16); // both bits set
+		if (flags == RADIX(16)) return 16;
+		if (flags == RADIX(10)) return 10;
+		if (flags == RADIX( 8)) return  8;
+		if (flags == RADIX( 2)) return  2;
+		throw new RuntimeException("BUG: DEFAULT_radix() is inconsistent.");
 	}
-	private static byte zero_first(byte radix, int flags, int next) {
+	protected byte zero_first(int next) {
 		if (isset(flags,  OPT_HEX) && next=='x')             	return 16;
 		if (isset(flags,  OPT_DEC) && next=='d')             	return 10;
 		if (isset(flags,  OPT_OCT) && next=='o')             	return  8;
@@ -217,7 +238,7 @@ public class parseNum {
 		else                                                 	return -1;
 	}
 	/**@return false if minus sign is not supported, true if it is accepted and throws if not for the number system*/
-	private static boolean handle_minus_sign(int flags, int radix) throws NumberFormatException {
+	protected boolean handle_minus_sign(int flags, int radix) throws NumberFormatException {
 		if ( !isset(flags, MINUS))
 			return false;
 		if (radix != 10  &&  isset(flags, MINUS_DEC))
@@ -255,20 +276,17 @@ public class parseNum {
 	 *@throws NumberFormatException NaN/no digits, too big/small/long 
 	 * @throws InternalException 
 	 *///too many parameters, but I need them to make good error messages.
-	private static <EX extends Throwable> long do_parse (
-				byte radix, int flags, byte max_digits, long max_value,
-				byte digits, int c, CharSupplier<EX> cs
-			) throws EX, NumberFormatException, InternalException {
+	private long parse (byte max_digits, long max_value) throws EX, NumberFormatException {
 		long num=0;
 		while (true) {
-			int n = next(flags, c, cs);
+			int n = next();
 			if (n == -1)
 				break;
 			digits++;
 			long newnum = num*radix - n;
 			c = cs.fetch();
 			if (digits > max_digits)
-				throw new InternalException(num, newnum, digits, false);
+				break;
 			if (Long.compareUnsigned(num, max_value) > 0  ||  Long.compareUnsigned(num, newnum) > 0)
 				throw new InternalException(num, newnum, digits,  true);
 			num = newnum;
@@ -281,7 +299,7 @@ public class parseNum {
 
 
 	/**so exception messages use the correct radix and prepend 0[xob], and does unsigned correctly.*/
-	private static String numToString(long num, byte radix, boolean negative) {
+	protected String numToString(long num, byte radix, boolean negative) {
 		StringBuilder out = new StringBuilder(18);
 		if (negative)
 			out.append('-');
@@ -295,19 +313,5 @@ public class parseNum {
 		}
 		out.append(Long.toUnsignedString(num, radix));
 		return out.toString();
-	}
-
-
-	/**A way to pass state where the error occurred */
-	private static class InternalException extends Exception {
-		/**value when the error was detected*/protected final long oldnum, newnum;
-		/***/protected final byte digits;
-		protected final boolean tooBig;
-		protected InternalException(long oldnum, long newnum, byte digits, boolean tooBig) {
-			this.oldnum = oldnum;
-			this.newnum = newnum;
-			this.digits = digits;
-			this.tooBig = tooBig;
-		}
 	}
 }

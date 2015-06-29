@@ -69,7 +69,7 @@ public class Convert {
 	}
 	public static Unit get_unit(String name) {
 		for (Unit u : units)
-			if (u.getName()==name)
+			if (u.getName().equals(name))
 				return u;
 		return null;
 	}

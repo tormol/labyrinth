@@ -1,16 +1,15 @@
 package tbm.util;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.awt.event.KeyEvent;//char_printable
+import java.util.ArrayList;//convert
+import java.util.Arrays;//String_nchars
+import java.util.Collection;//convert
+import java.util.HashMap;//map_init
+import java.util.LinkedList;//String_findAll
+import java.util.List;//convert, String_findAll
+import java.util.Map;//map_firstkey
+import java.util.function.Function;//convert
+import java.util.regex.Matcher;//String_findAll
+import java.util.regex.Pattern;//String_findAll
 
 //TODO: use Character statics to support more than ASCII
 /**static methods for simple things, som
@@ -40,10 +39,12 @@ public class statics {
 	}/**because new char[]{'a', 'b', 'c'} looks ugly.*/
 	public static char[] char_array(char... a) {
 		return a;
-	}/**Is c any of the chars in list?*/
+	}/**Is c any of the chars in list?
+	  *@return {@code list.indexOf(c) == -1}*/
 	public static boolean char_anyof(char c, String list) {
 		return list.indexOf(c) == -1;
-	}/**Is c any of the chars in list?*/
+	}/**Is c any of the chars in list?
+	   *If list is long, Arrays.binarySearch(Arrays.sort(list), c) might be faster.*/
 	public static boolean char_anyof(char c, char... list) {
 		for (char e : list)
 			if (c==e)
@@ -79,34 +80,35 @@ public class statics {
 		return (char)n;
 	}public static char char_asHex(char c1, char c2) throws InvalidHexException {
 		return(char) (16*char_asHex(c1) + char_asHex(c2));
-	}public static int char_toNum(char base, char c) {
-		if (c >= '0'  &&  c  <= '9'  &&  c-'0' < base) {
-			if (base == 1)
-				throw new RuntimeException("tbm.util.statics.char_toInt(): invalid base: "+base+"\nValid bases are 2-10 and 16.");	
-			return c - '0';
-		} if (base == 16) {
-			c |= 0x20;//uppercase become lowercase
-			if (c >= 'a'  && c <= 'f')
-				return 10+c-'a';
-		} else if (base < 2  ||  base > 10)
-			throw new RuntimeException("tbm.util.statics.char_toInt(): invalid base: "+base+"\nValid bases are 2-10 and 16.");
+	}/**convert a digit or letter to an int, or -1 if it's not a digit in the radix.
+	  *For radixes > 10 both cases are accepted.
+	  *Does not validate radix, so if radix < 1 no characters are accepted, and there are no digits for values over 37.*/
+	public static int char_toNum(char radix, char c) {
+		if (c >= '0'  &&  c  <= '9'  &&  c-'0' < radix)
+			return c-'0';	
+		c |= 0x20;//uppercase becomes lowercase
+		if (c >= 'a'  &&  c <= 'z'  &&  10+c-'a' < radix)
+			return 10+c-'a';
 		return -1;
-	}
-	public static <EX extends Throwable> char char_escape(char first, CharSupplier<EX> get) throws EX, InvalidHexException {
-		switch (first) {
-			case 't':return'\t';
-			case 's':return ' ';
-			case 'n':return'\n';
-			case 'x':return char_asHex((char)get.get(), (char)get.get());
-			case '0':return'\0';
-			case 'e':return 0x1b;//escape
-			case 'b':return'\b';
-			case 'r':return'\r';
-			default :return first;
-		}
-	}
+	}/**Turns some letters into non-printable characters.
+	  *t->tab	s->space	n->newline	r->carriage return	e->esc	b->bell	0->zero value	x->value of the two following hexadecimal characters.
+	  *@param first the character after a '\'
+	  *@param cs gives the two hexadecimal characters if first is 'x', not u
+	  *@throws InvalidHexException if {@code first=='x'} and one of the two characters given by {@code cs} are not \[1-9a-fA-F]/
+	  *@return {@code first} if it's not recognized.*///FIXME: wrong name: escape seqence is probably \e[something
+	public static <EX extends Throwable> char char_escape(char first, CharSupplier<EX> cs) throws EX, InvalidHexException {switch (first) {
+		case't':return'\t';
+		case's':return ' ';
+		case'n':return'\n';
+		case'x':return char_asHex((char)cs.fetch(), (char)cs.fetch());
+		case'0':return'\0';
+		case'e':return 0x1b;//escape
+		case'b':return'\b';
+		case'r':return'\r';
+		default:return first;
+	}}
 	/**Is c printable?
-	 * Uses Characther.UnicodeBlock, If you want to check if char is printable with the current font, use Font.canDisplay(int)*/
+	 * Uses Characther.UnicodeBlock, If you want to check if char is printable with the current font, use {@code Font.canDisplay()}*/
 	//http://stackoverflow.com/questions/220547/printable-char-in-java
 	public static boolean char_printable(char c) {
 	    Character.UnicodeBlock block = Character.UnicodeBlock.of( c );
@@ -135,19 +137,17 @@ public class statics {
 	public static String String_valueOf(char[] arr, int offset) {
 		return String.valueOf(arr, offset, arr.length-offset);
 	}
-	/**Returns an array with all matches of regex i str.*/
-	public static String[] String_findAll(String str, String regex) {
-		LinkedList<String> found = new LinkedList<String>();
+	/**Returns an array with all matches of regex in str.*/
+	public static List<String> String_findAll(String str, String regex) {
+		List<String> found = new LinkedList<String>();
 		Matcher m = Pattern.compile(regex).matcher(str);
 		while (m.find())
 			found.add(m.group());
-		return found.toArray(new String[found.size()]);
+		return found;
 	}/**Return the index of the first non-whitespace character or .length() if only whitespace.*/
 	public static int String_start(String line) {
 		int i=0;
-		while (line.length()>i
-		  &&(  line.charAt(i)==' '
-		   ||  line.charAt(i)=='\t'))
+		while (line.length() > i  &&  (line.charAt(i) == ' '  ||  line.charAt(i) == '\t'))
 			i++;
 		return i;
 	}/**Return the index+1 of the last non-whitespace character or 0 if only whitespace.
@@ -173,7 +173,7 @@ public class statics {
 
 
 	/**Do something by side effects n times.*/
-	public static void repeat(Runnable runnable, int times) {
+	public static void repeat(int times, Runnable runnable) {
 		for (; times>0; times--)
 			runnable.run();
 	}
@@ -182,10 +182,6 @@ public class statics {
 	/**a shorter initialization*/
 	public static <T> T[] array(T... a) {
 		return a;
-	}
-	/**A shorter alias of Arrays.asList()*/@SafeVarargs
-	public static <T> List<T> list(T... a) {
-		return Arrays.asList(a);
 	}
 
 	/**Create a HashMap and fill it with entries*/@SafeVarargs
@@ -227,18 +223,6 @@ public class statics {
 			return value1;
 		if (value2 != null)
 			return value2;
-		throw new NullPointerException("Both values are null");
-	}/**Won't call value2 if value1 returns null. Will only call once.*/
-	public static <T> T nonNull(Supplier<T> value1, Supplier<T> value2) {
-		T value = value1.get();
-		if (value != null)
-			return value;
-		return value2.get();
-	}/**Won't call value2 if value1 returns null. Will only call once. throws an exception if both return null.*/
-	public static <T> T nonNull_throw(Supplier<T> value1, Supplier<T> value2) throws NullPointerException {
-		T value = nonNull(value1, value2);
-		if (value != null)
-			return value;
 		throw new NullPointerException("Both values are null");
 	}/**Normalize a value to fit in [min, max].*/
 	public static double normalize(double value, double min, double max) {
