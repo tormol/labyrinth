@@ -2,7 +2,7 @@ package tbm.util.collections;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
-import tbm.util.collections.LeanHash.LeanHashSet;
+import tbm.util.collections.LeanHashSet;
 
 public final class key {
 	public static interface KeyObject<K> {
