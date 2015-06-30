@@ -61,11 +61,10 @@ public class statics {
 			super("'"+c+"' is not a hexadecimal characther.");
 			this.nonhex = c;
 		}
-		public static void check(char c) throws InvalidHexException {
-			char_asHex(c);
-		}
 		private static final long serialVersionUID = 1L;
-	}public static int char_asHex(int c) {
+	}/**convert a hexadecimal digit to it's value.
+	  *Returns -1 if {@code c} is not a digit;*/
+	public static int char_asHex(int c) {
 		if (c>='0' && c<='9')
 			return c-'0';
 		c |= 0x20;//makes upper-case letters lower-case.
@@ -73,23 +72,15 @@ public class statics {
 			return c-'a'+10;
 		//cannot write if (c<16)return c; because '\t' and '\n' are less than 16
 		return -1;
-	}public static char char_asHex(char c) throws InvalidHexException {
+	}/**convert a hexadecimal digit to it's value.
+	  *@throws InvalidHexException if {@code c} is not a digit.*/
+	public static char char_asHex(char c) throws InvalidHexException {
 		int n = char_asHex((int)c);
 		if (n == -1)
 			throw new InvalidHexException(c);
 		return (char)n;
 	}public static char char_asHex(char c1, char c2) throws InvalidHexException {
 		return(char) (16*char_asHex(c1) + char_asHex(c2));
-	}/**convert a digit or letter to an int, or -1 if it's not a digit in the radix.
-	  *For radixes > 10 both cases are accepted.
-	  *Does not validate radix, so if radix < 1 no characters are accepted, and there are no digits for values over 37.*/
-	public static int char_toNum(char radix, char c) {
-		if (c >= '0'  &&  c  <= '9'  &&  c-'0' < radix)
-			return c-'0';	
-		c |= 0x20;//uppercase becomes lowercase
-		if (c >= 'a'  &&  c <= 'z'  &&  10+c-'a' < radix)
-			return 10+c-'a';
-		return -1;
 	}/**Turns some letters into non-printable characters.
 	  *t->tab	s->space	n->newline	r->carriage return	e->esc	b->bell	0->zero value	x->value of the two following hexadecimal characters.
 	  *@param first the character after a '\'
