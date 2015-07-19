@@ -1,5 +1,6 @@
 package tbm.util;
 import static tbm.util.statics.*;
+
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -12,6 +13,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+
 import tbm.util.statics.InvalidHexException;
 
 public class Parser implements Closeable, AutoCloseable, CharSupplier<IOException>, Cloneable {
@@ -426,9 +430,48 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		return sb.toString();
 	}
 
+	/**Find the end of a regular expression and compile a Pattern.
+	 * @throws ParseException if there is an error in the regex or an unknown flag.*/
+	public Pattern regex() throws EOFException, IOException, ParseException {
+		Parser start = clone();
+		boolean inClass=false;//inside [] / doesn't need to be escaped
+		while (true) {
+			char c = next();
+			if (c == '\\')
+				skip();
+			else if (c == '[')
+				inClass = true;
+			else if (c == ']')
+				inClass = false;
+			else if (c == '/'  && !inClass)
+				break;
+		}
+		String body = back().subString(start);
+
+		int flags = 0;
+		while (true) switch (inext()) {
+			  case'i': flags |= Pattern.CASE_INSENSITIVE; break;
+			  case'm': flags |= Pattern.MULTILINE; break;
+			  case'x': flags |= Pattern.COMMENTS; break;
+			  case's': flags |= Pattern.DOTALL; break;
+			  case'd': flags |= Pattern.UNIX_LINES; break;
+			  case'u': flags |= Pattern.UNICODE_CASE; break;
+			  default:
+				try {
+					int c = back().ipeek();
+					if (Character.isLetter(c))
+						throw error("%c is not a valid flag.", c);
+					return Pattern.compile(body, flags);
+				} catch (PatternSyntaxException pse) {
+					col = start.col + pse.getIndex();
+					throw error(pse.getDescription());
+				}
+			}
+	}
 
 
-	/***/
+
+	/**Syntax error.*/
 	public class ParseException extends Exception {
 		protected ParseException(String f, Object... a) {this(String.format(f, a));}
 		protected ParseException(String str) {super(str);}

@@ -79,23 +79,26 @@ public class statics {
 		if (n == -1)
 			throw new InvalidHexException(c);
 		return (char)n;
-	}public static char char_asHex(char c1, char c2) throws InvalidHexException {
+	}public static char char_fromHex(char c1, char c2) throws InvalidHexException {
 		return(char) (16*char_asHex(c1) + char_asHex(c2));
+	}public static char char_fromHex(char c1, char c2, char c3, char c4) throws InvalidHexException {
+		return(char) (char_asHex(c1)<<12 | char_asHex(c2)<<8 | char_asHex(c3)<<4 | char_asHex(c4));
 	}/**Turns some letters into non-printable characters.
-	  *t->tab	s->space	n->newline	r->carriage return	e->esc	b->bell	0->zero value	x->value of the two following hexadecimal characters.
+	  *t->tab	s->space	n->newline	r->carriage return	e->esc	b->bell	0->zero value	x->value of the two following hexadecimal characters	u->value of the four following hexadecimal characters.
 	  *@param first the character after a '\'
 	  *@param cs gives the two hexadecimal characters if first is 'x', not u
 	  *@throws InvalidHexException if {@code first=='x'} and one of the two characters given by {@code cs} are not \[1-9a-fA-F]/
 	  *@return {@code first} if it's not recognized.*///FIXME: wrong name: escape seqence is probably \e[something
 	public static <EX extends Throwable> char char_escape(char first, CharSupplier<EX> cs) throws EX, InvalidHexException {switch (first) {
+		case'n':return'\n';
 		case't':return'\t';
 		case's':return ' ';
-		case'n':return'\n';
-		case'x':return char_asHex((char)cs.fetch(), (char)cs.fetch());
 		case'0':return'\0';
+		case'x':return char_fromHex((char)cs.fetch(), (char)cs.fetch());
+		case'u':return char_fromHex((char)cs.fetch(), (char)cs.fetch(), (char)cs.fetch(), (char)cs.fetch());
 		case'e':return 0x1b;//escape
-		case'b':return'\b';
 		case'r':return'\r';
+		case'b':return'\b';
 		default:return first;
 	}}
 	/**Is c printable?

@@ -1,4 +1,5 @@
 package tbm.util;
+import static tbm.util.parseNum.*;
 import static org.junit.Assert.*;
 import org.junit.Rule;
 import org.junit.Test;
@@ -6,47 +7,46 @@ import org.junit.rules.ExpectedException;
 
 public class parseNumTest {
 	@Rule
-    public ExpectedException thrown= ExpectedException.none();
+    public ExpectedException thrown = ExpectedException.none();
 
 	@Test
 	public void testLong_MIN_VALUE() {
 		String minLong = "-9223372036854775808";
 		assertEquals("wrong minLong", String.valueOf(Long.MIN_VALUE), minLong);
-		assertEquals(Long.MIN_VALUE, parseNum.signed_long(CharSupplier.fromString(minLong), false, ""));
-		assertEquals(Long.MIN_VALUE, parseNum.unsigned_long(CharSupplier.fromString(minLong.substring(1)), true, false, ""));
+		assertEquals("Long.MIN_VALUE", Long.MIN_VALUE, with(MINUS, CharSupplier.fromString(minLong)).bits(Long.SIZE));
 		thrown.expect(NumberFormatException.class);
-		parseNum.signed_long(CharSupplier.fromString("-9223372036854775809"), false, "");
+		with(MINUS, CharSupplier.fromString("-9223372036854775809")).bits(Long.SIZE);
 	}
 
 	@Test
 	public void testAllow_other_number_systems() {
 		assertEquals("allowing other number systems doesn't break anything",
-				parseNum.signed_long(CharSupplier.fromString("010"), false, ""),
-				parseNum.signed_long(CharSupplier.fromString("010"), true, ""));
+				with(OVERFLOW, CharSupplier.fromString("010")).bits(Long.SIZE),
+				with(OVERFLOW|OPT_DEC, CharSupplier.fromString("010")).bits(Long.SIZE) );
 		assertEquals("hexadecimal",
-				parseNum.signed_long(CharSupplier.fromString("10"), true, ""),
-				parseNum.signed_long(CharSupplier.fromString("0xa"), true, ""));
+				with(OPT_HEX|OVERFLOW, CharSupplier.fromString("10")).bits(Long.SIZE),
+				with(OPT_HEX|OVERFLOW, CharSupplier.fromString("0xa")).bits(Long.SIZE) );
 		assertEquals("octal",
-				parseNum.signed_long(CharSupplier.fromString("10"), true, ""),
-				parseNum.signed_long(CharSupplier.fromString("0o12"), true, ""));
+				with(OPT_OCT|OVERFLOW, CharSupplier.fromString("10")).bits(Long.SIZE),
+				with(OPT_OCT|OVERFLOW, CharSupplier.fromString("0o12")).bits(Long.SIZE) );
 		assertEquals("binary",
-				parseNum.signed_long(CharSupplier.fromString("10"), true, ""),
-				parseNum.signed_long(CharSupplier.fromString("0b1010"), true, ""));
+				with(OPT_BIN|OVERFLOW, CharSupplier.fromString("10")).bits(Long.SIZE),
+				with(OPT_BIN|OVERFLOW, CharSupplier.fromString("0b1010")).bits(Long.SIZE) );
 		assertEquals("other bases can overflow to negative without minus sign",
-				parseNum.signed_byte(CharSupplier.fromString("-1"), true, ""),
-				parseNum.signed_byte(CharSupplier.fromString("0xff"), true, ""));
+				-1,
+				with(RADIX(2)|OVERFLOW_OTHER, CharSupplier.fromString("11")).bits(2) );
 		thrown.expect(NumberFormatException.class);//no digits
-		parseNum.signed_long(CharSupplier.fromString("0x"), true, "");
+		with(OPT_HEX, CharSupplier.fromString("0x")).bits(2);
 	}
 
 	@Test
 	public void testWithSpaces() {
 		assertEquals("accepting unused characthers is ok",
-				parseNum.signed_long(CharSupplier.fromString("10"), false, ""),
-				parseNum.signed_long(CharSupplier.fromString("10"), false, " _"));
+				with(OVERFLOW, CharSupplier.fromString("10")).bits(Long.SIZE),
+				with(OVERFLOW|SKIP_SPACE, CharSupplier.fromString("10")).bits(Long.SIZE));
 		assertEquals("space characters are ignored",
-				parseNum.signed_long(CharSupplier.fromString("10"), false, " _"),
-				parseNum.signed_long(CharSupplier.fromString("1_ 0"), false, " _"));
+				with(OVERFLOW|SKIP_SPACE|SKIP_UNDERSCORE, CharSupplier.fromString("10")).bits(Long.SIZE),
+				with(OVERFLOW|SKIP_SPACE|SKIP_UNDERSCORE, CharSupplier.fromString("_1 0")).bits(Long.SIZE));
 	}
 
 
