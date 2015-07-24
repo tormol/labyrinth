@@ -1,47 +1,79 @@
 package tbm.util;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Objects;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.List;
 import java.util.regex.Pattern;
 //see git commit message for TODOs and documentation.
 /**
- * new parser(args)
- * String file = parser.getopt("file", "blah").argument();
- * boolean help = parser.getopt("help", 'h', "this").flag();
- * if (help)
- *     System.out.println(parser.getHelp());
- * List<String> args = parser.getargs();
- * List<String> wrongops = 
- * parser.wrongopts
- * 
+ * If you get positional arguments before all flags, some arguments might be missing as they are still attached to flags.
+ *
+ *Example:
+ * ArgsParser a = new ArgsParser(args);
+ * File file = a.optArg('f', "file", null/*hide from --help* /, null, str->new File(str);
+ * boolean quiet = a.optFlag('-q', "quiet", "say less");
+ * a.handle_version('v', quiet?"0.9.1":""simpleProgram version 0.9.1\nCopyright someone 2015-2016");
+ * boolean help = a.optFlag('h', "help", "Display this help and quit.");
+ * Integer x = a.optionalArgument("x", null, new IntRange().min(-5).max(5));
+ * Integer y = a.optionalArgument("y", null, new IntRange().min(-5).max(5));
+ * args = a.allArgumentss("all remaining non-integer arguments", false);//zero arguments is okay
+ * if (help) {
+ *     System.out.print(a.getHelp(quiet, "simpleProgram - do something"));
+ *     System.exit(0);
+ * }
+ * a.handle_errors(-1);
+ *
+ *@author tbm
+ * License: Apache v2
  */
 public class ArgsParser {
-
-	@SuppressWarnings("serial")
+	/**Is used by ArgType.*/@SuppressWarnings("serial")
 	public static class ArgException extends Exception {
-		public ArgException(String str) {
-			super(str);
-		}
 		public ArgException(String f, Object... a) {
 			super(String.format(f, a));
 		}
 	}
 
 
-	/****created from args[]**/
+	/**Convert an argument to an option or positional argument to the desired type, for example an integer or IP address.
+	 *@param T type/class the argument is converted to*///@FunctionalInterface
+	public interface ArgType<T> {
+		 /**Convert an argument to an option or positional argument to the desired type, for example an integer or IP address.
+		 *@param arg string to be converted
+		 *@return the converted type 
+		 *@throws ArgException if the string cannot be converted.
+		 * the message will come after "must be ".
+		 */
+		T parse(String arg) throws ArgException;
+
+		/**If name sent to *argument() is null, use argtype lowercase classname.*/
+		static String argName(String suppliedName, ArgType<?> argType) {
+			return suppliedName == null
+				? argType.getClass().getName().toLowerCase()
+				: suppliedName;
+		}
+	}
+
+
+
 	/**Represents an args option that have not been matched yet.*/
-	public class FoundOpt implements Comparable<FoundOpt> {
+	public class FoundOpt {
 		/**A multi-character option; --option*/
 		protected String Long = null;
 		/**A single-character option; -o*/
 		protected char Short = '\0';
 		/**The options index in args[]*/
 		protected final int index;
-		/***/
+		/**The arguments index in args[]. possible values are -1, index and index+1.*/
 		protected int argument_index = -1;
 		/**the argument, null==not set*/
 		protected String argument = null;
@@ -50,14 +82,14 @@ public class ArgsParser {
 			this.index = index;
 		}
 
-		/**Return the string that set this option*/
+		/**Get the string that set this option.*/
 		public String setBy() {
 			if (! Long.isEmpty())
 				return "--" + Long;
 			else if (Short != '\0')
 				return "-" + String.valueOf(Short);
 			else
-				return null;
+				return "";
 		}
 		/**@return this is a single-character option; -o
 		 *Returns <tt>'\0'</tt> if this is a long/multi-character option*/
@@ -71,39 +103,38 @@ public class ArgsParser {
 		public boolean hasArgument() {
 			return argument != null;
 		}
-		public void disownArgument() throws UnsupportedOperationException {
+		/**Returns true if argument was not a part of the option
+		 * -o3->false, --size 8->true, --help->false*/
+		public boolean canDisownArgument() {
+			return hasArgument() &&  index != argument_index;
+		}
+		/**Remove argument and put it back into args[]
+		 *@throws if there is no argument or it's not removable.*/
+		public void disownArgument() throws IllegalStateException {
 			if (! canDisownArgument())
-				throw new UnsupportedOperationException(toString() + ": Cannot disown argument.");
+				throw new IllegalStateException(toString() + ": Cannot disown argument.");
 			arguments[argument_index] = argument;
 			argument = null;
 			argument_index = -1;
 		}
-		/**Returns true if argument was a part of the option
-		 * eg "-o3"->true, "--size 8"->false, "--help"->false 
-		 */
-		public boolean canDisownArgument() {
-			return argument != null  &&  index != argument_index;
-		}
-		
-		/**Return debug information. see .setBy()*/
+
+		/**Get debug information. see .setBy()*/
 		public String toString() {
 			String str = String.format("[%d]=%s", index, setBy());
 			if (hasArgument())
 				str += String.format("->[%d]=%s", argument_index, argument);
 			return str;
 		}
-		//@Override Comparable (1.5 doesn't allow @Override on interfaces)
-		public int compareTo(FoundOpt fo) {
-			return this.index-fo.index;
-		}
 	}
 
 
-	/**@param T type/class the argument is converted to*/
-	public interface ArgType<T> {
-		T parse(String arg) throws ArgException;
-		String type_help();
+	/**Registers found options and decides what should be done with it's present or missing argument.*///@FunctionalInterface
+	public interface OptType {
+		/**Registers found options and decides what should be done with it's present or missing argument.
+		 *@throws if there is something wrong with the option, return an error message.*/
+		void accept(FoundOpt option) throws ArgException;
 	}
+
 
 
 	/**for aligning descriptions in generate_help() */
@@ -127,60 +158,53 @@ public class ArgsParser {
 		public ArgsParser parse(String... args) {
 			return new ArgsParser(this,  args);
 		}
-		public String shortopt_regex = "[A-Za-z].*";
-		public Builder valid_shortopts(String regex) {
-			shortopt_regex = regex;
+
+		protected String shortopt_regex = "[A-Za-z].*";
+		/**Which characters can be a short option?
+		 *@param regexClass is put inside a regex class ([]) so "^a-z" means everything except lowercase letters.*/
+		public Builder valid_shortopts(String regexClass) {
+			shortopt_regex = '['+regexClass+"].*";
 			return this;
 		}
+		/**digits can be options, this makes it impossible to enter negative numbers.*/
 		public Builder integer_shortopts() {
 			shortopt_regex = "[A-Za-Z0-9].*";
 			return this;
 		}
-		public boolean h_help = true;
-		public boolean v_version = false;
-		public Builder h_not_help() {
-			h_help = false;
-			return this;
-		}
-		public Builder v_for_version() {
-			v_version = true;
-			return this;
-		}
-		public boolean nonopt_stops_opts = false;
+
+		protected boolean nonopt_stops_opts = false;
+		/**Turns the --option in "-q command --option" into an argument.
+		 * Note that you now must enter options requiring an argument as --file=path;
+		 * ArgsParses doesnt know -q is a flag untill it's added, and then optFlag("option") would already have returned true.*/
 		public Builder stop_at_first_nonOpt() {
 			nonopt_stops_opts = true;
 			return this;
 		}
-		public boolean can_exit_anywhere = true;
-		public Builder dont_exit() {
-			can_exit_anywhere = true;
+	
+		protected String name = null;
+		/**for the Usage: line.*/
+		public Builder name(String name) {
+			this.name = Objects.requireNonNull(name);
 			return this;
 		}
 	}
 
 
-	/**Options parsed from args[]*/
-	//TreeSet because sorted by index, which might not be the order they are added
-	protected final SortedSet<FoundOpt> options = new TreeSet<FoundOpt>();;
-
-	/**All arguments that are not an option.
-	 * Sort before open.*/
+	/**All arguments that are not an option.*/
 	protected final String[] arguments;
-	/**to allow <tt>get_args()</tt> to be run multiple times, it doesn't empty {@link arg}, so arg.length is unlikely to reach zero.
-	 * that means we need another way to check for too many arguments.*/
-	protected boolean unused_arg = true;
+	/**Options parsed from args[]*///LinkedList because frequent removals
+	protected final LinkedList<FoundOpt> options = new LinkedList<FoundOpt>();
 
 	/**For generating help, Can't use a StringBuilder because you need to know the longest long option to line up descriptions.*/
-	//FIXME: use StringBuilder and max_lon_length, and add_help(char Short, String Long, String desc, ArgumentType<T> type)
 	protected final List<ValidOption> validOptions = new ArrayList<ValidOption>();
+	/**Store help information about positional arguments.*/
+	protected final StringBuilder positionalUsage = new StringBuilder();
 
-	/**While quitting on the first error is simpler, I think collecting them and printing them at the end is simpler, altougt some errors might cause other errors*/
+	/**While quitting on the first error is simpler, I think collecting them and printing them at the end is more user friendly, altougt some errors might cause other errors*/
 	protected final StringBuilder errors = new StringBuilder();
 
-	protected final boolean dont_exit;
-	protected final boolean h_help;
-	protected final boolean v_version;
-	
+	/**Name of the program, for the Usage: string*/
+	public final String name;
 
 	/**@param args the String[] passed to main().
 	 * @param b settings that affects argument parsing. @see Builder
@@ -192,23 +216,26 @@ public class ArgsParser {
 	 * @param b settings that affects argument parsing. @see Builder
 	 */
 	public ArgsParser(Builder b, String... args) {
-		Objects.requireNonNull(b);
-		Objects.requireNonNull(args);
-
 		//Builder parameters that are used later
 		this.arguments = new String[args.length];
-		this.dont_exit = b.can_exit_anywhere;
-		this.h_help = b.h_help;
-		this.v_version = b.v_version;
 
-		//
 		final boolean windows = System.getProperty("os.name").startsWith("Windows");
-		final String helpStr = "(\\?|h|help)";
 		if (args.length==1
-		 && (args[0].matches("-"+helpStr)
-		  || (windows && args[0].matches("/"+helpStr)) ) )
-			args[0] = "--help";
+	   	   &&(( windows && (args[0].equals("/help") || args[0].equals("/h") || args[0].equals("/?") ))
+	   	           ||      (args[0].equals("-help") || args[0].equals("-h") || args[0].equals("-?") )) )
+	   	   args[0] = "--help";
 
+		if (b.name == null) {
+			b.name = System.getProperty("sun.java.command");
+			if (b.name == null) {//use class name of main method, assumes being on the main thread.
+				StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+				b.name = stack[stack.length-1].getFileName().toLowerCase();
+				if (b.name == null)
+					b.name = "";
+			}
+		}
+		this.name = b.name;
+	
 		boolean stopopt = false;
 		for (int i=0; i<args.length; i++)
 			if (stopopt)
@@ -245,9 +272,9 @@ public class ArgsParser {
 			}
 			//if the last option didn't have an argument, add this.
 			//see Builder.stop_at_first_nonopt() for why nonopt_stops_opts forces option arguments to be 
-			else if (!options.isEmpty()  &&  options.last().argument == null  &&  !b.nonopt_stops_opts) {
-				options.last().argument = args[i];
-				options.last().argument_index = i;
+			else if (!options.isEmpty()  &&  !options.getLast().hasArgument()  &&  !b.nonopt_stops_opts) {
+				options.getLast().argument = args[i];
+				options.getLast().argument_index = i;
 			}
 			else {
 				arguments[i] = args[i];
@@ -258,144 +285,242 @@ public class ArgsParser {
 
 
 
-	/**
-	 * 
-	 * @param Short single-character version, -o
-	 * @param Long multi-character version, --option
-	 * @param help
-	 * @return
-	 */
-	public List<FoundOpt> getOpts(char Short, String Long, String help) {
+	/**Check for an option and store it for help messages.
+	 *@param Short single-character version, -o
+	 *@param Long multi-character version, --option
+	 *@param desc if not null option is stored and will be printed as a part of --help output
+	 *@param handler converts string to wanted type.
+	 *@return {@code handler}*/
+	public <OT extends OptType> OT option(char Short, String Long, String desc, OT handler) {
 		//cannot remove in a foreach
-		ArrayList<FoundOpt> hits = new ArrayList<FoundOpt>(2);
 		Iterator<FoundOpt> itr = options.iterator();
 		while (itr.hasNext()) {
 			FoundOpt opt = itr.next();
-			if (opt.Long != null  &&  opt.Long.equals(Long)
-			 || opt.Short !='\0'  &&  opt.Short == Short) {
-				hits.add(opt);
-				itr.remove();
-			}
+			if (Long != null  &&  Long.equals(opt.Long)
+			 || Short !='\0'  &&  Short == opt.Short)
+				try {
+					itr.remove();
+					handler.accept(opt);
+				} catch (ArgException ae) {
+					errors.append(opt.setBy()).append(' ').append(ae.getMessage()).append('\n');
+				}
 		}
-		if (help != null)
-			validOptions.add(new ValidOption(Short, Long, help));
-		return hits;
-	}
-
-	public int optFlagN(char Short, String Long, String description) {
-		int times = 0;
-		for (FoundOpt o : getOpts(Short, Long, description))
-			if (o.hasArgument())
-				if (o.canDisownArgument()) {
-					o.disownArgument();
-					times++;
-				} else
-					errors.append(o.setBy() + ": invalid");
-			else
-				times++;
-		return times;
-	}
-
-	public boolean optFlag(char Short, String Long, String description) {
-		return optFlagN(Short, Long, description) > 0;
-	}
-
-	public <T> List<T> optMultiArg(char Short, String Long, String description, ArgType<T> type) {
-		ArrayList<T> list = new ArrayList<T>(2);
-		for (FoundOpt o : getOpts(Short, Long, description))
-			if (o.hasArgument())
-				try {
-					list.add(type.parse(o.argument));
-				} catch (ArgException ae) {
-					errors.append(String.format("invalid argument to option %s (argument %d) \"%s\" is not a valid %s.\n", o.setBy(), o.index, o.argument, type));
-				}
-			else
-				errors.append(String.format("%s (argument %d) requires an argument.\n", o.setBy(), o.index));
-		return list;
-	}
-
-	public <T> T optArg(char Short, String Long, String description, T notSet, ArgType<T> type) {
-		T argument = notSet;
-		for (FoundOpt o : getOpts(Short, Long, description))
-			if (o.hasArgument())
-				try {
-					argument = type.parse(o.argument);
-				} catch (ArgException ae) {
-					errors.append(String.format("invalid argument to option %s: \"%s\" is not a valid %s.\n", o.setBy(), o.argument, type));
-				}
-			else
-				errors.append(o.setBy() + " requires an argument.\n");
-		return argument;
-	}
-
-	public <T> T optArg(char Short, String Long, String description, T notSet, T noArg, ArgType<T> type) {
-		T argument = notSet;
-		for (FoundOpt o : getOpts(Short, Long, description))
-			if (o.hasArgument())
-				if (! o.canDisownArgument())
-					try {
-						argument = type.parse(o.argument);
-					} catch (ArgException ae) {
-						errors.append(String.format("invalid argument to option %s: \"%s\" is not a valid %s.\n", o.setBy(), o.argument, type));
-					}
-				else {
-					o.disownArgument();
-					argument = noArg;
-				}
-			else
-				argument = noArg;
-		return argument;
+		if (desc != null)
+			validOptions.add(new ValidOption(Short, Long, desc));
+		return handler;
 	}
 
 
 
-	/**Return a String with a list of all options and their description.*/
-	public String getHelp() {
-		StringBuilder help = new StringBuilder();
-		int longest_Long = 0;
+
+
+  ////////////////////////////////////
+ //error, help and version handling//
+////////////////////////////////////
+	/**Are there any errors?*/
+	public boolean hasErrors() {
+		return getErrors().length() > 0;
+	}
+
+
+	/**Return a String with all errors.*/
+	public String getErrors() {
+		//use a new StringBuilder so getErrors() can be called multiple times
+		StringBuilder errors = new StringBuilder(this.errors);
+		//invalid options
+		for (FoundOpt o : options)
+			errors.append("Invalid option ").append(o.setBy()).append('.').append('\n');
+		//unused arguments
+		if (argumentsLeft() > 0)
+			errors.append("Unused arguments: " + Arrays.toString(allArguments(null, false)));
+		return errors.toString();
+	}
+
+
+	/**If there are any errors, print them and exit.
+	 * @param errorCode is passed to System.exit()*/
+	public void handle_errors(int errorCode) {
+		String errors = getErrors();
+		if ( !errors.isEmpty()) {
+			System.err.println(errors);
+			System.err.println(getUsage());
+			System.exit(errorCode);
+		}
+	}
+
+
+
+	/**Returns a Usage: string.
+	 * Ends with a newline.*/
+	public String getUsage() {//I could rename positionalUsage and add name in the constructor, but that might change. 
+		return "Usage " + name + " [ options ... ] " + positionalUsage.toString() + '\n';
+	}
+
+
+	/**Return a String with a list of all options and their description.
+	 * Ends with a newline if not empty.
+	 * You probably want to prepend getUsage()\n*/
+	public String getOptionHelp() {
+		int longest_longOpt = 0;
 		for (ValidOption o : validOptions)
-			if (o.description != null  &&  o.Long != null  &&  o.Long.length() > longest_Long)
-				longest_Long = o.Long.length();
+			if (o.description != null  &&  o.Long != null  &&  o.Long.length() > longest_longOpt)
+				longest_longOpt = o.Long.length();
+
+		StringBuilder help = new StringBuilder();
 		for (ValidOption o : validOptions)
 			if (o.description != null) {
+				//short
 				help.append('\t');
 				if (o.Short != '\0')
 					help.append('-').append(o.Short);
 				else
 					help.append(' ').append(' ');
-				if (o.Long != null)
-					help.append(String.format("\t--%1$-" + longest_Long + "s", o.Long));
-				else
-					help.append(String.format("\t  %1$" + longest_Long + "s", ""));
-				help.append('\t').append(o.description).append('\n');
+
+				//long
+				int spaces_after = longest_longOpt;
+				help.append('\t');
+				if (o.Long != null) {
+					help.append("--").append(o.Long);
+					spaces_after -= o.Long.length();
+				} else
+					spaces_after += 2;
+				while (spaces_after-- > 0)
+					help.append('\n');
+
+				//description
+				String[] descLines = o.description.split("\n");
+				help.append('\t').append(descLines[0]).append('\n');
+				for (int l=1; l<descLines.length; l++) {
+					help.append("\t  \t  ");
+					for (int s=0; s<longest_longOpt; s++)
+						help.append('\n');
+					help.append(descLines[l]).append('\n');
+				}
 			}
+
 		return help.toString();
 	}
 
 
-	public <T> T arg(String name, T missing, ArgType<T> type) {
-		String arg = null;
-		for (int i=0; i<arguments.length; i++)
-			if (arguments[i] != null) {
-				arg = arguments[i];
-				arguments[i] = null;
-			}
-		if (arg == null) {
-			if (missing == null)//required
-				errors.append("missing positional argument ").append(name).append('\n');
-			return missing;
-		}
-		try {
-			return type.parse(arg);
-		} catch (ArgException ae) {
-			errors.append(ae.getMessage()).append('\n');
-			return missing;
+	/**generate --help output as "$help\n${getUsage()}"Options:\n${getOptionHelp()}"
+	 *Ends with a newline.
+	 *Should be called after checking for positional arguments!
+	 *@param only_usage is --quiet set?
+	 *@param help text to be displayed before usage and option help, should end with a newline.*/
+	public String getHelp(boolean only_usage, String help) {
+		if (only_usage)
+			return getUsage();
+		return help + '\n' + getUsage() + "Options:\n" + getOptionHelp();
+	}
+
+	//handle_help() would encourage not waiting for positional arguments to get added to usage. 
+
+
+
+	/**If --version is set, print version_info and exit(0).
+	 *@param v_version use -v shortopt
+	 *If there is a -q--quiet flag, you should only show the version number if it was set.*/
+	public void handle_version(char shortOpt, String version_info) {
+		if (optFlag(shortOpt, "version", "Display version information and quit.")) {
+			System.out.println(version_info);
+			System.exit(0);
 		}
 	}
 
-	public <T> T arg(String name, ArgType<T> type) {
-		return arg(name, null, type);
+
+	/**Add options -v--verbose -q--quiet and -s--silent.
+	 * if silent is last -2 is returned,
+	 * else volume = times verbose - 1 if quiet or silent was set.*/
+	public int volume(String verbose_description, String quiet_description, String silent_description) {
+		Flag verbose = option('v', "verbose", verbose_description, new Flag());
+		Flag quiet = option('q', "quiet", quiet_description, new Flag());
+		Flag silent = option('s', "silent", silent_description, new Flag());
+		if (silent.last_index > verbose.last_index
+		&&  silent.last_index > quiet.last_index)
+			return -2;
+		return verbose.times
+				- (quiet.isSet() || silent.isSet() ? 1 : 0);
 	}
+
+
+
+
+
+  ////////////////////////
+ //positional arguments//
+////////////////////////
+	public <T> T optionalArgument(String name, T missing, ArgType<T> type) {
+		try {
+			positionalUsage.append(' ').append('[').append(ArgType.argName(name,  type)).append(']');
+			for (int i=0; i<arguments.length; i++)
+				if (arguments[i] != null) {
+					T arg = type.parse(arguments[i]);
+					arguments[i] = null;//only remove if valid
+					return arg;
+				}
+		} catch (ArgException ae)
+			{}//string has wrong type and is for a later positional argument
+		return missing;
+	}
+
+
+	/**A required positional argument
+	 *@param name for the Usage: line.*/
+	public <T> T argument(String name, ArgType<T> type) {
+		positionalUsage.append(' ').append(ArgType.argName(name,  type));
+		for (int i=0; i<arguments.length; i++)
+			if (arguments[i] != null)
+				try {
+					return type.parse(arguments[i]);
+				} catch (ArgException ae) {
+					if (name == null)
+						name = type.getClass().getName().toLowerCase();
+					errors.append(String.format("%s is not a valid %s, must be %s\n", arguments[i], name, ae.getMessage()));
+					return null;
+				} finally {
+					arguments[i] = null;
+				}
+		errors.append(name).append(" is missing\n");
+		return null;
+	}
+
+
+	/**Get a list of all remaining non-opt arguments.
+	 *@param name for the Usage: string.
+	 *@param minimum_one require at least one argument.*/
+	public <T> List<T> allArguments(String name, boolean minimum_one, ArgType<T> type) {
+		name = ArgType.argName(name, type);
+		positionalUsage.append(' ');
+		if (minimum_one)
+			positionalUsage.append(name).append(" [");
+		else
+			positionalUsage.append('[').append(name);
+		positionalUsage.append("...]");
+
+		ArrayList<T> list = new ArrayList<T>(arguments.length);
+		for (int i=0; i<arguments.length; i++)
+			if (arguments[i] != null)
+				try {
+					list.add(type.parse(arguments[i]));
+					arguments[i] = null;
+				} catch (ArgException ae) {
+					errors.append(arguments[i]).append(" is not a valid ").append(name).append(", must be ").append(ae.getMessage()).append('\n');
+				}
+		if (list.isEmpty() && minimum_one)
+			errors.append("must at least have one ").append(name).append('\n');
+		return list;
+	}
+
+
+	/**Get a list of all remaining non-opt arguments.
+	 *@param name for the Usage: string.
+	 *@param minimum_one require at least one argument.
+	 *@return array so you can do {@code args = allArguments();}*/
+	public String[] allArguments(String name, boolean minimum_one) {
+		List<String> list = allArguments(name, minimum_one, any);
+		return list.toArray(new String[list.size()]);
+	}
+
 
 	protected int argumentsLeft() {
 		int n = 0;
@@ -405,142 +530,182 @@ public class ArgsParser {
 		return n;
 	}
 
-	/**@return An array of all non-opt arguments.
-	 */
-	public <T> List<T> allArgs(String name, boolean minimum_one, ArgType<T> type) {
-		unused_arg = false;
-		ArrayList<T> list = new ArrayList<T>(arguments.length);
-		for (String arg : arguments)
-			if (arg != null)
-				try {
-					list.add(type.parse(arg));
-				} catch (ArgException ae) {
-					errors.append(ae.getMessage()).append('\n');
-				}
-		if (list.isEmpty() && minimum_one)
-			errors.append("must at least have one ").append(name).append('\n');
-		return list;
+
+
+
+
+  ///////////////////////////////////////
+ //OptType implementations and methods//
+///////////////////////////////////////
+	/**An option type that forgets the previous occurrence when it gets a new one.*/
+	public static class Single<V> implements OptType {
+		public V value;
+		public final V noArg_value;
+		public final ArgType<V> type;
+		public Single(V notSet, ArgType<V> type) {
+			value = notSet;
+			noArg_value = null;
+			this.type = type;
+		}
+		public Single(V notSet, V noArg, ArgType<V> type) {
+			value = notSet;
+			noArg_value = Objects.requireNonNull(noArg);
+			this.type = type;
+		}
+		public void accept(FoundOpt o) throws ArgException {
+			if (o.hasArgument())
+				if (noArg_value != null  &&  o.canDisownArgument()) {
+					o.disownArgument();
+					value = noArg_value;
+				} else
+					try {
+						value = type.parse(o.argument);
+					} catch (ArgException ae) {
+						throw new ArgException("%s has invalid argument \"%s\"; must %s.\n", o.setBy(), o.argument, ae.getMessage());
+					}
+			else if (noArg_value == null)
+				throw new ArgException("require an argument");
+			value = noArg_value;
+		}
 	}
 
-	/**@return An array of all  non-opt arguments.
-	 */
-	public String[] allArgs(String name, boolean minimum_one) {
-		List<String> list = allArgs(name, minimum_one, any);
-		return list.toArray(new String[list.size()]);
+	public <T> T optArg(char Short, String Long, String description, T notSet, ArgType<T> type) {
+		return option(Short, Long, description, new Single<T>(notSet, type)).value;
+	}
+
+	public <T> T optArg(char Short, String Long, String description, T notSet, T noArg, ArgType<T> type) {
+		return option(Short, Long, description, new Single<T>(notSet, noArg, type)).value;
 	}
 
 
 
-	/**Returns true if there are any errors.*/
-	public boolean hasErrors() {
-		return getErrors().length() > 0;
+	/**An option type that stores every argument and require one.*/
+	public static class MultiArg<V> implements OptType {
+		public final List<V> values = new ArrayList<V>(3);
+		public final ArgType<V> type;
+		public MultiArg(ArgType<V> type) {
+			this.type = Objects.requireNonNull(type);
+		}
+		public void accept(FoundOpt o) throws ArgException {
+			if ( !o.hasArgument())
+				throw new ArgException("%s (argument nr %d) require an argument.\n", o.setBy(), o.index+1);
+			try {
+				values.add(type.parse(o.argument));
+			} catch (ArgException ae) {
+				throw new ArgException("%d. %s has invalid argument \"%s\"; must %s.\n", values.size()+1, o.setBy(), o.argument, ae.getMessage());
+			}
+		}
 	}
-	/**Return a String with all errors.*/
-	public String getErrors() {
-		//use a new StringBuilder so getErrors() can be called multiple times
-		StringBuilder errors = new StringBuilder(this.errors);
-		//invalid options
-		for (FoundOpt o : options)
-			errors.append("Invalid option ").append(o.setBy()).append('.').append('\n');
-		//unused arguments
-		if (unused_arg  &&  argumentsLeft() > 0)
-			errors.append("Unused arguments: " + Arrays.toString(allArgs(null, false)));
-		return errors.toString();
+
+	public <T> List<T> optMultiArg(char Short, String Long, String description, ArgType<T> type) {
+		return option(Short, Long, description, new MultiArg<T>(type)).values;
+	}
+
+
+
+	/**An option type that takes no arguments and gives an error if it cannot be removed.*/
+	public static class Flag implements OptType {
+		public int times = 0;
+		public int last_index = -1;
+		public Flag()
+			{}
+		public void accept(FoundOpt o) throws ArgException {
+			if (o.hasArgument())
+				if (o.canDisownArgument())
+					o.disownArgument();
+				else
+					throw new ArgException("is a flag and cannot have an argument.");
+			times++;
+			last_index = o.index;
+		}
+		public boolean isSet() {
+			return times > 0;
+		}
+	}
+
+	
+	/**A shared object since flags are pretty reusable.*/
+	protected final Flag optFlag = new Flag();
+	public int optFlagN(char Short, String Long, String description) {
+		optFlag.times = 0;
+		return option(Short, Long, description, optFlag).times;
+	}
+
+	public boolean optFlag(char Short, String Long, String description) {
+		optFlag.times = 0;
+		return option(Short, Long, description, optFlag).isSet();
 	}
 
 
 
 
 
+  ///////////////////////////////////////
+ //ArgType implementations and methods//
+///////////////////////////////////////
+	//not static to not stay in memory permanently
+	//don't require java 8
+	/**An ArgType that passes the argument through.*/
+	public final ArgType<String> any = new ArgType<String>() {
+		/**@return argument as-is.*/
+		public String parse(String arg) {return arg;}
+	};
+
+	/**@return null if not set.*/
+	public String optStr(char Short, String Long, String description) {
+		return optArg(Short, Long, description, null, any);
+	}
 
 
-
-
-
-
-
-
-/************************************************
- * implementations that should cover most cases *
- ************************************************/
-	//https://weblogs.java.net/blog/emcmanus/archive/2010/10/25/using-builder-pattern-subclasses
+	/**argument must match a regex.*/
 	public static class Regex implements ArgType<String> {
 		public final Pattern regex;
+		public Regex(Pattern regex) {
+			this.regex = Objects.requireNonNull(regex);
+		}
 		public Regex(String regex) {
 			this.regex = Pattern.compile(regex);
 		}
 		public Regex(String regex, int flags) {
 			this.regex = Pattern.compile(regex, flags);
 		}
-		public String parse(String argument) throws ArgException {
-			 if (! regex.matcher(argument).matches())
-				 throw new ArgException("");
-			 return argument;
-		}
-		public String type_help() {
-			return "must match the regular expression " + regex.toString();
+		public String parse(String string) throws ArgException {
+			 if (! regex.matcher(string).matches())
+				 throw new ArgException("doesn't match the regular expression "+regex);
+			 return string;
 		}
 	}
 
-	public static class Set implements ArgType<String> {
-		public final String[] values;
-		public boolean ignoreCase = false; 
-		public Set(String... values) {
-			this.values = Objects.requireNonNull(values);
-		}
-		public Set ignoreCase() {
-			ignoreCase = true;
-			return this;
-		}
-		public String type_help() {
-			return "";
-		}
-		public String parse(String argument) throws ArgException {
-			argument = argument.trim();
-			//if b==1 and 
-			for (String v : values)
-				if ((ignoreCase && argument.equalsIgnoreCase(v))
-				|| (!ignoreCase && argument.equals(v)))
-					return v;
-			throw new ArgException("valid values are: " + Arrays.toString(values));
-		}
-	}
 
-	//not static to not stay in memory permanently
-	public final ArgType<String> any = new ArgType<String>() {
-		public String parse(String arg) {return arg;}
-		public String type_help() {return "";}
-	};
-
+	/**For arguments that must be an integer*/
 	public static class IntRange implements ArgType<Long> {
 		public final long min, max;
-		public IntRange(long min, long max) {
+		/**@throws IllegalArgumentException if min >= max*/
+		public IntRange(long min, long max) throws IllegalArgumentException {
 			if (min >= max)
 				throw new IllegalArgumentException("min >= max");
 			this.min = min;
 			this.max = max;
 		}
-		public Long parse(String argument) throws ArgException {
-			long num = Long.parseLong(argument.replace(" ", "").replace("_", ""));
-			if (num >= min  &&  num <= max)
-				return num;
-			if (num < 0  &&  min >= 0)
-				throw new ArgException("cannot be negative");
-			throw new ArgException("%s is too %s: must be %s",
-                    argument,  num>max ? "big" : "small",  type_help());
-			//throw new ArgException(argument + " is too " + (num>max?"big":"small") + ": must be " + type_help());
+		public Long parse(String number) throws ArgException {
+			try {
+				long num = Long.parseLong(number.replace(" ", "").replace("_", ""));
+				if (num >= min  &&  num <= max)
+					return num;
+				if (num < 0  &&  min >= 0)
+					throw new ArgException("must be positive");
+			} catch (NumberFormatException nfe)
+				{}//continue from here
+			StringBuilder sb = new StringBuilder("must be an integer");
+			if (min != Long.MIN_VALUE)
+				sb.append(" bigger than ").append(min-1);
+			if (max != Long.MAX_VALUE) {
+				if (min != Long.MIN_VALUE)
+					sb.append(" and");
+				sb.append(" smaller than ").append(max+1);
+			}
+			throw new ArgException(sb.toString());
 		}
-		public String type_help() {
-			return String.format("an integer bigger than %i and smaller than %i", min-1, max+1);
-		}
-	}
-
-
-/*********************
- * shorthand methods *
- *********************/
-	public String optStr(char Short, String Long, String description) {
-		return optArg(Short, Long, description, null, any);
 	}
 
 	public int optInt(char shortOpt, String longOpt, String description, int notSet, int min, int max) {
@@ -548,49 +713,112 @@ public class ArgsParser {
 	}
 
 
-	/**Adds the normal help options, if set, prints help+parameter help and call System.exit(0).
-	 *@param help the text to be displaayed before option help.*/
-	public void handle_help(String help) {
-		String helpStr = help();
-		if (helpStr == null)
-			return;
-		if (help == null)
-			help = "";
-		System.out.print(help);
-		if (!help.isEmpty() && help.charAt(help.length()-1) != '\n')
-			System.out.println();
-		System.out.print(helpStr);
-		System.exit(0);
-	}
+	/**argument must be one of the given values.*/
+	public static class Set<T> implements ArgType<T> {
+		/**Converts arguments to the desired type.*/
+		public final ArgType<T> converter; 
+		/**An argument must be equal to one of theese.*/
+		protected final Object[] values;
 
-	/**@return option help if an help option was set. returns null otherwise.*/
-	public String help() {
-		if (optFlag('h', "help", "Print this help.")
-		 || optFlag('?', null, null))
-			return getHelp();
-		return null;
-	}
+		/**@param converter Converts arguments to the desired type.
+		  *@param values if it's not in this list it's an invalid argument.
+		  *@throws IllegalArgumentException if values.length < 2
+		  */@SafeVarargs
+		public Set(ArgType<T> converter, T... values) throws IllegalArgumentException {
+			this.converter = Objects.requireNonNull(converter);
+			this.values = Objects.requireNonNull(values);
+			if (values.length < 2)
+				throw new IllegalArgumentException("A set with less than two values doesn't make sense.");
+		}
 
-	/**If -v or --version is set, print version info and exit(0).*/
-	public void handle_version(String version_info) {
-		if (version()) {
-			System.out.println(version_info);
-			System.exit(0);
+		@SuppressWarnings("unchecked")//completely safe
+		public T parse(String option) throws ArgException {
+			T converted = converter.parse(option);
+			for (Object v : values)
+				if (converted.equals(v))
+					return (T)v;
+			throw new ArgException("must be one of: "+values("or"));
+		}
+
+		/**Build a String with all the vallid values separated by ", ", except the last one which is separated by "$lastGlue ".
+		 * Similar to Arrays.toString(array) but without the [ and ].
+		 *@param lastGlue used to separate the next last element from the last one, words should start with a space but not end with one.
+		 *@return "a, b, c$lastGlue d"*/
+		public String values(String lastGlue) {
+			StringBuilder list = new StringBuilder();
+			list.append(values[0]);
+			for (int i=1; i<values.length-1; i++)
+				list.append(',').append(' ').append(values[i]);
+			list.append(lastGlue).append(' ').append(values[values.length-1]);
+			return list.toString();
+		}
+
+		public String toString() {
+			return values(" and");
 		}
 	}
-	/**@return true if -v or --version was set.*/
-	public boolean version() {
-		return optFlag('v', "version", "Display version information.");
+
+	/**Create a set where all values and arguments are trimmed and converted to lowercase before being compared*/
+	public static Set<String> StringSetIgnoreCase(String... values) {
+		for (int i=0; i<values.length; i++)
+			values[i] = values[i].toLowerCase();
+		return new Set<String>(new ArgType<String>(){public String parse(String arg) {
+			return arg.trim().toLowerCase();
+		}}, values);
 	}
 
 
-	/**If there are any errors, print them and exit.
-	 * @param errorCode is passed to System.exit()*/
-	public void handle_errors(int errorCode) {
-		String errors = getErrors();
-		if (errors.isEmpty())
-			return;
-		System.err.println(errors);
-		System.exit(errorCode);
+
+	public final ArgType<InputStream> inputFile  = new ArgType<InputStream>() {public InputStream parse(String path) throws ArgException {
+		if (path.equals("-"))
+			return System.in;
+		try {
+			return new FileInputStream(path);
+		} catch (IOException ioe) {
+			File file = new File(path);
+			if ( !file.exists())
+				throw new ArgException("doesn't exist");
+			if ( !file.isFile())
+				throw new ArgException("is not a file");
+			if ( !file.canRead())
+				throw new ArgException("is unreadable");
+			throw new ArgException(ioe.getMessage());
+		}
+	}};
+	
+
+
+	public static class OutputFile implements ArgType<OutputStream> {
+		protected boolean append = false;
+		public OutputFile append() {
+			return append(true);
+		}
+		public OutputFile append(boolean append) {
+			this.append = append;
+			return this;
+		}
+		public OutputStream parse(String path) throws ArgException {
+			if (path.equals("-"))
+				return System.out;
+			try {
+				return new FileOutputStream(path, append);
+			} catch (FileNotFoundException fnfe) {
+				String error = fnfe.getMessage();
+				File file = new File(path);
+				if ( !file.exists())
+					error = "cannot create file";
+				else if ( !file.isFile())
+					error = "not a file";
+				else if ( !file.canWrite())
+					error = "cannot write to file";
+				throw new ArgException(error);
+			}
+		}
+	}
+	/**Add an option that require a path argument and open it for writing.
+	 *@return null if not set or System.out if "-".
+	 *@param append append to file instead of overwriting.*/
+	public OutputStream optOutputFile(char shortOpt, String longOpt, String description, boolean append) {
+		return optArg(shortOpt, longOpt, description, null, new OutputFile().append(append));
 	}
 }

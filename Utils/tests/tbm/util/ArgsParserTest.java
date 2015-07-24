@@ -127,10 +127,6 @@ public class ArgsParserTest {
 	@Test
 	public void doubleDashStopsOptParsing() {
 		assert(parse("").optFlagN('f', null, null) == 1);
-	}
-
-	@Test
-	public void doubleDashStopsOptParsing() {
 		assertTrue(parse("-f -- -f").optFlagN('f', null, null) == 1);
 	}
 
@@ -156,6 +152,6 @@ public class ArgsParserTest {
 	@Test
 	public void onlyFirstDoubleDashShouldBeHandled() {
 		ArgsParser ap = parse("-- --");
-		assertArrayEquals(new String[]{"--"}, ap.getArgs());
+		assertArrayEquals(new String[]{"--"}, ap.allArguments("", false));
 	}
 }
