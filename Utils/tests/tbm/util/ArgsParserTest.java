@@ -145,7 +145,7 @@ public class ArgsParserTest {
 	public void negativeNumbersAreNotOptions() {
 		Builder b = new Builder();
 		assertFalse(parse("-6", b).optFlag('6', "ipv6", null));
-		b.integer_shortopts();
+		b.integer_shortOpts();
 		assertTrue (parse("-6", b).optFlag('6', "ipv6", null));
 	}
 	

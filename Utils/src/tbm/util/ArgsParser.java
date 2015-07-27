@@ -68,9 +68,9 @@ public class ArgsParser {
 	/**Represents an args option that have not been matched yet.*/
 	public class FoundOpt {
 		/**A multi-character option; --option*/
-		protected String Long = null;
+		protected String longOpt = null;
 		/**A single-character option; -o*/
-		protected char Short = '\0';
+		protected char shortOpt = '\0';
 		/**The options index in args[]*/
 		protected final int index;
 		/**The arguments index in args[]. possible values are -1, index and index+1.*/
@@ -84,19 +84,19 @@ public class ArgsParser {
 
 		/**Get the string that set this option.*/
 		public String setBy() {
-			if (! Long.isEmpty())
-				return "--" + Long;
-			else if (Short != '\0')
-				return "-" + String.valueOf(Short);
+			if (! longOpt.isEmpty())
+				return "--" + longOpt;
+			else if (shortOpt != '\0')
+				return "-" + String.valueOf(shortOpt);
 			else
 				return "";
 		}
 		/**@return this is a single-character option; -o
 		 *Returns <tt>'\0'</tt> if this is a long/multi-character option*/
-		public char getShort() {return Short;}
+		public char getShortOpt() {return shortOpt;}
 		/**@return this is a multi-character option; --option
 		 *Returns null if this is a short/single-character option*/
-		public String getLong() {return Long;}
+		public String getLongOpt() {return longOpt;}
 		public int getIndex() {return index;}
 		public String getArgument() {return argument;}
 		/**Returns true if this option has an argument.*/
@@ -139,12 +139,12 @@ public class ArgsParser {
 
 	/**for aligning descriptions in generate_help() */
 	protected static class ValidOption {
-		public final char Short;
-		public final String Long;
+		public final char shortOpt;
+		public final String longOpt;
 		public final String description;
-		protected ValidOption(char Short, String Long, String description) {
-			this.Short = Short;
-			this.Long = Long;
+		protected ValidOption(char shortOpt, String longOpt, String description) {
+			this.shortOpt = shortOpt;
+			this.longOpt = longOpt;
 			this.description = description;
 		}
 	}
@@ -159,23 +159,21 @@ public class ArgsParser {
 			return new ArgsParser(this,  args);
 		}
 
-		protected String shortopt_regex = "[A-Za-z].*";
-		/**Which characters can be a short option?
-		 *@param regexClass is put inside a regex class ([]) so "^a-z" means everything except lowercase letters.*/
-		public Builder valid_shortopts(String regexClass) {
-			shortopt_regex = '['+regexClass+"].*";
+		protected String shortOpt_regex = "[A-Za-z]";
+		/**Only characters that match regex can be short options.*/
+		public Builder is_shortOpt(String shortOpt_regex) {
+			this.shortOpt_regex = shortOpt_regex;
 			return this;
 		}
-		/**digits can be options, this makes it impossible to enter negative numbers.*/
-		public Builder integer_shortopts() {
-			shortopt_regex = "[A-Za-Z0-9].*";
-			return this;
+		/**Digits can be options, this makes it impossible to enter negative numbers as positional arguments.*/
+		public Builder integer_shortOpts() {
+			return is_shortOpt("[A-Za-Z0-9]");
 		}
 
 		protected boolean nonopt_stops_opts = false;
 		/**Turns the --option in "-q command --option" into an argument.
 		 * Note that you now must enter options requiring an argument as --file=path;
-		 * ArgsParses doesnt know -q is a flag untill it's added, and then optFlag("option") would already have returned true.*/
+		 * ArgsParser doesn't know -q is a flag until it's added, and then optFlag("option") would already have returned true.*/
 		public Builder stop_at_first_nonOpt() {
 			nonopt_stops_opts = true;
 			return this;
@@ -246,20 +244,20 @@ public class ArgsParser {
 				int t = args[i].indexOf("=");
 				FoundOpt p = new FoundOpt(i);
 				if (t==-1)
-					p.Long = args[i].substring(2);
+					p.longOpt = args[i].substring(2);
 				else {
-					p.Long = args[i].substring(2, t);
+					p.longOpt = args[i].substring(2, t);
 					p.argument = args[i].substring(t+1);
 					p.argument_index = i;
 				}
 				options.add(p);
 			}
-			else if ((args[i].startsWith("-")  ||  (windows && args[i].startsWith("/")))   &&   args[i].substring(1).matches(b.shortopt_regex) ) {
+			else if ((args[i].startsWith("-")  ||  (windows && args[i].startsWith("/")))   &&   args[i].substring(1, 2).matches(b.shortOpt_regex) ) {
 				FoundOpt o = null;
 				for (int ii=1; ii<args[i].length(); ii++)
-					if (args[i].substring(ii).matches(b.shortopt_regex)) {
+					if (args[i].substring(ii, ii+1).matches(b.shortOpt_regex)) {
 						o = new FoundOpt(i);
-						o.Short = args[i].charAt(ii);
+						o.shortOpt = args[i].charAt(ii);
 						options.add(o);
 					}
 					else {
@@ -286,18 +284,18 @@ public class ArgsParser {
 
 
 	/**Check for an option and store it for help messages.
-	 *@param Short single-character version, -o
-	 *@param Long multi-character version, --option
+	 *@param shortOpt single-character version, -o
+	 *@param longOpt multi-character version, --option
 	 *@param desc if not null option is stored and will be printed as a part of --help output
 	 *@param handler converts string to wanted type.
 	 *@return {@code handler}*/
-	public <OT extends OptType> OT option(char Short, String Long, String desc, OT handler) {
+	public <OT extends OptType> OT option(char shortOpt, String longOpt, String desc, OT handler) {
 		//cannot remove in a foreach
 		Iterator<FoundOpt> itr = options.iterator();
 		while (itr.hasNext()) {
 			FoundOpt opt = itr.next();
-			if (Long != null  &&  Long.equals(opt.Long)
-			 || Short !='\0'  &&  Short == opt.Short)
+			if (longOpt != null  &&  longOpt.equals(opt.longOpt)
+			 || shortOpt !='\0'  &&  shortOpt == opt.shortOpt)
 				try {
 					itr.remove();
 					handler.accept(opt);
@@ -306,7 +304,7 @@ public class ArgsParser {
 				}
 		}
 		if (desc != null)
-			validOptions.add(new ValidOption(Short, Long, desc));
+			validOptions.add(new ValidOption(shortOpt, longOpt, desc));
 		return handler;
 	}
 
@@ -363,25 +361,25 @@ public class ArgsParser {
 	public String getOptionHelp() {
 		int longest_longOpt = 0;
 		for (ValidOption o : validOptions)
-			if (o.description != null  &&  o.Long != null  &&  o.Long.length() > longest_longOpt)
-				longest_longOpt = o.Long.length();
+			if (o.description != null  &&  o.longOpt != null  &&  o.longOpt.length() > longest_longOpt)
+				longest_longOpt = o.longOpt.length();
 
 		StringBuilder help = new StringBuilder();
 		for (ValidOption o : validOptions)
 			if (o.description != null) {
 				//short
 				help.append('\t');
-				if (o.Short != '\0')
-					help.append('-').append(o.Short);
+				if (o.shortOpt != '\0')
+					help.append('-').append(o.shortOpt);
 				else
 					help.append(' ').append(' ');
 
 				//long
 				int spaces_after = longest_longOpt;
 				help.append('\t');
-				if (o.Long != null) {
-					help.append("--").append(o.Long);
-					spaces_after -= o.Long.length();
+				if (o.longOpt != null) {
+					help.append("--").append(o.longOpt);
+					spaces_after -= o.longOpt.length();
 				} else
 					spaces_after += 2;
 				while (spaces_after-- > 0)
@@ -418,7 +416,7 @@ public class ArgsParser {
 
 
 	/**If --version is set, print version_info and exit(0).
-	 *@param v_version use -v shortopt
+	 *@param shortOpt should probably be 'v' or '\0'
 	 *If there is a -q--quiet flag, you should only show the version number if it was set.*/
 	public void handle_version(char shortOpt, String version_info) {
 		if (optFlag(shortOpt, "version", "Display version information and quit.")) {
@@ -569,12 +567,12 @@ public class ArgsParser {
 		}
 	}
 
-	public <T> T optArg(char Short, String Long, String description, T notSet, ArgType<T> type) {
-		return option(Short, Long, description, new Single<T>(notSet, type)).value;
+	public <T> T optArg(char shortOpt, String longOpt, String description, T notSet, ArgType<T> type) {
+		return option(shortOpt, longOpt, description, new Single<T>(notSet, type)).value;
 	}
 
-	public <T> T optArg(char Short, String Long, String description, T notSet, T noArg, ArgType<T> type) {
-		return option(Short, Long, description, new Single<T>(notSet, noArg, type)).value;
+	public <T> T optArg(char shortOpt, String longOpt, String description, T notSet, T noArg, ArgType<T> type) {
+		return option(shortOpt, longOpt, description, new Single<T>(notSet, noArg, type)).value;
 	}
 
 
@@ -597,8 +595,8 @@ public class ArgsParser {
 		}
 	}
 
-	public <T> List<T> optMultiArg(char Short, String Long, String description, ArgType<T> type) {
-		return option(Short, Long, description, new MultiArg<T>(type)).values;
+	public <T> List<T> optMultiArg(char shortOpt, String longOpt, String description, ArgType<T> type) {
+		return option(shortOpt, longOpt, description, new MultiArg<T>(type)).values;
 	}
 
 
@@ -626,14 +624,14 @@ public class ArgsParser {
 	
 	/**A shared object since flags are pretty reusable.*/
 	protected final Flag optFlag = new Flag();
-	public int optFlagN(char Short, String Long, String description) {
+	public int optFlagN(char shortOpt, String longOpt, String description) {
 		optFlag.times = 0;
-		return option(Short, Long, description, optFlag).times;
+		return option(shortOpt, longOpt, description, optFlag).times;
 	}
 
-	public boolean optFlag(char Short, String Long, String description) {
+	public boolean optFlag(char shortOpt, String longOpt, String description) {
 		optFlag.times = 0;
-		return option(Short, Long, description, optFlag).isSet();
+		return option(shortOpt, longOpt, description, optFlag).isSet();
 	}
 
 
@@ -652,8 +650,8 @@ public class ArgsParser {
 	};
 
 	/**@return null if not set.*/
-	public String optStr(char Short, String Long, String description) {
-		return optArg(Short, Long, description, null, any);
+	public String optStr(char shortOpt, String longOpt, String description) {
+		return optArg(shortOpt, longOpt, description, null, any);
 	}
 
 
