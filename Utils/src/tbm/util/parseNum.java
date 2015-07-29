@@ -1,8 +1,10 @@
 package tbm.util;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.Objects;
 
 /**Parsing numbers from a stream, with the option of accepting other number systems, or ignoring spaces, tabs or any characters you want.*/
-public class parseNum<EX extends Throwable> {
+public class parseNum {
   //*******//
  // flags //
 //*******//
@@ -100,15 +102,15 @@ public class parseNum<EX extends Throwable> {
 //constructors
 
 	/**If you are only using the object once, this is shorter than new NumParser<SomeException>(flags, cs)
-	 *@return {@code new NumParser<EX>(flags, cs);}
-	 *@param cs cannot be null.*/
-	public static <EX extends Throwable> parseNum<EX> with(int flags, CharSupplier<EX> cs) {
-		return new parseNum<EX>(flags, cs);
+	 *@return {@code new NumParser(flags, cs);}
+	 *@param reader cannot be null.*/
+	public static parseNum with(int flags, Reader reader) {
+		return new parseNum(flags, reader);
 	}
 
 	/**@throws IllegalArgumentException if start radix is 16 and OPT_BIN or OPT_DEC is set*/
-	public parseNum(int flags, CharSupplier<EX> cs) throws IllegalArgumentException {
-		this.cs = Objects.requireNonNull(cs);
+	public parseNum(int flags, Reader reader) throws IllegalArgumentException {
+		this.reader = Objects.requireNonNull(reader);
 		this.c = NO_CHAR;
 		newFlags(flags);
 	}
@@ -123,7 +125,7 @@ public class parseNum<EX extends Throwable> {
 	/**a one-element pushback buffer, use next()*/
 	protected int c;
 	/**digit supplier*/
-	private CharSupplier<EX> cs;
+	private Reader reader;
 
 	//those fields must be initialized before parse() is called
 	/**radix of the last parsed number.*/
@@ -140,7 +142,7 @@ public class parseNum<EX extends Throwable> {
 
 	/**Set the first char
 	 *@return {@code this}*/
-	public parseNum<EX> first_char(char first) {
+	public parseNum first_char(char first) {
 		c = first;
 		return this;
 	}
@@ -148,7 +150,7 @@ public class parseNum<EX extends Throwable> {
 	/**update {@code this.flags} and validate the combinations.
 	 * (field is updated even if there is errors).
 	 *@return {@code this}*///avoiding "set" as that is also the opposite of clear
-	public parseNum<EX> newFlags(int flags) throws IllegalArgumentException {
+	public parseNum newFlags(int flags) throws IllegalArgumentException {
 		this.flags = flags;
 		int radix = start_radix();
 		if (radix == 16  &&  isset(OPT_BIN | OPT_DEC))
@@ -169,7 +171,7 @@ public class parseNum<EX extends Throwable> {
 	}
 
 	/**parse a number with the given number of bits*/
-	public long bits(int bits) throws EX, NumberFormatException, IllegalArgumentException {
+	public long bits(int bits) throws IOException, NumberFormatException, IllegalArgumentException {
 		radix = start_radix();
 		negative = false;
 		digits = 0;
@@ -209,10 +211,10 @@ public class parseNum<EX extends Throwable> {
 	}
 
 
-	public final int range(int min, int max) throws EX, NumberFormatException, IllegalArgumentException {
+	public final int range(int min, int max) throws IOException, NumberFormatException, IllegalArgumentException {
 		return (int)range((long)min, (long)max);
 	}
-	public long range(long min, long max) throws EX, NumberFormatException, IllegalArgumentException {
+	public long range(long min, long max) throws IOException, NumberFormatException, IllegalArgumentException {
 		radix = start_radix();
 		negative = false;
 		int c = next();
@@ -239,7 +241,7 @@ public class parseNum<EX extends Throwable> {
 //**************************//
 
 	/**Get next non-whitespace character and set this.c to NO_CHAR.*/
-	protected int next() throws EX {
+	protected int next() throws IOException {
 		int c = this.c;
 		while ( c==NO_CHAR
 		    || (c==' ' && isset(SKIP_SPACE))
@@ -247,7 +249,7 @@ public class parseNum<EX extends Throwable> {
 		    || (c=='-' && isset(SKIP_HYPEN))
 		    || (c==',' && isset(SKIP_COMMA))
 		    || (c=='.' && isset(SKIP_DOT)))
-			c = cs.fetch();
+			c = reader.read();
 		this.c = NO_CHAR;
 		return c;
 	}
@@ -300,13 +302,13 @@ public class parseNum<EX extends Throwable> {
 	 *@param max_value max allowed value, should be negative.
 	 *@throws NumberFormatException NaN/no digits, too big/small/long 
 	 *///too many parameters, but I need them to make good error messages.
-	private long parse(int max_digits, long max_value) throws EX, NumberFormatException {
+	private long parse(int max_digits, long max_value) throws IOException, NumberFormatException {
 		long num=0;
 		int n;
 		while ((n = toNum(next())) != -1) {
 			digits++;
 			long newnum = num*radix + n;//need to check for overflow
-			c = cs.fetch();//always read one past
+			c = reader.read();//always read one past
 			if (digits > max_digits)
 				throw new NumberFormatException("max "+digits+" digits");
 			if (Long.compareUnsigned(num, newnum) > 0)

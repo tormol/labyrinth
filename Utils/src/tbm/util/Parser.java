@@ -1,6 +1,5 @@
 package tbm.util;
 import static tbm.util.statics.*;
-
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -8,6 +7,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,21 +15,20 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
 import tbm.util.statics.InvalidHexException;
 
-public class Parser implements Closeable, AutoCloseable, CharSupplier<IOException>, Cloneable {
-	/**End of file, will always be -1*///because some methods depend on it;
-	public static final int END = -1;
+/**A Scanner that is'nt based on tokens and is geared towards parsing programming languages.*/
+public class Parser extends Reader implements Closeable, AutoCloseable, Cloneable {
 	public static char checkEnd(int c) throws EOFException {
-		if (c==END)
+		if (c == -1)
 			throw new EOFException(eof);
 		return (char)c;
 	}
-	protected static String eof = "Unexpected end of stream.";
+	protected static final String eof = "Unexpected end of stream.";
 
 	public static abstract class Source implements Closeable {
 		public static final int DEFAULT_EXPECTED_LINES = 10;
+		//More descriptive alternatives to passing true or false.
 		public static final boolean NEWLINE_IS_WHITESPACE = true;
 		public static final boolean NEWLINE_NOT_WHITESPACE = false;
 		public static final boolean HASH_STARTS_COMMENT = true;
@@ -45,19 +44,35 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 			this.newline_whitespace = newline_whitespace;
 			this.hash_comment_line = hash_comment_line;
 		}
-		/**read a line from src*/
+		/**read a line from src
+		 *@return whether more lines were read.*/
 		public boolean read_line() throws IOException {return false;}
+		/**Read everything from the source and close it.*/
+		public void read_all() throws IOException {
+			while (read_line())
+				do_nothing();
+			close();
+		}
+
 		@Override//Closeable
 		public void close() throws IOException {do_nothing();}
 		public String sourceName() {return "";}
-		protected int currentLines() {return lines.size();}
-		public void addLine(String line) {lines.add(line);}
-		protected String get(int lineNr) {
-			if (lineNr < 1)
-				throw new IllegalArgumentException("1 > lineNr=".concat(String.valueOf(lineNr)));
+		/**get the number of lines read so far,*/
+		public int currentLines() {return lines.size();}
+		protected void addLine(String line) {lines.add(line);}
+		/**get a line that has been read.
+		 *@param lineNr is 1-indexed
+		 *@throws IndexOutOfBoundException if lineNr < 0 || lineNr >= currentLines()*/
+		protected String get(int lineNr) throws IndexOutOfBoundsException {
+			if (lineNr == 0)
+				throw new IndexOutOfBoundsException("Parser line numbers start at 1");
 			return lines.get(lineNr);
 		}
-		protected char get(int lineNr, int col) {return get(lineNr).charAt(col-1);}
+		/**get the nth char from a line that has been read.
+		 *@param lineNr is 1-indexed
+		 *@param col is 0-indexed
+		 *@throws IndexOutOfBoundException if lineNr < 0 || lineNr >= currentLines() || col < 0 || col >= line length*/
+		protected char get(int lineNr, int col) throws IndexOutOfBoundsException {return get(lineNr).charAt(col-1);}
 	}
 
 	public static class SourceString extends Source {
@@ -119,12 +134,19 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	}
 
 
-	protected final Source source;
+	/**Is private as it might be removed, use getSource()*/
+	private final Source source;
 	protected int line=1, col=0;
-	/**Should the int parsing methods detect other number systems?*/
 
-	private Parser(Source base) {
-		this.source = Objects.requireNonNull(base);
+
+	public Parser(Source s) {
+		//Considered removing source field and use lock:
+		//+saves memory
+		//-class cast on every access (maybe optimized away by the JVM?)
+		//-mutable (constructor-assigned final fields were added in 1.1, Reader is from 1.0 (en.wikipedia.org/wiki/Final_(Java)#Blank_final))
+		//         If it's possible to modify javadoc of inherited fields, then I don't know how.
+		//-less intuitive
+		this.lock = this.source = Objects.requireNonNull(s);
 	}
 	public Parser(Supplier<String> get, boolean newline_whitespace, boolean hash_comment) {
 		this(new SourceSupplier(get, newline_whitespace, hash_comment));
@@ -137,6 +159,10 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	}
 
 
+	public final Source getSource() {
+		return source;
+	}
+
 	public Parser clone() {
 		try {
 			return (Parser)super.clone();
@@ -146,16 +172,12 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	}
 	
 
-	@Override//Closeable, AutoCloseable
-	/**If this Parser is backed by a file or stream, it is closed, if not nothing happens*/
+	/**If this Parser is backed by a file or stream, it is closed, if not nothing happens.
+	 * You can continue using this parser, but no more lines can be read.
+	 *@Deprecated use {@code getSource().close()} is more correct.
+	 */@Deprecated @Override//Closeable, AutoCloseable
 	public void close() throws IOException {
 		source.close();
-	}
-
-	/**Read everything from the source and close it.*/
-	public void read_all() throws IOException {
-		while (source.read_line())
-			do_nothing();
 	}
 
 	/**@return whether the source is empty*/
@@ -165,7 +187,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		return false;
 	}
 	/**Skip to the next character
-	 *@return this*/
+	 *@return {@code this}*/
 	public Parser skip() throws IOException {
 		if (! isEmpty()) {
 			col++;
@@ -192,7 +214,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	/**Get the char at the current position without incrementing the position. returns -1 if there is nothing to read.*/
 	public int ipeek() throws IOException {
 		if (isEmpty())
-			return END;
+			return -1;
 		if (col == source.get(line).length())
 			return '\n';
 		return source.get(line).charAt(col);
@@ -200,7 +222,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	/**Get the char at the current position without incrementing the position. returns -1 if there is nothing to read.*/
 	public char peek() throws IOException, EOFException {
 		int c = ipeek();
-		if (c == END)
+		if (c == -1)
 			throw new EOFException(eof);
 		return (char)c;
 	}
@@ -211,7 +233,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	}
 	public char next() throws IOException, EOFException {
 		int c = ipeek();
-		if (c == END)
+		if (c == -1)
 			throw new EOFException(eof);
 		skip();
 		return (char)c;
@@ -236,7 +258,7 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 	}
 
 	/**Check that the parameter is valid, and go to the start of the specified line.
-	 *@return this*/
+	 *@return {@code this}*/
 	public Parser setLine(int line) throws IndexOutOfBoundsException {
 		if (line<=0 || line>=source.currentLines())
 			throw new IndexOutOfBoundsException("Line "+line+" is < 1 or > "+source.currentLines());
@@ -245,13 +267,14 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		return this;
 	}
 
-	/**check that the*/
+	/**Move to 
+	 *@return {@code this}*/
 	public Parser setCol(int col) throws IndexOutOfBoundsException {
 		int length = source.get(line).length();
 		if (col < 0)
 			this.col = length - col;
 		else if (col >= length)
-			this.col = length - 1;
+			throw new IndexOutOfBoundsException("col >= getLength(getLine()");
 		else
 			this.col = col;
 		return this;
@@ -261,12 +284,12 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		return setLine(line).setCol(col);
 	}
 
-	/**Set the line and col of to that of p.
-	 **Only works if this and p share the same base;
-	 *@return this*/
-	public Parser setPos(Parser p) throws RuntimeException {
+	/**Set line and col of to that of p.
+	 *@throws IllegalArgumentException if p has a different source.
+	 *@return {@code this}*/
+	public Parser setPos(Parser p) throws IllegalArgumentException {
 		if (p.source != this.source)
-			throw new RuntimeException("The parser belong tho another source.");
+			throw new IllegalArgumentException("The parser belong tho another source.");
 		this.line = p.line;
 		this.col  = p.col;
 		return this;
@@ -498,12 +521,38 @@ public class Parser implements Closeable, AutoCloseable, CharSupplier<IOExceptio
 		return source.sourceName() + " Line: " + line + ", col: " + col;
 	}
 
-	@Deprecated @Override//CharSupplier
-	/**Similar to next(), but EOFExcetion is only thrown after EOF has been returned once.
-	 *@Deprecated For implementing CharSupplier, which is used internally.*/
-	public int fetch() throws EOFException, IOException {
-		if (isEmpty())
-			throw new EOFException(eof);
+	/**{@inheritDoc}
+	 *@Deprecated use {@code inext()} as it's more in line with other methods.
+	 *@return {@code inext()}
+	 */@Deprecated @Override//Reader
+	public int read() throws IOException {
 		return inext();
+	}
+	@Override//Reader
+	public int read(char[] buf, int offset, int length) throws IOException {
+		for (int read = 0;  read < length;  read++) {
+			int c = inext();
+			if (c == -1)
+				return read;
+			buf[offset + read]  = (char)c;
+		}
+		return length;
+	}
+	@Override//Reader
+	public long skip(long n) throws IOException, IllegalArgumentException {
+		if (n < 0)
+			throw new IllegalArgumentException("parameter is negative.");
+		long toSkip = n;
+		try {
+			while (toSkip-- > 0)//slow but short
+				skip();
+		} catch (EOFException ee) {
+			n = n-toSkip-1;
+		}
+		return n;
+	}
+	@Override//Reader
+	public boolean ready() {
+		return col != 0  ||  line < source.currentLines();
 	}
 }

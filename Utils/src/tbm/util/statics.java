@@ -1,5 +1,7 @@
 package tbm.util;
 import java.awt.event.KeyEvent;//char_printable
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;//convert
 import java.util.Arrays;//String_nchars
 import java.util.Collection;//convert
@@ -89,13 +91,14 @@ public class statics {
 	  *@param cs gives the two hexadecimal characters if first is 'x', not u
 	  *@throws InvalidHexException if {@code first=='x'} and one of the two characters given by {@code cs} are not \[1-9a-fA-F]/
 	  *@return {@code first} if it's not recognized.*///FIXME: wrong name: escape seqence is probably \e[something
-	public static <EX extends Throwable> char char_escape(char first, CharSupplier<EX> cs) throws EX, InvalidHexException {switch (first) {
+	public static char char_escape(char first, Reader r) throws IOException, InvalidHexException {switch (first) {
 		case'n':return'\n';
 		case't':return'\t';
 		case's':return ' ';
 		case'0':return'\0';
-		case'x':return char_fromHex((char)cs.fetch(), (char)cs.fetch());
-		case'u':return char_fromHex((char)cs.fetch(), (char)cs.fetch(), (char)cs.fetch(), (char)cs.fetch());
+		//TODO use a read buffer?
+		case'x':return char_fromHex((char)r.read(), (char)r.read());
+		case'u':return char_fromHex((char)r.read(), (char)r.read(), (char)r.read(), (char)r.read());
 		case'e':return 0x1b;//escape
 		case'r':return'\r';
 		case'b':return'\b';
