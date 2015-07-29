@@ -5,13 +5,13 @@ import java.util.Iterator;
 
 /**Looks like a bunch of functions for working with raw InputStreams*/
 public class InStream {
-	public static int read(InputStream is) throws IOException {
+	public static int skip_cr(InputStream is) throws IOException {
 		int c = is.read();
 		return c=='\r' ? is.read() : c;
 	}
 
 	public static String line(InputStream is) throws IOException {
-		int c = read(is);
+		int c = skip_cr(is);
 		if (c==-1)
 			return null;
 		if (c=='\n')
@@ -19,7 +19,7 @@ public class InStream {
 		StringBuilder str = new StringBuilder();
 		do {
 			str.append(c);
-			c = read(is);
+			c = skip_cr(is);
 		} while (c != -1 &&  c != '\n');
 		return str.toString();
 	}
