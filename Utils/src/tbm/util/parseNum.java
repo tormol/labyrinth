@@ -181,14 +181,15 @@ public class parseNum {
 		if (bits > Long.SIZE)
 			throw new IllegalArgumentException("Cannot store more than "+Long.SIZE+" bits.");
 
-		if ((c = next())  ==  '-') {
+		int c_copy;
+		if ((c_copy = next())  ==  '-')
 			negative = true;
-			c = NO_CHAR;
-		}
-		if ((c = next())  ==  '0') {
-			radix = zero_first(radix, c);
-			c = NO_CHAR;
-		}
+		else
+			c = c_copy;
+		if ((c_copy = next())  ==  '0')
+			radix = zero_first(next());
+		else
+			c = c_copy;
 
 		byte bits_per_digit = bits_per_digit();
 		byte max_digits = (byte)(bits/bits_per_digit + bits%bits_per_digit);
@@ -276,13 +277,15 @@ public class parseNum {
 	}
 
 	/**get the radix associated with the next char, else return default_radix.*/
-	protected byte zero_first(byte default_radix, int next) {
+	protected byte zero_first(int next) {
 		if (isset( OPT_BIN) && next=='b')	return  2;
 		if (isset( OPT_HEX) && next=='x')	return 16;
 		if (isset( OPT_DEC) && next=='d')	return 10;
 		if (isset( OPT_OCT) && next=='o')	return  8;
 		if (isset(ZERO_OCT))             	return  8;
-		digits++;                        	return default_radix;
+		digits++;
+		c = next;
+		return radix;
 	}
 
 	/**16->4 10->3 8->3 2->1*/

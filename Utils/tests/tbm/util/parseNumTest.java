@@ -40,7 +40,7 @@ public class parseNumTest {
 				-1,
 				with(RADIX(2)|OVERFLOW_OTHER, new StringReader("11")).bits(2) );
 		thrown.expect(NumberFormatException.class);//no digits
-		with(OPT_HEX, new StringReader("0x")).bits(2);
+		with(OPT_HEX|OVERFLOW, new StringReader("0x")).bits(2);
 	}
 
 	@Test
