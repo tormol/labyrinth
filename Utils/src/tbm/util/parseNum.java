@@ -12,59 +12,62 @@ public class parseNum {
 
 	//number systems
 	/**numbers that start with a zero are octal, use with caution as it's annoying and unexpected.*/
-	public static final int ZERO_OCT        = 0b0000_0000_0000_0001;
+	public static final int ZERO_OCT         = 0b0000__0000_0000_0000_0001;
 	/**if the number starts with 0b it's binary.*/
-	public static final int  OPT_BIN        = 0b0000_0000_0000_0010;
+	public static final int  OPT_BIN         = 0b0000__0000_0000_0000_0010;
 	/**if the number starts with 0d it's decimal.*/
-	public static final int  OPT_DEC        = 0b0000_0000_0000_0100;
+	public static final int  OPT_DEC         = 0b0000__0000_0000_0000_0100;
 	/**if the number starts with 0o it's octal.*/
-	public static final int  OPT_OCT        = 0b0000_0000_0000_1000;
+	public static final int  OPT_OCT         = 0b0000__0000_0000_0000_1000;
 	/**if the number starts with 0b it's hexadecimal.*/
-	public static final int  OPT_HEX        = 0b0000_0000_0001_0000;
+	public static final int  OPT_HEX         = 0b0000__0000_0000_0001_0000;
 	/**set the default radix, must be 2, 8, 10 or 16.*/
 	public static final int RADIX(int radix) throws IllegalArgumentException {switch (radix) {
-		case  2: return                       0b0000_0000_0010_0000;
-		case  8: return                       0b0000_0000_0100_0000;
-		case 10: return                       0b0000_0000_0000_0000;
-		case 16: return                       0b0000_0000_0110_0000;
+		case  2: return                        0b0000__0000_0000_0010_0000;
+		case  8: return                        0b0000__0000_0000_0100_0000;
+		case 10: return                        0b0000__0000_0000_0000_0000;
+		case 16: return                        0b0000__0000_0000_0110_0000;
 		default: throw new IllegalArgumentException(String.valueOf(radix).concat(" is not a supported radix, must be 2, 8, 10 or 16."));
 	}}
 
 	//grouping characters
 	/**Spaces can be used to divide digits into groups.*/
-	public static final int SKIP_SPACE      = 0b0000_0000_1000_0000;
+	public static final int SKIP_SPACE       = 0b0000__0000_0000_1000_0000;
 	/**_ can be used to divide digits into groups.*/
-	public static final int SKIP_UNDERSCORE = 0b0000_0001_0000_0000;
+	public static final int SKIP_UNDERSCORE  = 0b0000__0000_0001_0000_0000;
 	/**- can be used to divide digits into groups.*/
-	public static final int SKIP_HYPEN      = 0b0000_0010_0000_0000;
+	public static final int SKIP_HYPEN       = 0b0000__0000_0010_0000_0000;
 	/**. can be used to divide digits into groups.*/
-	public static final int SKIP_DOT        = 0b0000_0100_0000_0000;
+	public static final int SKIP_DOT         = 0b0000__0000_0100_0000_0000;
 	/**, can be used to divide digits into groups.*/
-	public static final int SKIP_COMMA      = 0b0000_1000_0000_0000;
+	public static final int SKIP_COMMA       = 0b0000__0000_1000_0000_0000;
 	//cannot force a skip interval as those are counted from the end.
 
 
 	//ways to enter negative numbers
 	/**use a minus sign to identify negative numbers*/
-	public static final int MINUS          = 0b1100_0000_0000_0000;
+	public static final int MINUS            = 0b0000__1100_0000_0000_0000;
 	/**use a minus sign to identify negative decimal numbers*/
-	public static final int MINUS_DEC      = 0b1000_0000_0000_0000;
+	public static final int MINUS_DEC        = 0b0000__1000_0000_0000_0000;
 	/**use a minus sign to identify negative non-decimal numbers*/
-	public static final int MINUS_OTHER    = 0b0100_0000_0000_0000;
+	public static final int MINUS_OTHER      = 0b0000__0100_0000_0000_0000;
 	/**Allow numbers to overflow into negative numbers.*/
-	public static final int OVERFLOW       = 0b0011_0000_0000_0000;
+	public static final int OVERFLOW         = 0b0000__0011_0000_0000_0000;
 	/**Allow decimal numbers to overflow into negative numbers.*/
-	public static final int OVERFLOW_DEC   = 0b0010_0000_0000_0000;
+	public static final int OVERFLOW_DEC     = 0b0000__0010_0000_0000_0000;
 	/**Allow non-decimalnumbers to overflow into negative numbers.*/
-	public static final int OVERFLOW_OTHER = 0b0001_0000_0000_0000;
+	public static final int OVERFLOW_OTHER   = 0b0000__0001_0000_0000_0000;
 
-	////latter cases, hard to implement
+	/**Don't do sign extension when returning numbers that are negative with the given bits.
+	 * Useful when bits is not 8*2^bits ore you are not down-casting*/
+	public static final int DONT_SIGN_EXTEND = 0b0001__0000_00000_00000_00000;
+	////letter cases, hard to implement
 	///**Hexadecimal letters and radix identifier must be uppercase.*/
-	//public static final int  ONLY_UPPERCASE = 0b0001 << 16;
+	//public static final int  ONLY_UPPERCASE = 0b0010__0000_0000_0000_0000;
 	///**Hexadecimal letters and radix identifier must be lowercase.*/
-	//public static final int  ONLY_LOWERCASE = 0b0010 << 16;
+	//public static final int  ONLY_LOWERCASE = 0b0100__0000_0000_0000_0000;
 	///**Hexadecimal letters and radix identifier cannot be bost uppercase and lowercase.*/
-	//public static final int CONSISTENT_CASE = 0b0011 << 16;
+	//public static final int CONSISTENT_CASE = 0b0110__0000_0000_0000_0000;
 
 	//usage defaults
 	/**RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW*/
@@ -99,14 +102,7 @@ public class parseNum {
 
 
 
-//constructors
 
-	/**If you are only using the object once, this is shorter than new NumParser<SomeException>(flags, cs)
-	 *@return {@code new NumParser(flags, cs);}
-	 *@param reader cannot be null.*/
-	public static parseNum with(int flags, Reader reader) {
-		return new parseNum(flags, reader);
-	}
 
 	/**@throws IllegalArgumentException if start radix is 16 and OPT_BIN or OPT_DEC is set*/
 	public parseNum(int flags, Reader reader) throws IllegalArgumentException {
@@ -117,14 +113,13 @@ public class parseNum {
 
 
 
-	//fields are not final to allow reuse
-	/**need to fetch a new one*/
+	//fields are mutable to allow reuse
+	/**need to read a new one*/
 	protected static final int NO_CHAR = -2;
 	protected static final int END_CHAR = -1;
 	protected int flags;
 	/**a one-element pushback buffer, use next()*/
 	protected int c;
-	/**digit supplier*/
 	private Reader reader;
 
 	//those fields must be initialized before parse() is called
@@ -193,7 +188,8 @@ public class parseNum {
 
 		byte bits_per_digit = bits_per_digit();
 		byte max_digits = (byte)(bits/bits_per_digit + bits%bits_per_digit);
-		long max_value = (1L << (bits-1)) -1;
+		final long max_signed = (1L << (bits-1)) -1;
+		long max_value = max_signed;
 		if ((radix != 10  &&  isset(OVERFLOW_OTHER))
 		 || (radix == 10  &&  isset(OVERFLOW_DEC)))
 			max_value = (max_value<<1) | 1;
@@ -208,7 +204,16 @@ public class parseNum {
 			max_value++;
 		}
 
-		return parse(max_digits, max_value);
+		long num = parse(max_digits, max_value);
+		if (num > max_signed  && !isset(DONT_SIGN_EXTEND))
+			num |= -1L << bits;
+				
+		if (negative  &&  num != 0) {
+			num = -num;
+			if (isset(DONT_SIGN_EXTEND))
+				num += 1<<bits;
+		}
+		return num;
 	}
 
 
@@ -232,7 +237,8 @@ public class parseNum {
 		} else if (max < 0)
 			throw new NumberFormatException("Number must start with a minus sign.");
 
-		return parse(Integer.MAX_VALUE, max);//infinite digits
+		long num = parse(Integer.MAX_VALUE, max);//infinite digits
+		return negative ? -num : num;
 	}
 
 
@@ -282,10 +288,9 @@ public class parseNum {
 		if (isset( OPT_HEX) && next=='x')	return 16;
 		if (isset( OPT_DEC) && next=='d')	return 10;
 		if (isset( OPT_OCT) && next=='o')	return  8;
-		if (isset(ZERO_OCT))             	return  8;
-		digits++;
 		c = next;
-		return radix;
+		if (isset(ZERO_OCT))             	return  8;
+		digits++;                        	return radix;
 	}
 
 	/**16->4 10->3 8->3 2->1*/
@@ -300,11 +305,10 @@ public class parseNum {
 
 
 
-	/**Do the actual parsing.
+	/**Do the actual parsing. doesn't handle minus sign nor convert to negative.
 	 *@param max_digits maximum number of digits, including leading zeroes, multiplying a number by more than two and make it hard to detect.
 	 *@param max_value max allowed value, should be negative.
-	 *@throws NumberFormatException NaN/no digits, too big/small/long 
-	 *///too many parameters, but I need them to make good error messages.
+	 *@throws NumberFormatException NaN/no digits, too big/small/long*/
 	private long parse(int max_digits, long max_value) throws IOException, NumberFormatException {
 		long num=0;
 		int n;
@@ -322,8 +326,6 @@ public class parseNum {
 			throw new NumberFormatException(numToString(num) + " is too " + (negative ? "small" : "big"));
 		if (digits == 0)
 			throw new NumberFormatException("No digits");
-		if (negative)
-			num = -num;
 		return num;
 	}
 
