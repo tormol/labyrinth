@@ -66,22 +66,33 @@ public class ArgsParser {
 
 
 	/**Represents an args option that have not been matched yet.*/
-	public class FoundOpt {
+	public class FoundOpt implements Comparable<FoundOpt> {
 		/**A multi-character option; --option*/
 		protected String longOpt = null;
 		/**A single-character option; -o*/
 		protected char shortOpt = '\0';
 		/**The options index in args[]*/
 		protected final int index;
+		/**the number of flags before this shortOpt in the same argument.*/
+		protected final int shortOpt_index;
 		/**The arguments index in args[]. possible values are -1, index and index+1.*/
 		protected int argument_index = -1;
 		/**the argument, null==not set*/
 		protected String argument = null;
 
 		protected FoundOpt(int index) {
-			this.index = index;
+			this(index, -1);
 		}
 
+		protected FoundOpt(int index, int shortOpt_index) {
+			this.index = index;
+			this.shortOpt_index = shortOpt_index;
+		}
+
+		/**Returns {@code '\0'} if this is a long option.*/
+		public char getShortOpt() {return shortOpt;}
+		/**Returns {@code null} if this is a short option.*/
+		public String getLongOpt() {return longOpt;}
 		/**Get the string that set this option.*/
 		public String setBy() {
 			if (! longOpt.isEmpty())
@@ -91,25 +102,32 @@ public class ArgsParser {
 			else
 				return "";
 		}
-		/**@return this is a single-character option; -o
-		 *Returns <tt>'\0'</tt> if this is a long/multi-character option*/
-		public char getShortOpt() {return shortOpt;}
-		/**@return this is a multi-character option; --option
-		 *Returns null if this is a short/single-character option*/
-		public String getLongOpt() {return longOpt;}
+
+		/**get this option's index in {@code args[]}*/
 		public int getIndex() {return index;}
+		/**get the number of shortOpts before this in the same index.*/
+		public int getShortOptIndex() {return shortOpt_index;}
+		/**Compare index and if equal compare shortOpt_index
+		 *@return a negative number if this option came before {@other}
+		 */@Override//Comparable
+		public int compareTo(FoundOpt other) {
+			return index != other.index
+				?  index - other.index
+				:  shortOpt_index - other.shortOpt_index;
+		}
+
+		/**Returns {@code null} if no argument.*/
 		public String getArgument() {return argument;}
-		/**Returns true if this option has an argument.*/
 		public boolean hasArgument() {
 			return argument != null;
 		}
-		/**Returns true if argument was not a part of the option
+		/**Wash this options argument found in args[getIndex()+1]?
 		 * -o3->false, --size 8->true, --help->false*/
 		public boolean canDisownArgument() {
 			return hasArgument() &&  index != argument_index;
 		}
 		/**Remove argument and put it back into args[]
-		 *@throws if there is no argument or it's not removable.*/
+		 *@throws IllegalStateException if there is no argument or it's not removable.*/
 		public void disownArgument() throws IllegalStateException {
 			if (! canDisownArgument())
 				throw new IllegalStateException(toString() + ": Cannot disown argument.");
@@ -159,15 +177,40 @@ public class ArgsParser {
 			return new ArgsParser(this,  args);
 		}
 
-		protected String shortOpt_regex = "[A-Za-z]";
-		/**Only characters that match regex can be short options.*/
+		//unicode classes: regular-expressions.info/unicode.html
+		protected String shortOpt_regex = "\\p{Letter}";
+		/**Only characters that match regex can be short options.
+		 * Default value is "\\p{Letter}"*/
 		public Builder is_shortOpt(String shortOpt_regex) {
-			this.shortOpt_regex = shortOpt_regex;
+			this.shortOpt_regex = Objects.requireNonNull(shortOpt_regex);
 			return this;
 		}
-		/**Digits can be options, this makes it impossible to enter negative numbers as positional arguments.*/
+		/**Digits can be options, this makes it impossible to enter negative numbers as positional arguments.
+		 * is equal to {@code is_shortOpt("[\\d\\p{Letter}]")}
+		 * Default value is "\\p{Letter}"*/
 		public Builder integer_shortOpts() {
-			return is_shortOpt("[A-Za-Z0-9]");
+			return is_shortOpt("[\\d\\p{Letter}]");//don't accept unicode digits until IntRange supports them  
+		}
+
+		protected boolean uppercase_shortOpt_not_flag = false;
+		/**if set, uppercase shortOpts take the rest of the argument as it's argument even if the next char isn't '=' but a valid shortOpt.
+		 * this means -fAfa i a flag f and A has argument fa
+		 * Default value is {@code false}.
+		 * 
+		 * While restrictive, this is predictable to the users.
+		 * Other approaches that wouldn't work:
+		 * * Builder regex of shortOpts that take the rest:
+		 * * * Breaks DRY.
+		 * * Take the rest is default, and OptTypes disown the rest in the same way they disown separete arguents.
+		 * * * (Requires flags be added before optArgs).
+		 * * * a and b are both flags, -ab and -ba is equivalent, but if a is added after b, -ba wouldn't work, and vice versa.
+		 * * Flags is default, and OptTypes can ask for the remaining:
+		 * * * (Requires flags be added after optArgs).
+		 * * * a and b are both optArgs, -ab is supposed to mean a with argument b, but what if b is added before a?
+		 */
+		public Builder uppercase_shortOpt_not_flag(boolean b) {
+			uppercase_shortOpt_not_flag = b;
+			return this;
 		}
 
 		protected boolean nonopt_stops_opts = false;
@@ -235,6 +278,7 @@ public class ArgsParser {
 		this.name = b.name;
 	
 		boolean stopopt = false;
+		FoundOpt opt = null;
 		for (int i=0; i<args.length; i++)
 			if (stopopt)
 				arguments[i] = args[i];
@@ -242,39 +286,39 @@ public class ArgsParser {
 				stopopt = true;
 			else if (args[i].startsWith("--")) {
 				int t = args[i].indexOf("=");
-				FoundOpt p = new FoundOpt(i);
+				opt = new FoundOpt(i);
 				if (t==-1)
-					p.longOpt = args[i].substring(2);
+					opt.longOpt = args[i].substring(2);
 				else {
-					p.longOpt = args[i].substring(2, t);
-					p.argument = args[i].substring(t+1);
-					p.argument_index = i;
+					opt.longOpt = args[i].substring(2, t);
+					opt.argument = args[i].substring(t+1);
+					opt.argument_index = i;
 				}
-				options.add(p);
-			}
-			else if ((args[i].startsWith("-")  ||  (windows && args[i].startsWith("/")))   &&   args[i].substring(1, 2).matches(b.shortOpt_regex) ) {
-				FoundOpt o = null;
+				options.add(opt);
+			}//shortOpt, doesn't support codePoints outside UTF-16 (yet)
+			else if ((args[i].startsWith("-")  ||  (windows && args[i].startsWith("/")))   &&   args[i].substring(1, 2).matches(b.shortOpt_regex) )
 				for (int ii=1; ii<args[i].length(); ii++)
-					if (args[i].substring(ii, ii+1).matches(b.shortOpt_regex)) {
-						o = new FoundOpt(i);
-						o.shortOpt = args[i].charAt(ii);
-						options.add(o);
+					//if not '=' and matches b.shortOpt_regex and (if b.upperrcase_shortOpt_not_flag) previous opt not uppercase
+					if (args[i].charAt(ii) != '='  &&  args[i].substring(ii, ii+1).matches(b.shortOpt_regex)
+					 &&  !(b.uppercase_shortOpt_not_flag  &&  ii > 1  &&  Character.isUpperCase(opt.shortOpt))) {
+						opt = new FoundOpt(i, ii-1);
+						opt.shortOpt = args[i].charAt(ii);
+						options.add(opt);
 					}
-					else {
+					else {//argument
 						if (args[i].charAt(ii) == '=')
 							ii++;
-						o.argument = args[i].substring(ii);
-						o.argument_index = i;
+						opt.argument = args[i].substring(ii);
+						opt.argument_index = i;
 						break;
 					}
-			}
 			//if the last option didn't have an argument, add this.
-			//see Builder.stop_at_first_nonopt() for why nonopt_stops_opts forces option arguments to be 
-			else if (!options.isEmpty()  &&  !options.getLast().hasArgument()  &&  !b.nonopt_stops_opts) {
-				options.getLast().argument = args[i];
-				options.getLast().argument_index = i;
+			//see Builder.stop_at_first_nonopt() for why nonopt_stops_opts prevents -o optarg
+			else if (opt != null  &&  !opt.hasArgument()  &&  !b.nonopt_stops_opts) {
+				opt.argument = args[i];
+				opt.argument_index = i;
 			}
-			else {
+			else {//it's a positional argument
 				arguments[i] = args[i];
 				if (b.nonopt_stops_opts)
 					stopopt = true;
@@ -433,11 +477,10 @@ public class ArgsParser {
 		Flag verbose = option('v', "verbose", verbose_description, new Flag());
 		Flag quiet = option('q', "quiet", quiet_description, new Flag());
 		Flag silent = option('s', "silent", silent_description, new Flag());
-		if (silent.last_index > verbose.last_index
-		&&  silent.last_index > quiet.last_index)
+		if (silent.isAfter(verbose)
+		 && silent.isAfter(quiet))
 			return -2;
-		return verbose.times
-				- (quiet.isSet() || silent.isSet() ? 1 : 0);
+		return verbose.times  - (quiet.isSet() || silent.isSet() ? 1 : 0);
 	}
 
 
@@ -603,10 +646,11 @@ public class ArgsParser {
 
 	/**An option type that takes no arguments and gives an error if it cannot be removed.*/
 	public static class Flag implements OptType {
-		public int times = 0;
-		public int last_index = -1;
+		protected int times = 0;
+		protected FoundOpt last = null;
 		public Flag()
 			{}
+		@Override//OptType
 		public void accept(FoundOpt o) throws ArgException {
 			if (o.hasArgument())
 				if (o.canDisownArgument())
@@ -614,10 +658,18 @@ public class ArgsParser {
 				else
 					throw new ArgException("is a flag and cannot have an argument.");
 			times++;
-			last_index = o.index;
+			last = o;
 		}
-		public boolean isSet() {
-			return times > 0;
+		public boolean isSet() {return last != null;}
+		public int lastIndex() {return isSet() ? last.index : -1;}
+		public int times() {return times;}
+		public FoundOpt lastOpt() {return last;}
+		public boolean isAfter(Flag other) {
+			if (this.lastOpt() == null)
+				return false;
+			if (other.lastOpt() == null)
+				return false;
+			return lastOpt().compareTo(other.lastOpt()) > 0;
 		}
 	}
 
@@ -632,6 +684,37 @@ public class ArgsParser {
 	public boolean optFlag(char shortOpt, String longOpt, String description) {
 		optFlag.times = 0;
 		return option(shortOpt, longOpt, description, optFlag).isSet();
+	}
+
+	/**Find the last of multiple flags. useful when you have several options that negate each other.
+	 *@param none is returned if no flags were set.
+	 *@param opts repeated parameters to optFlag(), eg shortOpt, longOpt, help, shortOpt, longOpt, Help, ...
+	 *3*n+0 must be Character
+	 *3*n+1 must be String or null
+	 *3*n+2 must be String or null.
+	 *@return the longOpt (or shortOpt if longOpt is null) of the last set option, or {@code none} if no flags were set.*/
+	public String optFlagLast(String none, Object... opts) throws IllegalArgumentException {
+		try {
+			String last = none;
+			int last_index = -1;
+			if (opts.length % 3  != 0)
+				throw new IllegalArgumentException("opts must have a multiple of 3 elements");
+			for (int i=0; i<opts.length; i+=3) {
+				optFlag.last = null;
+				int index = option((char)opts[i], (String)opts[i+1], (String)opts[i+2], optFlag).lastIndex();
+				if (index > last_index) {
+					last_index = index;
+					last = (String)opts[i+1];
+					if (last == null)
+						last = ((Character)opts[i]).toString();
+				}
+			}
+			return last;
+		} catch (ClassCastException cce) {
+			throw new IllegalArgumentException(cce.getMessage());
+		} catch (NullPointerException npe) {
+			throw new IllegalArgumentException("shortOpt cannot be null even when it's a Character, use '\0'.");
+		}
 	}
 
 
