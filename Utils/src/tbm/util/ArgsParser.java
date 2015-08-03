@@ -243,8 +243,8 @@ public class ArgsParser {
 	/**While quitting on the first error is simpler, I think collecting them and printing them at the end is more user friendly, altougt some errors might cause other errors*/
 	protected final StringBuilder errors = new StringBuilder();
 
-	/**Name of the program, for the Usage: string*/
-	public final String name;
+	/**Name of the program, for the Usage: string*///is protected to be consistent with no other public fields
+	protected final String name;
 
 	/**@param args the String[] passed to main().
 	 * @param b settings that affects argument parsing. @see Builder
@@ -325,6 +325,12 @@ public class ArgsParser {
 	}
 
 
+	/**get name of the program.
+	 * If Builder.name() was not set, this is the class name of the bottom of the stack.
+	 * if the object was constructed on the main thread, that is the class of main().*/
+	public String getName() {
+		return name;
+	}
 
 	/**Check for an option and store it for help messages.
 	 *@param shortOpt single-character version, -o
