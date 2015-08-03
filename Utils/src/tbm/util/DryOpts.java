@@ -338,7 +338,7 @@ public class DryOpts {
 	 *@param desc if not null option is stored and will be printed as a part of --help output
 	 *@param handler converts string to wanted type.
 	 *@return {@code handler}*/
-	public <OT extends OptType> OT option(char shortOpt, String longOpt, String desc, OT handler) {
+	public <OT extends OptType> OT opt(char shortOpt, String longOpt, String desc, OT handler) {
 		//cannot remove in a foreach
 		Iterator<FoundOpt> itr = options.iterator();
 		while (itr.hasNext()) {
@@ -378,8 +378,8 @@ public class DryOpts {
 		for (FoundOpt o : options)
 			errors.append("Invalid option ").append(o.setBy()).append('.').append('\n');
 		//unused arguments
-		if (argumentsLeft() > 0)
-			errors.append("Unused arguments: " + Arrays.toString(allArguments(null, false)));
+		if (argsLeft() > 0)
+			errors.append("Unused arguments: " + Arrays.toString(allArgs(null, false)));
 		return errors.toString();
 	}
 
@@ -488,9 +488,9 @@ public class DryOpts {
 	 * if silent is last -2 is returned,
 	 * else volume = times verbose - 1 if quiet or silent was set.*/
 	public int volume(String verbose_description, String quiet_description, String silent_description) {
-		Flag verbose = option('v', "verbose", verbose_description, new Flag());
-		Flag quiet = option('q', "quiet", quiet_description, new Flag());
-		Flag silent = option('s', "silent", silent_description, new Flag());
+		Flag verbose = opt('v', "verbose", verbose_description, new Flag());
+		Flag quiet = opt('q', "quiet", quiet_description, new Flag());
+		Flag silent = opt('s', "silent", silent_description, new Flag());
 		if (silent.isAfter(verbose)
 		 && silent.isAfter(quiet))
 			return -2;
@@ -521,7 +521,7 @@ public class DryOpts {
 
 	/**A required positional argument
 	 *@param name for the Usage: line.*/
-	public <T> T argument(String name, ArgType<T> type) {
+	public <T> T arg(String name, ArgType<T> type) {
 		positionalUsage.append(' ').append(ArgType.argName(name,  type));
 		for (int i=0; i<arguments.length; i++)
 			if (arguments[i] != null)
@@ -543,7 +543,7 @@ public class DryOpts {
 	/**Get a list of all remaining non-opt arguments.
 	 *@param name for the Usage: string.
 	 *@param minimum_one require at least one argument.*/
-	public <T> List<T> allArguments(String name, boolean minimum_one, ArgType<T> type) {
+	public <T> List<T> allArgs(String name, boolean minimum_one, ArgType<T> type) {
 		name = ArgType.argName(name, type);
 		positionalUsage.append(' ');
 		if (minimum_one)
@@ -571,13 +571,13 @@ public class DryOpts {
 	 *@param name for the Usage: string.
 	 *@param minimum_one require at least one argument.
 	 *@return array so you can do {@code args = allArguments();}*/
-	public String[] allArguments(String name, boolean minimum_one) {
-		List<String> list = allArguments(name, minimum_one, any);
+	public String[] allArgs(String name, boolean minimum_one) {
+		List<String> list = allArgs(name, minimum_one, any);
 		return list.toArray(new String[list.size()]);
 	}
 
 
-	protected int argumentsLeft() {
+	protected int argsLeft() {
 		int n = 0;
 		for (String arg : arguments)
 			if (arg != null)
@@ -625,11 +625,11 @@ public class DryOpts {
 	}
 
 	public <T> T optArg(char shortOpt, String longOpt, String description, T notSet, ArgType<T> type) {
-		return option(shortOpt, longOpt, description, new Single<T>(notSet, type)).value;
+		return opt(shortOpt, longOpt, description, new Single<T>(notSet, type)).value;
 	}
 
 	public <T> T optArg(char shortOpt, String longOpt, String description, T notSet, T noArg, ArgType<T> type) {
-		return option(shortOpt, longOpt, description, new Single<T>(notSet, noArg, type)).value;
+		return opt(shortOpt, longOpt, description, new Single<T>(notSet, noArg, type)).value;
 	}
 
 
@@ -653,7 +653,7 @@ public class DryOpts {
 	}
 
 	public <T> List<T> optMultiArg(char shortOpt, String longOpt, String description, ArgType<T> type) {
-		return option(shortOpt, longOpt, description, new MultiArg<T>(type)).values;
+		return opt(shortOpt, longOpt, description, new MultiArg<T>(type)).values;
 	}
 
 
@@ -692,12 +692,12 @@ public class DryOpts {
 	protected final Flag optFlag = new Flag();
 	public int optFlagN(char shortOpt, String longOpt, String description) {
 		optFlag.times = 0;
-		return option(shortOpt, longOpt, description, optFlag).times;
+		return opt(shortOpt, longOpt, description, optFlag).times;
 	}
 
 	public boolean optFlag(char shortOpt, String longOpt, String description) {
 		optFlag.times = 0;
-		return option(shortOpt, longOpt, description, optFlag).isSet();
+		return opt(shortOpt, longOpt, description, optFlag).isSet();
 	}
 
 	/**Find the last of multiple flags. useful when you have several options that negate each other.
@@ -715,7 +715,7 @@ public class DryOpts {
 				throw new IllegalArgumentException("opts must have a multiple of 3 elements");
 			for (int i=0; i<opts.length; i+=3) {
 				optFlag.last = null;
-				int index = option((char)opts[i], (String)opts[i+1], (String)opts[i+2], optFlag).lastIndex();
+				int index = opt((char)opts[i], (String)opts[i+1], (String)opts[i+2], optFlag).lastIndex();
 				if (index > last_index) {
 					last_index = index;
 					last = (String)opts[i+1];

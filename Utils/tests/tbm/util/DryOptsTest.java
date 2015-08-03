@@ -152,6 +152,6 @@ public class DryOptsTest {
 	@Test
 	public void onlyFirstDoubleDashShouldBeHandled() {
 		DryOpts ap = parse("-- --");
-		assertArrayEquals(new String[]{"--"}, ap.allArguments("", false));
+		assertArrayEquals(new String[]{"--"}, ap.allArgs("", false));
 	}
 }
