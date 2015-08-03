@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * If you get positional arguments before all flags, some arguments might be missing as they are still attached to flags.
  *
  *Example:
- * ArgsParser a = new ArgsParser(args);
+ * DryOpts a = new DryOpts(args);
  * File file = a.optArg('f', "file", null/*hide from --help* /, null, str->new File(str);
  * boolean quiet = a.optFlag('-q', "quiet", "say less");
  * a.handle_version('v', quiet?"0.9.1":""simpleProgram version 0.9.1\nCopyright someone 2015-2016");
@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
  *@author tbm
  * License: Apache v2
  */
-public class ArgsParser {
+public class DryOpts {
 	/**Is used by ArgType.*/@SuppressWarnings("serial")
 	public static class ArgException extends Exception {
 		public ArgException(String f, Object... a) {
@@ -173,8 +173,8 @@ public class ArgsParser {
 	public static class Builder {
 		public Builder()
 			{}
-		public ArgsParser parse(String... args) {
-			return new ArgsParser(this,  args);
+		public DryOpts parse(String... args) {
+			return new DryOpts(this,  args);
 		}
 
 		//unicode classes: regular-expressions.info/unicode.html
@@ -215,12 +215,12 @@ public class ArgsParser {
 		protected boolean nonopt_stops_opts = false;
 		/**Turns the --option in "-q command --option" into an argument.
 		 * Note that you now must enter options requiring an argument as --file=path;
-		 * ArgsParser doesn't know -q is a flag until it's added, and then optFlag("option") would already have returned true.*/
+		 * DryOpts doesn't know -q is a flag until it's added, and then optFlag("option") would already have returned true.*/
 		public Builder stop_at_first_nonOpt() {
 			nonopt_stops_opts = true;
 			return this;
 		}
-	
+
 		protected String name = null;
 		/**for the Usage: line.*/
 		public Builder name(String name) {
@@ -249,13 +249,13 @@ public class ArgsParser {
 	/**@param args the String[] passed to main().
 	 * @param b settings that affects argument parsing. @see Builder
 	 */
-	public ArgsParser(String... args) {
+	public DryOpts(String... args) {
 		this(new Builder(), args);
 	}
 	/**@param args the String[] passed to main().
 	 * @param b settings that affects argument parsing. @see Builder
 	 */
-	public ArgsParser(Builder b, String... args) {
+	public DryOpts(Builder b, String... args) {
 		//Builder parameters that are used later
 		this.arguments = new String[args.length];
 

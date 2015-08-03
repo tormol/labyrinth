@@ -2,14 +2,14 @@ package tbm.util;
 import tbm.util.geom.Point;
 import tbm.util.parseNum;
 import static tbm.util.parseNum.*;
-import static tbm.util.ArgsParser.*;
-/**Argument types that depend on other classes and would make ArgsParser not self-contained.
+import static tbm.util.DryOpts.*;
+/**Argument types that depend on other classes and would make DryOpts not self-contained.
  * 
  * @author tbm
  * License Apache v3
  */
-public class ArgsParserExtensions {
-	public static class ExtendedInteger extends parseNum implements ArgsParser.ArgType<Long> {
+public class DryOptsExtensions {
+	public static class ExtendedInteger extends parseNum implements DryOpts.ArgType<Long> {
 		public static final int default_flags = DEC|OCT|HEX|BIN|DEFAULT(10)|SKIP_SPACE|SKIP_UNDERSCORE;
 
 		public long min,max;
