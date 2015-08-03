@@ -186,20 +186,19 @@ public class ArgsParser {
 			return this;
 		}
 		/**Digits can be options, this makes it impossible to enter negative numbers as positional arguments.
-		 * is equal to {@code is_shortOpt("[\\d\\p{Letter}]")}
+		 * is equal to {@code is_shortOpt("[-\\d\\p{Letter}]")}
 		 * Default value is "\\p{Letter}"*/
 		public Builder integer_shortOpts() {
-			return is_shortOpt("[\\d\\p{Letter}]");//don't accept unicode digits until IntRange supports them  
+			return is_shortOpt("[-\\d\\p{Letter}]");//don't accept unicode digits until IntRange supports them  
 		}
 
-		protected boolean uppercase_shortOpt_not_flag = false;
-		/**if set, uppercase shortOpts take the rest of the argument as it's argument even if the next char isn't '=' but a valid shortOpt.
-		 * this means -fAfa i a flag f and A has argument fa
+		protected boolean uppercase_shortOpt_ends_list = false;
+		/**if set, uppercase shortOpts take the rest of the argument as its argument even if the next char isn't '=' but a valid shortOpt.
+		 * this means -fAfa is flag f and A has argument fa
 		 * Default value is {@code false}.
 		 * 
-		 * While restrictive, this is predictable to the users.
-		 * Other approaches that wouldn't work:
-		 * * Builder regex of shortOpts that take the rest:
+		 * While restrictive, this is predictable to users, and other approaches that wouldn't work:
+		 * * Builder regex of shortOpts that ends list:
 		 * * * Breaks DRY.
 		 * * Take the rest is default, and OptTypes disown the rest in the same way they disown separete arguents.
 		 * * * (Requires flags be added before optArgs).
@@ -208,8 +207,8 @@ public class ArgsParser {
 		 * * * (Requires flags be added after optArgs).
 		 * * * a and b are both optArgs, -ab is supposed to mean a with argument b, but what if b is added before a?
 		 */
-		public Builder uppercase_shortOpt_not_flag(boolean b) {
-			uppercase_shortOpt_not_flag = b;
+		public Builder uppercase_shortOpt_ends_list(boolean b) {
+			uppercase_shortOpt_ends_list = b;
 			return this;
 		}
 
@@ -300,7 +299,7 @@ public class ArgsParser {
 				for (int ii=1; ii<args[i].length(); ii++)
 					//if not '=' and matches b.shortOpt_regex and (if b.upperrcase_shortOpt_not_flag) previous opt not uppercase
 					if (args[i].charAt(ii) != '='  &&  args[i].substring(ii, ii+1).matches(b.shortOpt_regex)
-					 &&  !(b.uppercase_shortOpt_not_flag  &&  ii > 1  &&  Character.isUpperCase(opt.shortOpt))) {
+					 &&  !(b.uppercase_shortOpt_ends_list  &&  ii > 1  &&  Character.isUpperCase(opt.shortOpt))) {
 						opt = new FoundOpt(i, ii-1);
 						opt.shortOpt = args[i].charAt(ii);
 						options.add(opt);
