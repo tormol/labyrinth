@@ -464,12 +464,21 @@ public class ArgsParser {
 
 
 
-	/**If --version is set, print version_info and exit(0).
-	 *@param shortOpt should probably be 'v' or '\0'
+	/**If --version is set, print versionInfo and exit(0).
+	 *@param shortOpt should be 'v' or '\0'
 	 *If there is a -q--quiet flag, you should only show the version number if it was set.*/
-	public void handle_version(char shortOpt, String version_info) {
+	public void handle_version(char shortOpt, String versionInfo) {
 		if (optFlag(shortOpt, "version", "Display version information and quit.")) {
-			System.out.println(version_info);
+			System.out.println(versionInfo);
+			System.exit(0);
+		}
+	}
+
+	/**If --version is set, print quiet?versionNumber:versionInfo and exit(0).
+	 *@param shortOpt should be 'v' or '\0'*/
+	public void handle_version(char shortOpt, String versionInfo, boolean quiet, String versionNumber) {
+		if (optFlag(shortOpt, "version", "Display version information and quit.")) {
+			System.out.println(quiet ? versionNumber : versionInfo);
 			System.exit(0);
 		}
 	}
@@ -766,10 +775,10 @@ public class ArgsParser {
 	/**For arguments that must be an integer*/
 	public static class IntRange implements ArgType<Long> {
 		public final long min, max;
-		/**@throws IllegalArgumentException if min >= max*/
+		/**@throws IllegalArgumentException if min > max*/
 		public IntRange(long min, long max) throws IllegalArgumentException {
-			if (min >= max)
-				throw new IllegalArgumentException("min >= max");
+			if (min > max)
+				throw new IllegalArgumentException("min > max");
 			this.min = min;
 			this.max = max;
 		}
