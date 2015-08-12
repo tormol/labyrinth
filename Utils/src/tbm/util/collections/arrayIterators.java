@@ -4,7 +4,7 @@ import java.util.Objects;
 
 /**If you need an iterator for an array-backed Collection,
  *or are too lazy to write <tt>for (int i=0; i<array.length; i++)</tt>*/
-public final class ArrayIterators {
+public final class arrayIterators {
 	/**@return new ArrayIterators.Unmodifiable<E>(array);*/
 	public static <E> Unmodifiable<E> unmodifiable(
 			@SuppressWarnings("unchecked") E... array

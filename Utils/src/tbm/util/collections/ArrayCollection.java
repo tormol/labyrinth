@@ -148,9 +148,8 @@ public class ArrayCollection<E> extends AbstractCollection<E> {
 			Arrays.fill(elements, empty);
 	}
 
-	@Override
-	public Iterator<E> iterator() {
-		return new ArrayIterators.SkipEmpty<E>(elements, empty);
+	@Override public Iterator<E> iterator() {//might work
+		return (arrayIterators.SkipEmpty<E>) new arrayIterators.SkipEmpty<Object>(elements, empty);
 	}
 
 	public Object[] toArray(int free) {
