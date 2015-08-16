@@ -285,7 +285,8 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	}
 
 
-	/**Move all elements to the start of the array, passing <tt>this.elements</tt> is safe.*/
+	/**Move all elements to the start of the array, passing <tt>this.elements</tt> is safe.
+	 *@return size*/
 	private int pack(Object[] new_elements) {
 		int to = 0;
 		//copy everything until the first null
