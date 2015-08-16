@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 
-public class LeanHashSet<E> extends LeanHash<E> implements Set<E> {
+public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
 	public static <E> LeanHashSet<E> copy(Collection<E> c) {
 		if (c instanceof LeanHashSet)
 			return ((LeanHashSet<E>)c).clone();
@@ -43,6 +43,15 @@ public class LeanHashSet<E> extends LeanHash<E> implements Set<E> {
 			return false;
 		add_new(e, hash(hash_index));
 		return true;
+	}
+
+	@Override//SetWithGet
+	public E get(Object obj) {
+		//ok to throw NullPointerException if obj == null
+		int index = index(indexOf(obj));
+		if (index == -1)
+			return null;
+		return elements[index];
 	}
 
 	@Override//Set
