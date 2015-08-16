@@ -71,12 +71,6 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	//FIXME: can this be inlined?
 	protected abstract int ew();
 
-	/**Is called by <tt>indexOf()</tt> to allow subclasses to redefine equality.
-	 *@return elements[index].equals(o)*/
-	protected boolean compare(int index, Object o) {
-		return elements[index].equals(o);
-	}
-
 
 	/***/
 	protected final long new_bucket(int entries, int first_index) {
@@ -111,7 +105,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		int from = index(buckets[hash]);
 		int to = from + elements(buckets[hash]) * ew();
 		for (int i = from;  i < to;  i += ew())
-			if (compare(i, element_or_key))
+			if (elements[i].equals(element_or_key))
 				return (long)(hash)<<32 | i;
 		return (long)(hash)<<32 | 0xffffffffL;
 	}
