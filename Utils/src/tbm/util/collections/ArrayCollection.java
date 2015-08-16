@@ -8,31 +8,56 @@ import java.util.Objects;
 /**A collection, nothing more, nothing less.
  * Supports null elements and doesn't use equals() or hashCode().*/
 public class ArrayCollection<E> extends AbstractCollection<E> {
-	protected static final Object empty = new Object(){@Override
-		public String toString() {
+	/**is also used by other classes in tbm.util.collections
+	 *.toString() returns {@code "empty"}
+	 *.equals() returns {@code false}*/
+	protected static final Object empty = new Object() {
+		@Override public String toString() {
 			return "empty";
-		}};
+		}
+		@Override public boolean equals(Object o) {
+			return false;
+		}
+	};
+
+	protected static final int default_size = 8;
 
 	protected Object[] elements;
 	protected int size;
-	/**index of an unused slot, or -1*/
+	/**index of an unused slot, or -1 if */
 	protected int anEmpty;
+
+	protected ArrayCollection(Object[] elements, int size, int anEmpty) {
+		this.elements = elements;
+		this.size = size;
+		this.anEmpty = anEmpty;
+	}
+	public ArrayCollection(Collection<E> c) {
+		elements = c.toArray();
+		size = elements.length;
+		anEmpty = -1;
+	}
+	@SafeVarargs//couldn't be safer
+	public ArrayCollection(E... elements) {
+		this(elements, elements.length, -1);
+	}
 	public ArrayCollection() {
-		elements = new Objects[8];
-		anEmpty = 7;
-		size = 0;
+		this(new Objects[default_size],  default_size - 1,  0);
 	}
 
+
+	/**uses {@code .equal()}*/
 	protected int indexOf(int begin, Object o) {
 		if (o == null)
 			return indexOfRef(begin, o);
 		while (begin < elements.length)
-			if (o.equals(elements[begin])  &&  elements[begin] != empty)
+			if (o.equals(elements[begin]))
 				return begin;
 			else
 				begin++;
 		return -1;
 	}
+	/**uses {@code ==}*/
 	protected int indexOfRef(int begin, Object o) {
 		while (begin < elements.length)
 			if (elements[begin] == o)
@@ -142,34 +167,39 @@ public class ArrayCollection<E> extends AbstractCollection<E> {
 
 	@Override
 	public void clear() {
-		if (elements.length > 16)
-			elements = new Object[8];
+		if (elements.length > 2*default_size)
+			elements = new Object[default_size];
 		else
 			Arrays.fill(elements, empty);
 	}
 
-	@Override public Iterator<E> iterator() {//might work
+	@Override public arrayIterators.SkipEmpty<E, Object> iterator() {//might work
 		return new arrayIterators.SkipEmpty<E, Object>((E[])elements, empty);
 	}
 
-	public Object[] toArray(int free) {
+	/**Is used to grow the internal array*/
+	protected Object[] toArray(int free) throws IllegalArgumentException {
 		if (free < 0)
 			throw new IllegalArgumentException("free cannot be less than zero, but is "+free+'.');
 		Object[] new_elements = new Object[size()+free];
 		int to = new_elements.length;
-		if (! isEmpty())
-			for (Object o : elements)
-				if (o != empty) {
-					to--;
-					new_elements[to] = o;
-				}
+		for (Object o : elements)
+			if (o != empty) {
+				to--;
+				new_elements[to] = o;
+			}
 		Arrays.fill(new_elements, 0, to, empty);
 		return new_elements;
 	}
-	@Override
-	public Object[] toArray() {
+	@Override public Object[] toArray() {
 		return toArray(0);
 	}
 
-	//TODO: implement the toArray()s without using an iterator
+	@SuppressWarnings("unchecked")//caller knows
+	@Override public <T> T[] toArray(T[] array) {
+		if (array.length < size())
+			return (T[]) toArray();
+		System.arraycopy(toArray(array.length-size()), 0, array, 0, array.length);
+		return array;
+	}
 }
