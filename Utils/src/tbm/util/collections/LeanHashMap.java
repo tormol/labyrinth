@@ -10,7 +10,7 @@ import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.function.BiConsumer;
 
 @SuppressWarnings("unchecked")
-public class LeanHashMap<K,V> extends LeanHash<Object> implements Map<K,V>, Iterable<Map.Entry<K,V>> {
+public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,V> {
 	public LeanHashMap(Map<K, V> map) {
 		super(requireNonNull(map).size(), 1.2f);
 		putAll(map);
@@ -183,7 +183,8 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements Map<K,V>, Iter
 	}
 
 	/**A dangerous but memory efficient Iterator for Entries
-	 * If you want to keep the Entry after <tt>next()</tt>, <tt>clone()</tt> will return a SimpleImmutableEntry.*/
+	 * If you want to keep the Entry after <tt>next()</tt>, <tt>clone()</tt> will return a SimpleImmutableEntry.
+	 *///very little in common with UnsafeMapIterator
 	protected class IterVolatileEntry extends Iter<Entry<K,V>> implements Entry<K,V>, Cloneable {
 		protected IterVolatileEntry() {
 			super(-2);
