@@ -1,32 +1,38 @@
 package tbm.util;
 import tbm.util.geom.Point;
-import tbm.util.parseNum;
-import static tbm.util.parseNum.*;
+import tbm.util.ParseNum;
+import static tbm.util.ParseNum.*;
+import java.io.IOException;
+import java.io.StringReader;
 import static tbm.util.DryOpts.*;
+
 /**Argument types that depend on other classes and would make DryOpts not self-contained.
  * 
  * @author tbm
  * License Apache v3
  */
 public class DryOptsExtensions {
-	public static class ExtendedInteger extends parseNum implements DryOpts.ArgType<Long> {
-		public static final int default_flags = DEC|OCT|HEX|BIN|DEFAULT(10)|SKIP_SPACE|SKIP_UNDERSCORE;
+	public static class ExtendedInteger implements DryOpts.ArgType<Long> {
+		public static final int default_flags = OPT_DEC|OPT_HEX|OPT_BIN|SKIP_SPACE|SKIP_UNDERSCORE;
 
 		public long min,max;
+		public int flags;
 		public ExtendedInteger(long min, long max) {
 			this(min, max, default_flags);
 		}
 		public ExtendedInteger(long min, long max, int flags) {
-			super(flags);
 			this.min = min;
 			this.max = max;
+			this.flags = flags;
 		}
 		@Override
 		public Long parse(String arg) throws ArgException {
-			// TODO Auto-generated method stub
-			return null;
+			try {
+				return new ParseNum(flags, new StringReader(arg)).range(min, max);
+			} catch (IOException e) {
+				throw new IllegalStateException("BUG: internal StringReader is somehow closed.", e);
+			}
 		}
-		
 	}
 
 

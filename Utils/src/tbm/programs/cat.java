@@ -3,8 +3,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
-import tbm.util.ArgsParser;
-
+import tbm.util.DryOpts;
 
 public class cat {
 	static String prepend = null;
@@ -12,13 +11,17 @@ public class cat {
 	static PrintStream out = System.out;
 	static String outFile = null;
 	public static void main(String[] args) {
-		ArgsParser ap = new ArgsParser(args);
+		DryOpts ap = new DryOpts(args);
 		prepend = ap.optStr('p', "header", "Add this before every file.");
 		outFile = ap.optStr('o', "out", "Write to this file.");
 		append = ap.optFlag('a', "append", "Append to the file specified in out.");
-		ap.handle_version("javaCat version 1");
-		ap.handle_help("Concatenate files");
-		args = ap.getArgs();
+		ap.handle_version('v', "javaCat version 1");
+		boolean help = ap.optFlag('h', "help", "display help and exit");
+		args = ap.allArgs("files to read", false);
+		if (help) {
+			System.out.println(ap.getHelp(false, "Concatenate files"));
+			return;
+		}
 		ap.handle_errors(1);
 
 		try {

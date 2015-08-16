@@ -12,7 +12,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import tbm.util.ArgsParser;
+import tbm.util.DryOpts;
 
 
 public class PrimitivePreProcessor {
@@ -22,7 +22,7 @@ public class PrimitivePreProcessor {
 		append_new = true;//only write new files
 
 	static final int ARRAYLIST_LENGTHT = 10;
-	static final String help =
+	static final String helpStr =
 	"Generate java files based on other files.\n" +
 	"Syntax:\n"+
 	"//&class = classname1,classname2,...\t\t//the first var is used for filenames\n" +
@@ -30,18 +30,22 @@ public class PrimitivePreProcessor {
 	"//comment that will not appear in generated files\n" +
 	"//&name = *1, *2, ...\t\t(glob: name1, name2, ...)\n" +
 	"import something\t\t(this line and everything after is written to the generated files)\n";
-	static final String version =
+	static final String versionStr =
 	"PrimitivePreProcessor v1\n" +
 	"Copyright Torbjørn Birch Moltu\n" +
 	"GPL version 2";
 	public static void main(String[] args) {
 		//init types, create files, open javap 
-		ArgsParser ap = new ArgsParser(args);
+		DryOpts ap = new DryOpts(args);
 		clean = ap.optFlag('c', "clean", "Remove the files that would normally been created.");
 		append_new = ap.optFlag('n', "append_new", "Only print new files");
-		ap.handle_version(version);
-		ap.handle_help(help);
-		args = ap.getArgs();
+		ap.handle_version('v', versionStr);
+		boolean help = ap.optFlag('h', "help", "Display help and exit");
+		args = ap.allArgs("source files", true);
+		if (help) {
+			System.out.println(ap.getHelp(false, helpStr));
+			return;
+		}
 		ap.handle_errors(1);
 
 		try {
@@ -52,7 +56,7 @@ public class PrimitivePreProcessor {
 				else if (f.getName().endsWith(".java"))
 					replaceFile(f);
 				else
-					System.err.format("%s unnsupported format", f);
+					System.err.format("%s: unnsupported format", f);
 			}
 		} catch (AnError e) {
 			System.err.println(e.getMessage());
