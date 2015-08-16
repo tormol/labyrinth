@@ -149,7 +149,7 @@ public class ArrayCollection<E> extends AbstractCollection<E> {
 	}
 
 	@Override public Iterator<E> iterator() {//might work
-		return (arrayIterators.SkipEmpty<E>) new arrayIterators.SkipEmpty<Object>(elements, empty);
+		return new arrayIterators.SkipEmpty<E, Object>((E[])elements, empty);
 	}
 
 	public Object[] toArray(int free) {
