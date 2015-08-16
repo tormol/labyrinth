@@ -4,7 +4,7 @@ import java.io.Reader;
 import java.util.Objects;
 
 /**Parsing numbers from a stream, with the option of accepting other number systems, or ignoring spaces, tabs or any characters you want.*/
-public class parseNum {
+public class ParseNum {
   //*******//
  // flags //
 //*******//
@@ -105,10 +105,8 @@ public class parseNum {
 
 
 	/**@throws IllegalArgumentException if start radix is 16 and OPT_BIN or OPT_DEC is set*/
-	public parseNum(int flags, Reader reader) throws IllegalArgumentException {
-		this.reader = Objects.requireNonNull(reader);
-		this.c = NO_CHAR;
-		newFlags(flags);
+	public ParseNum(int flags, Reader reader) throws IllegalArgumentException {
+		newReader(reader).newFlags(flags);
 	}
 
 
@@ -137,15 +135,15 @@ public class parseNum {
 
 	/**Set the first char
 	 *@return {@code this}*/
-	public parseNum first_char(char first) {
+	public ParseNum first_char(char first) {
 		c = first;
 		return this;
 	}
 
-	/**update {@code this.flags} and validate the combinations.
+	/**update flags and validate the combinations.
 	 * (field is updated even if there is errors).
 	 *@return {@code this}*///avoiding "set" as that is also the opposite of clear
-	public parseNum newFlags(int flags) throws IllegalArgumentException {
+	public ParseNum newFlags(int flags) throws IllegalArgumentException {
 		this.flags = flags;
 		int radix = start_radix();
 		if (radix == 16  &&  isset(OPT_BIN | OPT_DEC))
@@ -158,6 +156,15 @@ public class parseNum {
 			throw new IllegalArgumentException("Must set either OVERFLOW_OTHER or MINUS_OTHER, else there is no way to enter a signed negative non-decimal number.");
 		return this;
 	}
+
+	/**set a new character source
+	 *@return {@code this}*/
+	public ParseNum newReader(Reader reader) {
+		this.reader = Objects.requireNonNull(reader);
+		this.c = NO_CHAR;
+		return this;
+	}
+
 
 	/**is a flag (or any of a combination) set?
 	 *@return {@code (flags & flag) != 0}*/

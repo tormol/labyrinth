@@ -1,14 +1,14 @@
 package tbm.util;
-import static tbm.util.parseNum.*;
+import static tbm.util.ParseNum.*;
 import static org.junit.Assert.*;
 import java.io.IOException;
 import java.io.StringReader;
 import org.junit.Test;
 
-public class parseNumTest {
+public class ParseNumTest {
 	public long parse(String num, int bits, int flags) throws NumberFormatException, IllegalArgumentException {
 		try {
-			return new parseNum(flags, new StringReader(num)).bits(bits);
+			return new ParseNum(flags, new StringReader(num)).bits(bits);
 		} catch (IOException e) {//should never happen
 			throw new RuntimeException("A StringBuilder somehow threw an IOException.", e);
 		}
