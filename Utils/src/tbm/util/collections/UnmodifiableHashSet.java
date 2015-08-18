@@ -20,4 +20,6 @@ public abstract class UnmodifiableHashSet<E> extends UnmodifiableSet<E> {
 			index = -1;
 		return index;
 	}
+
+	private static final long serialVersionUID = 1L;
 }

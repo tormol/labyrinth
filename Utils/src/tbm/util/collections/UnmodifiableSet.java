@@ -1,11 +1,12 @@
 package tbm.util.collections;
+import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWithGet<E> {
+public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWithGet<E>, Serializable {
 	/**is mutable to allow users to profile and set a better value for their uses.*/
 	protected static int linear_max_size = 5;//a guesstimate
 
@@ -85,8 +86,9 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 	@Override public final boolean remove(Object o) throws UnsupportedOperationException {
 		throw new UnsupportedOperationException();
 	}
-
 	//TODO: make more methods final?
+
+	private static final long serialVersionUID = 1L;
 
 
 
@@ -119,6 +121,7 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 					return i;
 			return -1;
 		} 
+		private static final long serialVersionUID = 1L;
 	}
 
 
@@ -141,5 +144,6 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 		@Override protected int hash(Object o) {
 			return ((o.hashCode() + addToHash) << shiftLeft) >> shiftRight;
 		}
+		private static final long serialVersionUID = 1L;
 	}
 }

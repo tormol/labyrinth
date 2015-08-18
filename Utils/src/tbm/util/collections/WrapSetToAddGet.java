@@ -1,5 +1,4 @@
 package tbm.util.collections;
-import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Objects;
@@ -7,7 +6,7 @@ import java.util.Set;
 
 /**Wrap instances of an existing Set implementation to use a slow .get()
  * Should have been inside SetWithGet, but everything inside an interface is public*/
-/*package*/ class WrapSetToAddGet<E> extends AbstractSet<E> implements SetWithGet<E>, Serializable {
+/*package*/ class WrapSetToAddGet<E> extends AbstractSet<E> implements SetWithGet<E> {
 	public final Set<E> wrapped;
 	public WrapSetToAddGet(Set<E> set) {
 		wrapped = Objects.requireNonNull(set);
@@ -22,5 +21,4 @@ import java.util.Set;
 			return wrapped.equals( ((WrapSetToAddGet<?>) o).wrapped );
 		return false;
 	}
-	private static final long serialVersionUID = 1L;
 }

@@ -41,4 +41,6 @@ public class UnmodifiableStartTableHashSet<E> extends UnmodifiableHashSet<E> {
 				return i;
 		return -1;
 	}
+
+	private static final long serialVersionUID = 1L;
 }

@@ -84,4 +84,6 @@ public class UnmodifiableSortedSet<E extends Comparable<E>> extends Unmodifiable
 	@Override public SortedSet<E> tailSet(E startsWith) {
 		return subSet(wouldBeIndexOf(startsWith), elements.length);
 	}
+
+	private static final long serialVersionUID = 1L;
 }

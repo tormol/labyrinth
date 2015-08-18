@@ -1,4 +1,5 @@
 package tbm.util.collections;
+import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
@@ -202,4 +203,6 @@ public class ArrayCollection<E> extends AbstractCollection<E> {
 		System.arraycopy(toArray(array.length-size()), 0, array, 0, array.length);
 		return array;
 	}
+
+	private static final long serialVersionUID = 1;
 }
