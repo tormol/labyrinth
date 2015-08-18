@@ -509,9 +509,8 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	 * {@code if (hasNext())remove()} will
 	 *Supports <tt>remove()</tt>.*/
 	protected class Iter<T> implements Iterator<T> {
-		public static final byte READY=0, TAKEN=1, STARTED=2, REMOVED=3, ENDED=4;
 		private int pos;
-		private byte state = STARTED;
+		private int next = -1;
 		protected Iter(int before_start) {
 			pos = before_start;//so the first hasNext() works
 		}
@@ -521,37 +520,27 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		protected T value(int index) {
 			return (T)elements[index];
 		}
-		public int lastIndex() {
-			if (state < REMOVED)
-				return state;
-			return -1;
-		}
 
-		@Override public final boolean hasNext() {switch (state) {
-		case READY: return true;
-		case ENDED: return false;
-		default:
-			pos = nextAfter(pos);
-			if (pos == -1)
-				state = ENDED;
-			else
-				state = READY;
-			return hasNext();
-		}}
+		@Override public final boolean hasNext() {
+			if (next != -1)
+				return true;
+			next = nextAfter(pos);
+			return next != -1;
+		}
 		@Override public T next() {
 			if (! hasNext())
 				throw new NoSuchElementException();
-			state = TAKEN;
+			pos = next;
+			next = -1;
 			return value(pos);
 		}
-		@Override public void remove() {switch (state) {
-		case STARTED: throw new IllegalStateException("Must call hasNext() first, Why do you want to remove the first element of an unknown-order iterator anyway?");
-		case REMOVED: throw new IllegalStateException("Already removed element.");
-		case   ENDED: throw new IllegalStateException("hasNext() returned false.");//The unit tests require IllegalStateException
-		default://the unit tests require hasNext() remove(), even tough that only makes sense with known order.
-			state = REMOVED;
+		@Override public void remove() {
+			if (pos < 0)
+				throw new IllegalStateException("next() threw NoSuchElementException or has not been called");
+			if (elements[pos] == null)
+				throw new IllegalStateException("Already removed element");
 			remove_index(hash(elements[pos]), pos);
-		}}
+		}
 	}
 
 
