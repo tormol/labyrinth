@@ -18,10 +18,12 @@ public class UnmodifiableSortedSet<E extends Comparable<E>> extends Unmodifiable
 			Arrays.sort(elements);
 		if ( !fromSet)
 			for (int i=1; i<elements.length; i++)
-				if (Arrays.binarySearch(elements, 0, i, elements[i])  <  0)
+				if (Arrays.binarySearch(elements, 0, i, elements[i])  >=  0)
 					throw new IllegalArgumentException("multiple "+elements[i]+'s');
 	}
 	@Override protected int indexOf(Object o) {
+		if (o == null)
+			return -1;
 		return Arrays.binarySearch(elements, o);
 	}
 
