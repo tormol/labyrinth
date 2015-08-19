@@ -1,10 +1,9 @@
 package tbm.util.collections;
 import java.io.Serializable;
 import java.util.AbstractSet;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWithGet<E>, Serializable {
 	/**is mutable to allow users to profile and set a better value for their uses.*/
@@ -52,10 +51,6 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 		this.elements = elements;
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override public arrayIterators.Unmodifiable<E> iterator() {
-		return new arrayIterators.Unmodifiable<E>((E[])elements);
-	}
 
 	//Is not final so a implementation can use 2^n-1 sized arrays or store null element by setting a flag 
 	@Override public int size() {
@@ -73,6 +68,30 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 			return (E)elements[index];
 		return null;
 	}
+
+
+	public <T> T[] toArray(Class<T[]> ofType) {
+		return Arrays.copyOf(elements, elements.length, ofType);
+	}
+
+	@Override public final Object[] toArray() {
+		return toArray(Object[].class);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override public <T> T[] toArray(T[] array) {
+		if (array.length < size())
+			return toArray((Class<T[]>)array.getClass());
+		System.arraycopy(elements, 0, array, 0, size());
+		Arrays.fill(array, size(), array.length, null);
+		return array;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override public arrayIterators.Unmodifiable<E> iterator() {
+		return new arrayIterators.Unmodifiable<E>((E[])elements);
+	}
+
 
 	//mutation methods already implemented in AbstractSet, but now they're final
 	/**@throws UnsupportedOperationException if called
@@ -106,9 +125,10 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 				boolean hasNull = false;
 				for (int i=0; i<elements.length; i++)
 					if (elements[i] != null)
-						for (int ii=0; ii<i; ii++)
+						for (int ii=0; ii<i; ii++) {
 							if (elements[i].equals(elements[ii]))
 								throw new IllegalArgumentException("multiple "+elements[i]+'s');
+						}//keeps else if outside the loop
 					else if (hasNull)
 						throw new IllegalArgumentException("multiple nulls");
 					else
