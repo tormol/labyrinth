@@ -3,21 +3,16 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
-/**If you need an Iterator for an array-backed Collection*/
+/**If you need an Iterator for an unmodifiable array-backed Collection*/
 public final class arrayIterators {
-	/**It's hard And I don't need it
-	  *If you for some reason really need an Listiterator, there was a nealy complete one in ArrayIterator before 2015*/
-	protected static final int attemts_at_implementing_ListIterator = 2;
-
-	/**An Iterator for arrays that doesn't support remove(),
-	 *  but have <tt>skip()</tt>, <tt>peek()</tt> and <tt>nextIndex()</tt>
+	/**An Iterator for arrays that doesn't support remove() but has every function from ListIterator except previous()	 *  
 	 *  from ListIterator.*/
 	public static class Unmodifiable<E> implements Iterator<E>, Iterable<E> {
 		protected final E[] array;
 		/**position of the last element returned by next, starts at -1 and can be larger than array.length*/
 		protected int pos = -1;
 		protected Unmodifiable(E[] array) {
-			this.array = Objects.requireNonNull(array);
+			this.array = Objects.requireNonNull(array, "array is null");
 		}
 
 		/**Allows using this class with foreach loops directly.
@@ -32,15 +27,37 @@ public final class arrayIterators {
 		public int nextIndex() {
 			return pos+1;
 		}
+		/**return index of the last element returned by next()*/
+		public int previousIndex() {
+			return pos;
+		}
+
 		@Override public final boolean hasNext() {
 			return nextIndex() < array.length;
 		}
-		@Override public E next() {
+		/**@return true if <tt>next()</tt> has been called*/
+		public final boolean hasPrevious() {
+			return previousIndex() >= 0;
+		}
+
+		/**get the element at pos
+		 *@param update_pos should {@code this.pos} be set to pos if pos is valid?
+		 *@throws NoSuchElementException if pos is an invalid index*/
+		protected E get(int pos, boolean update_pos) {
 			try {
-				return array[pos = nextIndex()];
+				E e = array[pos];//fail before changing position or direction
+				if (update_pos)
+					this.pos = pos;
+				return e;
 			} catch (ArrayIndexOutOfBoundsException e) {
 				throw new NoSuchElementException();
 			}
+		}
+
+		/**{@inheritDoc}
+		 *Is idempotent when NoSuchElementException is thrown*/
+		@Override public E next() {
+			return get(nextIndex(), true);
 		}
 
 		/**Return the next element but don't advance the iteration
@@ -48,21 +65,85 @@ public final class arrayIterators {
 		 * (returning null would be meaningless if there can be null elements in the array,
 		 * and {@code if (hasNext() && peek().someFunc())} is clearer than {@code if (peek() != null  &&  peek().somefunc())}
 		 */
-		public final E peek() {
-			try {
-				return array[nextIndex()];
-			} catch (ArrayIndexOutOfBoundsException e) {
-				throw new NoSuchElementException();
-			}
+		public final E peekNext() {
+			return get(nextIndex(), false);
 		}
-		/**Skip the next element.*/
-		public final void skip() {
-			pos = nextIndex();
+		public final E peekPrevious() {
+			return get(previousIndex(), false);
+		}
+
+		/**@throws UnsupportedOperationException always
+		 * @deprecated unsupported operation*/@Deprecated
+		@Override public final void remove() throws UnsupportedOperationException {
+			throw new UnsupportedOperationException();
 		}
 	}
 
 
+	public static class ListIterator<E> extends Unmodifiable<E> implements java.util.ListIterator<E> {
+		protected boolean forward = true;
+		protected ListIterator(E[] array, int pos) throws IndexOutOfBoundsException {
+			super(array);
+			this.pos = pos;
+			if (pos < 0)
+				throw new IndexOutOfBoundsException("pos = "+pos+" < 0");
+			if (pos > array.length)
+				throw new IndexOutOfBoundsException("pos = "+pos+" > array.length = "+array.length);
+		}
 
+		@Override public int nextIndex() {
+			return pos + (forward ? 1 : 0);
+		}
+		@Override public int previousIndex() {
+			return pos - (forward ? 0 : 1);
+		}
+
+		@Override public E next() {
+			E e = get(nextIndex(), true);
+			forward = true;
+			return e;
+		}
+		/**{@inheritDoc}
+		 *Is idempotent when NoSuchElementException is thrown*/
+		@Override public E previous() {
+			E e = get(previousIndex(), true);
+			forward = false;
+			return e;
+		}
+
+		@Override public void set(E e) {
+			try {
+				array[pos] = e;
+			} catch (ArrayIndexOutOfBoundsException aioobe) {
+				throw new IllegalStateException();
+			}
+		}
+
+		/**@throws UnsupportedOperationException always
+		 * @deprecated unsupported operation*/@Deprecated
+		@Override public final void add(E arg0) throws UnsupportedOperationException {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+
+	public static class UnmodifiableListIterator<E> extends ListIterator<E> {
+		public UnmodifiableListIterator(E[] array, int start) {
+			super(array, start);
+		}
+		@SuppressWarnings("unchecked")
+		public UnmodifiableListIterator(E... array) {
+			this(array, 0);
+		}
+
+		/**@throws UnsupportedOperationException always
+		 * @deprecated unsupported operation*/@Deprecated
+		@Override public final void set(E arg0) throws UnsupportedOperationException {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	
 	/**{@inheritDoc}
 	 *Also skips references to instance.
 	 *Useful for some collections.*/
@@ -88,47 +169,10 @@ public final class arrayIterators {
 			return e;
 		}
 
-		/**@return {@code null}*/
+		/**@return instance that signifies an unused slot.
+		 *Default is {@code null}*/
 		protected Object emptyElement() {
 			return null;
 		}
-	}
-
-
-	/**{@inheritDoc}
-	 *Supports <tt>remove()</tt>.*/
-	public static class SkipEmpty<E> extends UnmodifiableSkipEmpty<E> {
-		public SkipEmpty(E[] array) {
-			super(array);
-		}
-
-		/**@return {@code true} if element was empty*/
-		protected void setLast(Object o) {
-			try {
-				if (((Object[])array)[pos] == emptyElement())
-					throw new IllegalStateException("Element has already been removed");
-				((Object[])array)[pos] = o;
-			} catch (ArrayIndexOutOfBoundsException e) {
-				if (pos == -1)
-					throw new IllegalStateException("Must call next() first");
-				if (pos >= array.length)
-					throw new IllegalStateException("No more elements");
-				throw e;
-			}
-		}
-
-		/**replaces the last returned element with e*/
-		public final void set(E e) {
-			setLast(e);
-		}
-
-		/**{@inheritDoc}
-		 *replaces the last returned element with empty*/
-		@Override public final void remove() {
-			setLast(emptyElement());
-			//FIXME somehow decrement size
-		}
-
-		//add() could work when there are null elements before nextIndex(), but that would be unreliable
 	}
 }
