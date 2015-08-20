@@ -3,12 +3,12 @@ import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**A collection, nothing more, nothing less.
  * Supports null elements and doesn't use equals() or hashCode().*/
-public class ArrayCollection<E> extends AbstractCollection<E> {
+public class ArrayCollection<E> extends AbstractCollection<E> implements Serializable {
 	/**is also used by other classes in tbm.util.collections
 	 *.toString() returns {@code "empty"}
 	 *.equals() returns {@code false}*/
@@ -21,15 +21,21 @@ public class ArrayCollection<E> extends AbstractCollection<E> {
 		}
 	};
 
+
 	protected static final int default_size = 8;
+
 
 	protected Object[] elements;
 	protected int size;
-	/**index of an unused slot, or -1 if */
+	/**index of a known unused slot, or -1 if unknown*/
 	protected int anEmpty;
 
 	protected ArrayCollection(Object[] elements, int size, int anEmpty) {
-		this.elements = elements;
+		if (elements.getClass() != Object[].class) {
+			this.elements = new Object[elements.length];
+			System.arraycopy(elements, 0, this.elements, 0, elements.length);
+		} else
+			this.elements = elements;
 		this.size = size;
 		this.anEmpty = anEmpty;
 	}
@@ -38,12 +44,13 @@ public class ArrayCollection<E> extends AbstractCollection<E> {
 		size = elements.length;
 		anEmpty = -1;
 	}
-	@SafeVarargs//couldn't be safer
+	@SafeVarargs//I actually want an Object[]
 	public ArrayCollection(E... elements) {
 		this(elements, elements.length, -1);
 	}
 	public ArrayCollection() {
 		this(new Objects[default_size],  default_size - 1,  0);
+		Arrays.fill(elements, empty);
 	}
 
 
@@ -98,14 +105,10 @@ public class ArrayCollection<E> extends AbstractCollection<E> {
 			elements[anEmpty] = e;
 			anEmpty = -1;
 		} else if (size == elements.length) {
-			int new_size = (size * 3) / 2; 
-			Object[] new_elements = new Object[new_size];
+			int new_size = 1 + (size * 3) / 2;//add one to ensure growth when size < 2
 			int diff = new_size - size;
-			//copy existing to the end to speed up finding empty slots.
-			Arrays.fill(new_elements, 0, diff-1, empty);
-			System.arraycopy(elements, 0, new_elements, diff, size);
-			elements = new_elements;
-			new_elements[diff-1] = e;
+			elements = toArray(diff);
+			elements[diff-1] = e;
 			anEmpty = diff - 2;
 		} else
 			elements[indexOfRef(0, empty)] = e;
@@ -129,7 +132,7 @@ public class ArrayCollection<E> extends AbstractCollection<E> {
 	}
 	public int removeCompletely(Object o) {
 		int i=0, next=indexOf(0, o);
-		while (next == -1) {
+		while (next != -1) {
 			remove(next);
 			i++;
 			next = indexOf(next+1, o);
@@ -170,38 +173,68 @@ public class ArrayCollection<E> extends AbstractCollection<E> {
 	public void clear() {
 		if (elements.length > 2*default_size)
 			elements = new Object[default_size];
-		else
-			Arrays.fill(elements, empty);
+		Arrays.fill(elements, empty);
+		anEmpty = elements.length-1;
+		size = 0;
 	}
 
-	@Override public arrayIterators.SkipEmpty<E, Object> iterator() {//might work
-		return new arrayIterators.SkipEmpty<E, Object>((E[])elements, empty);
+
+	//Iterable
+	@SuppressWarnings("unchecked")
+	@Override public arrayIterators.SkipEmpty<E> iterator() {//might work
+		return new arrayIterators.SkipEmpty<E>((E[])elements) {
+			@Override protected Object emptyElement() {
+				return empty;
+			}
+		};
 	}
 
-	/**Is used to grow the internal array*/
+	@SuppressWarnings("unchecked")
+	@Override public void forEach(Consumer<? super E> consumer) {
+		for (Object o : elements)
+			if (o != empty)
+				consumer.accept((E)o);
+	}
+
+
+	/**move all emptys to start of elements
+	 *@return number of <tt>empty</tt>s*/
+	protected int pack() {
+		int emptys = elements.length - size();
+
+		//use anEmpty
+		int from = 0;
+		if (anEmpty >= emptys) {//then emptys > 0 
+			while (elements[from] == empty)
+				from++;
+			elements[anEmpty] = elements[from];
+			from++;
+		}
+		anEmpty = emptys - 1;
+
+		//move
+		for (int fillIn = emptys;  from < emptys;  from++)
+			if (elements[from] != empty) {
+				while (elements[fillIn] != empty)
+					fillIn++;
+				elements[fillIn] = elements[from];
+				elements[from] = empty;
+			}
+		return emptys;
+	}
+
 	protected Object[] toArray(int free) throws IllegalArgumentException {
 		if (free < 0)
 			throw new IllegalArgumentException("free cannot be less than zero, but is "+free+'.');
+		int emptys = pack();
 		Object[] new_elements = new Object[size()+free];
-		int to = new_elements.length;
-		for (Object o : elements)
-			if (o != empty) {
-				to--;
-				new_elements[to] = o;
-			}
-		Arrays.fill(new_elements, 0, to, empty);
+		Arrays.fill(new_elements, 0, free, empty);
+		System.arraycopy(elements, emptys, new_elements, free, size());
 		return new_elements;
 	}
+
 	@Override public Object[] toArray() {
 		return toArray(0);
-	}
-
-	@SuppressWarnings("unchecked")//caller knows
-	@Override public <T> T[] toArray(T[] array) {
-		if (array.length < size())
-			return (T[]) toArray();
-		System.arraycopy(toArray(array.length-size()), 0, array, 0, array.length);
-		return array;
 	}
 
 	private static final long serialVersionUID = 1;

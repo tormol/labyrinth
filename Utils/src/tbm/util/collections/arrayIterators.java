@@ -14,7 +14,8 @@ public final class arrayIterators {
 	 *  from ListIterator.*/
 	public static class Unmodifiable<E> implements Iterator<E>, Iterable<E> {
 		protected final E[] array;
-		protected int next = 0;
+		/**position of the last element returned by next, starts at -1 and can be larger than array.length*/
+		protected int pos = -1;
 		protected Unmodifiable(E[] array) {
 			this.array = Objects.requireNonNull(array);
 		}
@@ -25,27 +26,38 @@ public final class arrayIterators {
 			return this;
 		}
 
-		@Override public boolean hasNext() {
-			return next != array.length;
+		//If I override forEach or forEachRemaining, skipEmpty would have to override again
+
+		/**return the next index to be returned, or >= array.length if at the end*/
+		public int nextIndex() {
+			return pos+1;
 		}
-		public final int nextIndex() {
-			hasNext();
-			return next;
+		@Override public final boolean hasNext() {
+			return nextIndex() < array.length;
 		}
-		@Override public final E next() {
-			if (hasNext())
-				return array[next++];
-			throw new NoSuchElementException();
+		@Override public E next() {
+			try {
+				return array[pos = nextIndex()];
+			} catch (ArrayIndexOutOfBoundsException e) {
+				throw new NoSuchElementException();
+			}
 		}
 
-		/**Return the next element but don't advance the iteration.*/
+		/**Return the next element but don't advance the iteration
+		 *@throws NoSuchElementException if there are no more elements.
+		 * (returning null would be meaningless if there can be null elements in the array,
+		 * and {@code if (hasNext() && peek().someFunc())} is clearer than {@code if (peek() != null  &&  peek().somefunc())}
+		 */
 		public final E peek() {
-			return hasNext() ? array[next] : null;//adds after return
+			try {
+				return array[nextIndex()];
+			} catch (ArrayIndexOutOfBoundsException e) {
+				throw new NoSuchElementException();
+			}
 		}
 		/**Skip the next element.*/
 		public final void skip() {
-			if (hasNext())
-				next++;
+			pos = nextIndex();
 		}
 	}
 
@@ -54,49 +66,67 @@ public final class arrayIterators {
 	/**{@inheritDoc}
 	 *Also skips references to instance.
 	 *Useful for some collections.*/
-	public static class UnmodifiableSkipEmpty<E extends T, T> extends Unmodifiable<E> {
-		protected final T empty;//protected to not leak poison values
-		public UnmodifiableSkipEmpty(E[] array, T empty) {
+	public static class UnmodifiableSkipEmpty<E> extends Unmodifiable<E> {
+		/**cache for nextIndex()*/
+		protected int next = -1;
+
+		public UnmodifiableSkipEmpty(E[] array) {
 			super(array);
-			this.empty = empty;
 		}
 
-		/**{@inheritDoc}
-		 *Automatically skip null elements.*/
-		@Override public boolean hasNext() {
-			while (next < array.length)
-				if (array[next] == empty)
-					next++;
-				else
-					return true;
-			return false;
+		@Override public int nextIndex() {
+			if (next == -1)
+				for (next = pos+1;  next < array.length;  next++)
+					if (array[next] != emptyElement())
+						break;
+			return next;
 		}
 
+		@Override public E next() {
+			E e = super.next();
+			next = -1;//reset if next() didn't throw
+			return e;
+		}
+
+		/**@return {@code null}*/
+		protected Object emptyElement() {
+			return null;
+		}
 	}
 
 
 	/**{@inheritDoc}
 	 *Supports <tt>remove()</tt>.*/
-	public static class SkipEmpty<E extends T, T> extends UnmodifiableSkipEmpty<E, T> {
-		public SkipEmpty(E[] array, T empty) {
-			super(array, empty);
+	public static class SkipEmpty<E> extends UnmodifiableSkipEmpty<E> {
+		public SkipEmpty(E[] array) {
+			super(array);
 		}
 
-		protected void replaceLast(T t) {
-			if (next == 0)
-				throw new IllegalStateException();
-			((T[])array)[next] = t;//why does this work?
+		/**@return {@code true} if element was empty*/
+		protected void setLast(Object o) {
+			try {
+				if (((Object[])array)[pos] == emptyElement())
+					throw new IllegalStateException("Element has already been removed");
+				((Object[])array)[pos] = o;
+			} catch (ArrayIndexOutOfBoundsException e) {
+				if (pos == -1)
+					throw new IllegalStateException("Must call next() first");
+				if (pos >= array.length)
+					throw new IllegalStateException("No more elements");
+				throw e;
+			}
 		}
 
 		/**replaces the last returned element with e*/
-		public final void replace(E e) {
-			replaceLast(e);
+		public final void set(E e) {
+			setLast(e);
 		}
 
 		/**{@inheritDoc}
 		 *replaces the last returned element with empty*/
 		@Override public final void remove() {
-			replaceLast(empty);
+			setLast(emptyElement());
+			//FIXME somehow decrement size
 		}
 
 		//add() could work when there are null elements before nextIndex(), but that would be unreliable
