@@ -29,6 +29,7 @@ public class ArrayList<E> implements List<E>, RandomAccess, Serializable, Clonea
 	@SafeVarargs
 	public ArrayList(E... elements) {
 		this.elements = elements;
+		end = elements.length;
 	}
 	public ArrayList() {
 		this(default_size);
@@ -429,20 +430,50 @@ public class ArrayList<E> implements List<E>, RandomAccess, Serializable, Clonea
 	}
 
 
-	/*//guava's IteratorTester is hard to follow
+	//non-List methods
+	public E getFirst()       {return get(0);}
+	public E getLast()        {return get(size()-1);}
+	public E removeFirst()    {return remove(0);}
+	public E removeLast()     {return remove(size()-1);}
+	public void addFirst(E e) {add(0, e);}
+	public void addLast(E e)  {add(e);}
+
+
+
+	private static void print(Object o) {
+		System.out.println(o.toString());
+	}
+	//guava's IteratorTester is hard to follow
 	public static void main(String[] args) {
-		ArrayList<String> list = new ArrayList<>(Arrays.asList("t"));
-		ListIterator<String> iter = list.listIterator();
-		System.out.println(iter.hasNext());
+		ArrayList<String> list = new ArrayList<>(2);
+		list.add("a");
+		list.add("b");
+		list.add("c");
+		list.remove("a");
+		print(list + " "+list.size());
+
+		list.set(1, null);
+		print("set(1,null): "+list.equals(Arrays.asList("b", null)));
+		list.add(2, "o");
+		print(list.get(2));
+
+		list.add(0, "t");
+		list.retainAll(Arrays.asList("o","t","h"));
+		print("retainall: "+list);
+
+		ListIterator<String> iter = list.listIterator(1);
+		print(iter.hasNext());
 		iter.add("e");
-		//try {System.out.println(iter.previous());}
-		//	catch (NoSuchElementException e) {}
-		//iter.remove();
-		iter.add("q");
-		System.out.println(iter.hasNext());
+		print("iter add e: "+list);
 		try {System.out.println(iter.previous());}
 			catch (NoSuchElementException e) {}
 		iter.remove();
-		System.out.println(list);
-	}*/
+		iter.next();
+		iter.add("q");
+		print("iter replace e with q "+list);
+		try {print(iter.previous());}
+			catch (NoSuchElementException e) {}
+		iter.set("1");
+		print(list);
+	}
 }
