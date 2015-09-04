@@ -5,16 +5,36 @@ import tbm.util.Random;
 /***/
 public enum Direction {
 	/**axis: Y  angle: pi/2*/
-	NORTH(Y, +Math.PI/2),
+	NORTH(Y, +Math.PI/2) {
+		@Override public Direction     left() {return  WEST;}
+		@Override public Direction    right() {return  EAST;}
+		@Override public Direction opposite() {return SOUTH;}
+	},
 	/**axis: Y  angle: -pi/2*/
-	SOUTH(Y, -Math.PI/2),
+	SOUTH(Y, -Math.PI/2) {
+		@Override public Direction     left() {return  EAST;}
+		@Override public Direction    right() {return  WEST;}
+		@Override public Direction opposite() {return NORTH;}
+	},
 	 /**axis: X  angle: pi*/
-	 WEST(X, Math.PI),
+	 WEST(X, Math.PI) {
+		@Override public Direction     left() {return NORTH;}
+		@Override public Direction    right() {return SOUTH;}
+		@Override public Direction opposite() {return  EAST;}
+	},
 	 /**axis: X, angle: 0*/
-	 EAST(X, 0),
+	 EAST(X, 0) {
+		@Override public Direction     left() {return SOUTH;}
+		@Override public Direction    right() {return NORTH;}
+		@Override public Direction opposite() {return  WEST;}
+	},
 	 /**axis: null,  angle: NaN
 	  *If you don't want this member, create a simple wrapper*/
-	 NONE(null, Double.NaN);
+	 NONE(null, Double.NaN) {
+		@Override public Direction     left() {return  NONE;}
+		@Override public Direction    right() {return  NONE;}
+		@Override public Direction opposite() {return  NONE;}
+	};
 
 	/**the axis of this direction. WEST,EAST->X  NORTH,SOUTH->Y*/
 	public final Axis axis;
@@ -27,43 +47,21 @@ public enum Direction {
 
 	/**if you face this direction and look left, you look...
 	 * NORTH->WEST WEST->SOUTH SOUTH->EAST EAST->NORTH*/
-	public Direction left() {switch (this) {
-		case NORTH:	return WEST;
-		case SOUTH:	return EAST;
-		case WEST:	return SOUTH;
-		case EAST:	return NORTH;
-		case NONE:  return NONE;
-		default:	throw new RuntimeException();
-	}}
+	public abstract Direction left();
+
 	/**if you face this direction and look right, you look...
 	 * NORTH->EAST EAST->SOUTH SOUTH->WEST WEST->NORTH*/
-	public Direction right() {switch (this) {
-		case NORTH:	return EAST;
-		case SOUTH:	return WEST;
-		case WEST:	return NORTH;
-		case EAST:	return SOUTH;
-		case NONE:  return NONE;
-		default:	throw new AssertionError("Unhandled Direction "+toString());
-	}}
+	public abstract Direction right();
+
 	/**gives the opposite direction
 	 * NORTH->SOUTH SOUTH->NORTH WEST->EAST EAST->WEST*/
-	public Direction opposite() {switch (this) {
-		case NORTH:	return SOUTH;
-		case SOUTH:	return NORTH;
-		case WEST:	return EAST;
-		case EAST:	return WEST;
-		case NONE:  return NONE;
-		default:	throw new AssertionError("Unhandled Direction "+toString());
-	}}
+	public abstract Direction opposite();
+
 
 	/**Return a random direction except NONE*/
-	public static Direction random() {switch (Random.rand.nextInt(4)) {
-		case  0:	return EAST;
-		case  1:	return NORTH;
-		case  2:	return WEST;
-		case  3:	return SOUTH;
-		default:	throw new AssertionError("value from tbm.util.Random out of range.");
-	}}
+	public static Direction random() {
+		return values()[Random.rand.nextInt(4)];
+	}
 
 	/**value.equals(): north->NORTH south->SOUTH west->WEST east->EAST other->NONE*/
 	public static <T> Direction find(T value, T north, T south, T west, T east) {

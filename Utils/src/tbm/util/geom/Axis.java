@@ -1,20 +1,14 @@
 package tbm.util.geom;
 
 public enum Axis {
-	X('x'),Y('y');
-	/**lowercase letter of axis*/
-	public final char letter;
-
+	X('x') {@Override public Axis flip() {return Y;}},
+	Y('y') {@Override public Axis flip() {return X;}};
 	Axis(char c) {
 		this.letter = c;
 	}
 
+	/**lowercase letter of axis*/
+	public final char letter;
 	/**get the other axis: X->Y, Y->X*/
-	public Axis flip() {
-		switch (this) {
-		  case X: return Y;
-		  case Y: return X;
-		  default: throw new AssertionError("Unhandled Axis "+this.toString());
-		}
-	}
+	public abstract Axis flip();
 }
