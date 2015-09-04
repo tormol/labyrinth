@@ -82,10 +82,6 @@ public final class randomAccessIterators {
 
 
 	public static interface Modifiable<E> extends Iterator<E> {
-		default E emptyValue() {
-			return null;
-		}
-
 		@Override void remove();
 	}
 
@@ -99,86 +95,6 @@ public final class randomAccessIterators {
 	public static abstract class ModifiableOneWayListIterator<E> extends OneWayListIterator<E> implements Modifiable<E> {
 		
 	}
-
-
-
-
-	private static abstract class ListIterator<E> extends OneWayListIterator<E> implements java.util.ListIterator<E> {
-		protected boolean forward = true;
-		protected ListIterator(int pos) throws IndexOutOfBoundsException {
-			this.pos = pos;
-			if (pos < 0)
-				throw new IndexOutOfBoundsException("pos = "+pos+" < 0");
-			if (pos > maxIndex())
-				throw new IndexOutOfBoundsException("pos = "+pos+" > array.length = "+maxIndex());
-		}
-
-		@Override public int nextIndex() {
-			return pos + (forward ? 1 : 0);
-		}
-		@Override public int previousIndex() {
-			return pos - (forward ? 0 : 1);
-		}
-
-		@Override public E next() {
-			E e = get(nextIndex(), true);
-			forward = true;
-			return e;
-		}
-		/**{@inheritDoc}
-		 *Is idempotent when NoSuchElementException is thrown*/
-		@Override public E previous() {
-			E e = get(previousIndex(), true);
-			forward = false;
-			return e;
-		}
-
-		/**@throws UnsupportedOperationException always
-		 * @deprecated unsupported operation*/@Deprecated
-		@Override public final void add(E e) throws UnsupportedOperationException {
-			throw new UnsupportedOperationException();
-		}
-	}
-
-
-	public static abstract class ModifiableListIterator<E> extends ListIterator<E> implements Modifiable<E> {
-		protected ModifiableListIterator(int pos) throws IndexOutOfBoundsException {
-			super(pos);
-		}
-
-		protected abstract void setIndex(int index, E value);
-		@Override public void set(E e) {
-			try {
-				setIndex(pos, e);
-			} catch (IndexOutOfBoundsException ioobe) {
-				throw new IllegalStateException();
-			}
-		}
-
-		@Override public void remove() {
-			try {
-				if (getIndex(pos) == emptyValue())
-					throw new IllegalStateException("already removed");
-				setIndex(pos, emptyValue());
-			} catch (IndexOutOfBoundsException ioobe) {
-				throw new IllegalStateException();
-			}
-		}
-	}
-
-
-	public static abstract class UnmodifiableListIterator<E> extends ListIterator<E> implements Unmodifiable<E> {
-		protected UnmodifiableListIterator(int pos) throws IndexOutOfBoundsException {
-			super(pos);
-		}
-
-		/**@throws UnsupportedOperationException always
-		 * @deprecated unsupported operation*/@Deprecated
-		@Override public final void set(E e) throws UnsupportedOperationException {
-			throw new UnsupportedOperationException();
-		}
-	}
-
 
 
 
@@ -225,7 +141,7 @@ public final class randomAccessIterators {
 			try {
 				if (getIndex(pos) == emptyElement())
 					throw new IllegalStateException("Element has already been removed");
-				if (e == emptyValue())
+				if (e == emptyElement())
 					delIndex(pos);
 				setIndex(pos, e);
 			} catch (IndexOutOfBoundsException ioobe) {
@@ -239,8 +155,9 @@ public final class randomAccessIterators {
 
 		/**{@inheritDoc}
 		 *replaces the last returned element with empty*/
+		@SuppressWarnings("unchecked")
 		public final void remove() {
-			set(emptyValue());
+			set((E) emptyElement());
 		}
 	}
 }
