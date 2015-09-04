@@ -1,14 +1,16 @@
 package tbm.util.collections;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Consumer;
+import tbm.util.collections.randomAccessIterators.ModifiableSkipEmpty;
 
 /**A collection, nothing more, nothing less.
  * Supports null elements and doesn't use equals() or hashCode().*/
-public class ArrayCollection<E> extends AbstractCollection<E> implements Serializable {
+public class ArrayCollection<E> extends AbstractCollection<E> implements Serializable, CollectionWithToArrayType<E> {
 	/**is also used by other classes in tbm.util.collections
 	 *.toString() returns {@code "empty"}
 	 *.equals() returns {@code false}*/
@@ -49,7 +51,7 @@ public class ArrayCollection<E> extends AbstractCollection<E> implements Seriali
 		this(elements, elements.length, -1);
 	}
 	public ArrayCollection() {
-		this(new Objects[default_size],  default_size - 1,  0);
+		this(new Objects[default_size],  0,  default_size-1);
 		Arrays.fill(elements, empty);
 	}
 
@@ -181,11 +183,13 @@ public class ArrayCollection<E> extends AbstractCollection<E> implements Seriali
 
 	//Iterable
 	@SuppressWarnings("unchecked")
-	@Override public arrayIterators.SkipEmpty<E> iterator() {//might work
-		return new arrayIterators.SkipEmpty<E>((E[])elements) {
-			@Override protected Object emptyElement() {
-				return empty;
-			}
+	@Override public ModifiableSkipEmpty<E> iterator() {//might work
+		return (ModifiableSkipEmpty<E>)new ModifiableSkipEmpty<Object>() {
+			@Override protected    int	    maxIndex()                   	{return elements.length;}
+			@Override protected Object	    getIndex(int index)          	{return elements[index];}
+			@Override protected   void	    setIndex(int index, Object e)	{elements[index] = e;}
+			@Override protected   void	    delIndex(int index)          	{size--;}
+			@Override protected Object	emptyElement()                   	{return empty;}
 		};
 	}
 
@@ -223,19 +227,37 @@ public class ArrayCollection<E> extends AbstractCollection<E> implements Seriali
 		return emptys;
 	}
 
-	protected Object[] toArray(int free) throws IllegalArgumentException {
+	private <T> T[] toArray(int free, Class<T[]> type) throws IllegalArgumentException {
 		if (free < 0)
 			throw new IllegalArgumentException("free cannot be less than zero, but is "+free+'.');
 		int emptys = pack();
-		Object[] new_elements = new Object[size()+free];
+		@SuppressWarnings("unchecked")
+		T[] new_elements = (T[]) Array.newInstance(type.getComponentType(), size()+free);
 		Arrays.fill(new_elements, 0, free, empty);
 		System.arraycopy(elements, emptys, new_elements, free, size());
 		return new_elements;
 	}
-
+	@SuppressWarnings("unchecked")
+	protected E[] toArray(int free) {
+		return toArray(free, (Class<E[]>)elements.getClass());
+	}
 	@Override public Object[] toArray() {
-		return toArray(0);
+		return toArray(0, Object[].class);
+	}
+	@Override public <T> T[] toArray(Class<T[]> type) {
+		return toArray(0, type);
 	}
 
 	private static final long serialVersionUID = 1;
+
+
+	public static void main(String[] args) {
+		ArrayCollection<String> col = new ArrayCollection<>("a");
+		ModifiableSkipEmpty<String> iter = col.iterator();
+		iter.hasNext();
+		System.out.println(iter.next());
+		iter.remove();
+
+		System.out.println(col);
+	}
 }
