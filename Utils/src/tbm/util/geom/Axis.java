@@ -2,11 +2,14 @@ package tbm.util.geom;
 
 public enum Axis {
 	X('x'),Y('y');
-	public final char c;
+	/**lowercase letter of axis*/
+	public final char letter;
+
 	Axis(char c) {
-		this.c = c;
+		this.letter = c;
 	}
 
+	/**get the other axis: X->Y, Y->X*/
 	public Axis flip() {
 		switch (this) {
 		  case X: return Y;

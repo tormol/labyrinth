@@ -18,11 +18,11 @@ public enum Direction {
 
 	/**the axis of this direction. WEST,EAST->X  NORTH,SOUTH->Y*/
 	public final Axis axis;
-	/**angle in radians, relative to NORTH*/
+	/**angle in radians, relative to EAST*/
 	public final double angle;
-	private Direction(Axis axis, double theta) {
+	private Direction(Axis axis, double angle) {
 		this.axis  =  axis;
-		this.angle = theta;
+		this.angle = angle;
 	}
 
 	/**if you face this direction and look left, you look...
@@ -69,15 +69,26 @@ public enum Direction {
 	public static <T> Direction find(T value, T north, T south, T west, T east) {
 		if (value.equals(north))  return NORTH;
 		if (value.equals(south))  return SOUTH;
-		if (value.equals(west ))  return WEST;
-		if (value.equals(east ))  return EAST;
+		if (value.equals( west))  return  WEST;
+		if (value.equals( east))  return  EAST;
 		return NONE;
 	}
-	/**value.equals(): north->NORTH south->SOUTH west->WEST east->EAST other->throw Exception*/
-	public static <T> Direction get(T value, T north, T south, T west, T east) throws Exception {
+
+	/**value.equals(): north->NORTH south->SOUTH west->WEST east->EAST other->throw Exception
+	 *@throws UnknownDirectionException if value in not equal to any direction*/
+	public static <T> Direction get(T value, T north, T south, T west, T east) throws UnknownDirectionException {
 		Direction d = find(value, north, south, west, east);
 		if (d != NONE)
 			return d;
-		throw new Exception('"'+value.toString()+"' does not match any direction value.");
+		throw new UnknownDirectionException(value+" does not match any direction value.");
+	}
+
+	/**Is thrown by Direction.get() if input doesn't match a direction*/
+	//nested because I don't think it will be used much
+	public static class UnknownDirectionException extends Exception {
+		public UnknownDirectionException(String str) {
+			super(str);
+		}
+		private static final long serialVersionUID = 1;
 	}
 }
