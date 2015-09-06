@@ -48,15 +48,23 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 	protected final Object[] elements;
 	protected abstract int indexOf(Object o);
 
-	protected UnmodifiableSet(Object[] elements) {
+	protected UnmodifiableSet(Object[] elements, boolean checkForDuplicates) {
 		this.elements = elements;
+		if (checkForDuplicates)
+			checkForDuplicates();
 	}
 
+
+	protected UnmodifiableSet(Collection<? extends E> col) {
+		this(col.toArray(),  !(col instanceof Set<?>));
+	}
 
 	//Is not final so a implementation can use 2^n-1 sized arrays or store null element by setting a flag 
 	@Override public int size() {
 		return elements.length;
 	}
+
+	protected abstract void checkForDuplicates() throws IllegalArgumentException;
 
 	@Override public final boolean contains(Object o) {
 		return indexOf(o) >= 0;//UnmodifiableSortedSet.indexOf()s Array.binarySearch() can return any negative value
@@ -121,27 +129,30 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 	 *Should only be used for small sets (*/
 	private static class UnmodifiableSmallSet<E> extends UnmodifiableSet<E> {
 		protected UnmodifiableSmallSet(E[] elements, boolean fromSet) {
-			super(elements);
-			if (! fromSet) {
-				boolean hasNull = false;
-				for (int i=0; i<elements.length; i++)
-					if (elements[i] != null)
-						for (int ii=0; ii<i; ii++) {
-							if (elements[i].equals(elements[ii]))
-								throw new IllegalArgumentException("multiple "+elements[i]+'s');
-						}//keeps else if outside the loop
-					else if (hasNull)
-						throw new IllegalArgumentException("multiple nulls");
-					else
-						hasNull = true;
-			}
+			super(elements, !fromSet);
 		}
+
+		@Override protected void checkForDuplicates() {
+			boolean hasNull = false;
+			for (int i=0; i<elements.length; i++)
+				if (elements[i] != null)
+					for (int ii=0; ii<i; ii++) {
+						if (elements[i].equals(elements[ii]))
+							throw new IllegalArgumentException("multiple "+elements[i]+'s');
+					}//keeps else if outside the loop
+				else if (hasNull)
+					throw new IllegalArgumentException("multiple nulls");
+				else
+					hasNull = true;
+		}
+
 		@Override protected int indexOf(Object o) {
 			for (int i=0; i<elements.length; i++)
 				if (o == elements[i]  ||  (o != null  &&  o.equals(elements[i])))
 					return i;
 			return -1;
-		} 
+		}
+
 		private static final long serialVersionUID = 1L;
 	}
 
@@ -155,12 +166,10 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 		protected final int addToHash;
 		protected final byte shiftLeft, shiftRight;
 		protected Bits(E[] elements, int addToHash, byte shiftLeft, byte shiftRight, boolean fromSet) {
-			super(elements);
+			super(elements, false);//everything has different hash
 			this.addToHash = addToHash;
 			this.shiftLeft = shiftLeft;
 			this.shiftRight = shiftRight;
-			if ( !fromSet)
-				checkForDuplicates();
 		}
 		@Override protected int hash(Object o) {
 			return ((o.hashCode() + addToHash) << shiftLeft) >> shiftRight;

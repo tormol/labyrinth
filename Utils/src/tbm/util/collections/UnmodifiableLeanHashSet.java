@@ -45,7 +45,7 @@ public class UnmodifiableLeanHashSet<E> extends UnmodifiableHashSet<E> {
 	public final int size, shift;
 
 	protected UnmodifiableLeanHashSet(E[] elements, long[] buckets, int size, int shift) {
-		super(elements);
+		super(elements, true);
 		this.buckets = buckets;
 		this.size = size;
 		this.shift = shift;

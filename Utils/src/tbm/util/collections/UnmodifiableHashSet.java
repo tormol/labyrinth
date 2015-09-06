@@ -7,14 +7,14 @@ public abstract class UnmodifiableHashSet<E> extends UnmodifiableSet<E> {
 	 *@param o not null*/
 	protected abstract int hash(Object o);
 
-	protected UnmodifiableHashSet(Object[] elements) {
-		super(elements);
+	protected UnmodifiableHashSet(Object[] elements, boolean fromSet) {
+		super(elements, !fromSet);
 	}
 
 	/**Check for duplicates by setting an elementt to ArrayCollection.empty and see if the set still contains() the removed element.
 	 *Makes a copy of elements if it's not an Object[]
 	 *@throws IllegalArgumentException if one elements equals another*/
-	protected void checkForDuplicates() throws IllegalArgumentException {
+	@Override protected void checkForDuplicates() throws IllegalArgumentException {
 		Object[] elements = this.elements;
 		if (elements.getClass() == Object[].class)
 			elements = Arrays.copyOf(elements, elements.length, Object[].class);

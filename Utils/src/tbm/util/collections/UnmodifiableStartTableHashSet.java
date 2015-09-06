@@ -10,8 +10,9 @@ public class UnmodifiableStartTableHashSet<E> extends UnmodifiableHashSet<E> {
 	/**must be between 0.5 and 1*/
 	public static final float default_roundDown_treshold = 0.75f;
 	protected final int[] startsAt;
+
 	protected UnmodifiableStartTableHashSet(Object[] elements, boolean fromSet) {
-		super(elements);
+		super(elements, true);//need to fill startsAt[] first
 		int highest = Integer.highestOneBit(elements.length);
 		int roundUp = (highest << 1) - 1;
 		int roundDown = highest - 1;
@@ -24,21 +25,28 @@ public class UnmodifiableStartTableHashSet<E> extends UnmodifiableHashSet<E> {
 		int startsAt = 0;
 		for (int hash=0; hash<hashes; hash++) {
 			this.startsAt[hash] = startsAt;
-			while (startsAt < elements.length  &&  hash == hash(elements[startsAt])) {
-				if ( !fromSet)
-					for (int i=this.startsAt[hash]; i<startsAt; i++)
-						if (elements[startsAt].equals(elements[i]))
-							throw new IllegalArgumentException("multiple "+elements[startsAt]+'s');
+			while (startsAt < elements.length  &&  hash == hash(elements[startsAt]))
 				startsAt++;
-			}
 		}
 		this.startsAt[hashes] = startsAt;//the extra one
+
+		if ( !fromSet)
+			checkForDuplicates();
+	}
+
+	@Override protected void checkForDuplicates() throws IllegalArgumentException {
+		for (int hash = 0;  hash+1 < startsAt.length;  hash++)//for each hash value
+			for (int a = startsAt[hash]+1;  a < startsAt[hash+1];  a++)//for each element with hash except the first
+				for (int b = startsAt[hash];  b < a;  b++)//for each element with hash before a
+					if (elements[a].equals(elements[b]))
+						throw new IllegalArgumentException("multiple "+elements[a]+'s');
 	}
 
 	//UnmodifiableHashSet methods
 	@Override protected int hash(Object o) {
 		return o.hashCode() & (startsAt.length-2);
 	}
+
 	@Override protected int indexOf(Object o) {
 		if (o != null)
 			for (int i=startsAt[hash(o)];  i<startsAt[hash(o)+1];  i++)
