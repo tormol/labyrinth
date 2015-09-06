@@ -234,15 +234,16 @@ public class ParseNum {
 
 		if (min > max)
 			throw new IllegalArgumentException("min must be smaller or equal to max, but min="+min+" and max="+max);
-		if (max<0  && c != '-')
-			
+		if (max < 0  && c != '-')
+			throw new NumberFormatException("must be negative");
+
 		if (c == '-') {
 			if (min >= 0)
-				throw new NumberFormatException("Number cannot be negative.");
+				throw new NumberFormatException("cannot be negative");
 			negative = true;
 			max = min;
 		} else if (max < 0)
-			throw new NumberFormatException("Number must start with a minus sign.");
+			throw new NumberFormatException("must start with a minus sign");
 
 		long num = parse(Integer.MAX_VALUE, max);//infinite digits
 		return negative ? -num : num;
