@@ -17,7 +17,7 @@ import java.util.function.Predicate;
  *@eprecated use java.util.LinkedList
  */
 public class LinkedList<E> implements List<E>, Serializable, Cloneable {
-	protected static class Link<E> {
+	protected static class Link<E> implements Serializable {
 		protected Link<E> prev, next;
 		protected E element;
 		protected Link(Link<E> prev, Link<E> next, E elements) {
@@ -25,6 +25,7 @@ public class LinkedList<E> implements List<E>, Serializable, Cloneable {
 			this.next = next;
 			this.element = elements;
 		}
+		private static final long serialVersionUID = 1L;
 	}
 
 	//would be nice to have those methods inside Link, but I need List instance too
@@ -432,6 +433,6 @@ public class LinkedList<E> implements List<E>, Serializable, Cloneable {
 			int index = super.lastIndexOf(o);
 			return index>=0 ? index : -1;//might go past start
 		}
-		private static final long serialVersionUID = 1;
+		private static final long serialVersionUID = 1L;
 	}
 }

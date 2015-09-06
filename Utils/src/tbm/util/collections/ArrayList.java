@@ -60,7 +60,8 @@ public class ArrayList<E> implements List<E>, RandomAccess, Serializable, Clonea
 	/**@param index untrusted parameter to a list-specific method
 	 *@return index + start
 	 *@throws IndexOutOfBoundsException if not 0 <= index < size()*/
-	protected int absoluteIndex(int index, boolean canAdd) {
+	@javax.annotation.CheckReturnValue//findbugs: this method throws exception
+	protected int absoluteIndex(int index, boolean canAdd) throws IndexOutOfBoundsException {
 		if (index < 0)
 			throw new IndexOutOfBoundsException("index cannot be negative but was "+index);
 		if (index > size()  ||  (!canAdd && index == size()))
