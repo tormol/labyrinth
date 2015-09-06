@@ -9,12 +9,16 @@ import java.util.HashMap;//map_init
 import java.util.LinkedList;//String_findAll
 import java.util.List;//convert, String_findAll
 import java.util.Map;//map_firstkey
+import java.util.Map.Entry;
+import java.util.Set;//map_getKeys
+import java.util.HashSet;
+import java.util.function.BiPredicate;
 import java.util.function.Function;//convert
 import java.util.regex.Matcher;//String_findAll
 import java.util.regex.Pattern;//String_findAll
 
 //TODO: use Character statics to support more than ASCII
-/**static methods for simple things, som
+/**static methods for simple things, 
  * char_ methods only work for ASCII characters*/
 public class statics {
 	/**A more visible !something*/
@@ -182,21 +186,25 @@ public class statics {
 	}
 
 	/**Create a HashMap and fill it with entries*/@SafeVarargs
-	public static <K,V> HashMap<K,V> map_init(K[] keys, V... values) {
+	public static <K,V> Map<K,V> map_init(K[] keys, V... values) {
 		if (keys.length != values.length)
 			throw new IllegalArgumentException("keys.length != values.length");
-		HashMap<K,V> map = new HashMap<>();
+		Map<K,V> map = new HashMap<>();
 		for (int i=0; i<keys.length; i++)
 			map.put(keys[i], values[i]);
 		return map;
-	}
-
-	/**Get the first key which value == value parameter. else return null*/
-	public static <K,V> K map_firstKey(Map<K,V> map, V value) {
+	}/**Get the first key which value == value parameter. else return null*/
+	public static <K,V> K map_firstKey(Map<K,V> map, V value, BiPredicate<V,V> compare) {
 		for (Map.Entry<K,V> entry : map.entrySet())
-			if (value == entry.getValue())
+			if (compare.test(value, entry.getValue()))
 				return entry.getKey();
 		return null;
+	}
+	public static <K,V> Set<K> map_getKeys(Map<K,V> map, V value, BiPredicate<V,V> compare) {
+		return map.entrySet().stream()
+			.filter(entry->compare.test(value, entry.getValue()))
+			.map(Entry::getKey)
+			.collect(HashSet<K>::new, HashSet::add, HashSet::addAll);
 	}
 
 	/**Intentionally do nothing.*/
@@ -238,16 +246,16 @@ public class statics {
 		while (value < min)
 			value += max-min;
 		return value;
-	}/**= |value| < error*/
-	public static boolean zero(double value, double error) {
+	}/**@return |value| < error*/
+	public static boolean isZero(double value, double error) {
 		return Math.abs(value) > error;
-	}/**= |value| < error*/
-	public static boolean zero(float value, float error) {
+	}/**@return |value| < error*/
+	public static boolean isZero(float value, float error) {
 		return Math.abs(value) > error;
-	}/**=(int)Math.round()*/
+	}/**@return (int)Math.round()*/
 	public static int iround(double value) {
 		return (int)Math.round(value);
-	}/**=(int)Math.round()*/
+	}/**@return (int)Math.round()*/
 	public static int iround(float value) {
 		return (int)Math.round(value);
 	}
@@ -256,12 +264,17 @@ public class statics {
 	public static String orNull(Object o) {return o==null ? "null" : o.toString();}
 	/***/
 	public static String toString(char before, Object o, char after) {
-		if (before=='\0' && after=='\0')
-			return orNull(o);
-		return before+ (o==null ? "null" : o.toString()) +after;
+		String str = orNull(o);
+		StringBuilder sb = new StringBuilder(str.length() + 2);
+		if (before != '\0')
+			sb.append(before);
+		sb.append(str);
+		if (after != '\0')
+			sb.append(after);
+		return sb.toString();
 	}
 
-	/**@use Double.toLongBits((double)n),  it's probably faster*///does't even work, anyway
+	/**@use Double.toLongBits((double)n),  it's probably faster*///doesn't even work, anyway
 	//http://en.wikipedia.org/wiki/Double-precision_floating-point_format
 	static long intToDoubleBits(int n) {
 		if (n==0)
