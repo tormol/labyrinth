@@ -1,4 +1,5 @@
-/guava-libraries
+/guava
+
 #generated files
 #/tbm/util/geom/.gitignore
 *.ignore
