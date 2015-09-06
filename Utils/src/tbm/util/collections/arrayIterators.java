@@ -19,6 +19,23 @@ public class arrayIterators {
 
 
 
+	/***/
+	public static class UnmodifiableSkipEmptyArrayIterator<E> extends UnmodifiableSkipEmpty<E> {
+		private final E[] array;
+		private final Object empty;
+		@Override protected    int maxIndex()         	{return array.length;}
+		@Override protected      E getIndex(int index)	{return array[index];}
+		@Override protected Object emptyElement()     	{return empty;}
+
+		@SafeVarargs//never changed
+		public UnmodifiableSkipEmptyArrayIterator(Object empty, E... array) {
+			this.empty = empty;
+			this.array = Objects.requireNonNull(array, "array is null");
+		}
+	}
+
+
+
 	/**An array-backed ListIterator that supports <tt>set(e)</tt> but not <tt>add(e)</tt> or <tt>remove()</tt>*/
 	public static class ArrayListIterator<E> implements ListIterator<E> {
 		private final E[] array;

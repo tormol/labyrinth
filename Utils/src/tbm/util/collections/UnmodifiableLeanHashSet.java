@@ -77,7 +77,9 @@ public class UnmodifiableLeanHashSet<E> extends UnmodifiableHashSet<E> {
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override public arrayIterators.Unmodifiable<E> iterator() {
-		return new arrayIterators.UnmodifiableSkipEmpty<E, Object>((E[])elements, ArrayCollection.empty);
+	@Override public ExtendedIterator<E> iterator() {
+		return new arrayIterators.UnmodifiableSkipEmptyArrayIterator<E>(ArrayCollection.empty, (E[])elements);
 	}
+
+	private static final long serialVersionUID = 1L;
 }
