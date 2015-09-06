@@ -1,10 +1,9 @@
 package tbm.util.collections;
 import static java.util.Objects.requireNonNull;
-
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.Objects;
 import java.util.Set;
 
 public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
@@ -12,7 +11,7 @@ public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
 		if (c instanceof LeanHashSet)
 			return ((LeanHashSet<E>)c).clone();
 		return new LeanHashSet<E>(c);
-	}
+ 	}
 
 
 	public LeanHashSet(int initialCapacity, float ratio) {
@@ -30,14 +29,12 @@ public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
 	}
 
 
-	@Override//Leanhash
-	protected final int ew() {
+	@Override protected final int ew() {
 		return 1;
 	}
 
 
-	@Override//Set
-	public boolean add(E e) {
+	@Override public boolean add(E e) {
 		long hash_index = indexOf(e);
 		if (index(hash_index) != -1)
 			return false;
@@ -45,8 +42,7 @@ public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
 		return true;
 	}
 
-	@Override//SetWithGet
-	public E get(Object obj) {
+	@Override public E get(Object obj) {
 		//ok to throw NullPointerException if obj == null
 		int index = index(indexOf(obj));
 		if (index == -1)
@@ -54,90 +50,74 @@ public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
 		return elements[index];
 	}
 
-	@Override//Set
-	public boolean contains(Object obj) {
+	@Override public boolean contains(Object obj) {
 		if (obj == null)
 			return false;
 		return index(indexOf(obj)) != -1;
 	}
 
-	@Override//Set
-	public boolean remove(Object obj) {
+	@Override public boolean remove(Object obj) {
 		return remove_element(obj) != -1;
 	}
 
 
-	@Override//Set
-	public boolean addAll(Collection<? extends E> col) {
+	@Override public boolean addAll(Collection<? extends E> col) {
 		boolean modified = false;
 		for (E e : col)
 			modified |= add(e);
 		return modified;
 	}
 
-	@Override//Set
-	public boolean containsAll(Collection<?> col) {
+	@Override public boolean containsAll(Collection<?> col) {
 		for (Object e : col)
 			if (! this.contains(e))
 				return false;
 		return true;
 	}
 
-	@Override//Set
-	public boolean removeAll(Collection<?> col) {
+	@Override public boolean removeAll(Collection<?> col) {
 		boolean modified = false;
 		for (Object e : col)
 			modified |= remove(e);
 		return modified;
 	}
 
-	@Override//Set
-	public boolean retainAll(Collection<?> col) {
+	@Override public boolean retainAll(Collection<?> col) {
 		boolean modified = false;
-		int i = -ew();
-		while ((i = nextAfter(i)) != -1)
-			if (! col.contains(elements[i])) {
-				remove_index(hash(elements[i]), i);
+		for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
+			if (! col.contains(elements[index(b_i)])) {
+				remove_index(hash(elements[index(b_i)]), index(b_i));
 				modified = true;
 			}
 		return modified;
 	}
 
 
-	@Override//Set
-	public Iterator<E> iterator() {
-		return new Iter<E>(-1);
+	@Override public Iterator<E> iterator() {
+		return new Iter<E>() {
+			@Override protected E getIndex(int index) {
+				return elements[index];
+			}
+		};
 	}
 
-	/**Uses <tt>o.contains()</tt>
-	 * Is capacity-bound.*/@Override//LeanHash
-	public boolean equals(Object o) {
+	@Override public boolean equals(Object o) {
 		if (o instanceof LeanHashSet)
 			return super.equals(o);
 		if (! (o instanceof Set))
 			return false;
-		Set<?> set = (Set<?>)o;
-
-		if (this.size() != set.size())
-			return false;
-		//The loop only checks that this is a subset of set, size
-		int i = -ew();
-		while ((i = nextAfter(i))  !=  -1)
-			if (! set.contains(elements[i]))
-				return false;
-		return true;
+		Set<?> other = (Set<?>)o;
+		return this.size() == other.size()  &&  this.containsAll(other);
 	}
 
-
-
-
-	@Override//LeanHash
-	public LeanHashSet<E> clone() {
-		return new LeanHashSet<E>(elements.clone(), buckets.clone());
+	@Override public LeanHashSet<E> clone() {
+		LeanHash<E> clone = super.clone();
+		if (clone == null)
+			clone = new LeanHashSet<>(elements.clone(), buckets.clone());
+		return (LeanHashSet<E>) clone;
 	}
 
-	@Override//Set
-	public String toString() {
+	@Override public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append('[');
 		for (E el : elements)
@@ -149,22 +129,21 @@ public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
 		return sb.toString();
 	}
 
-	@Override//Set
-	public Object[] toArray() {
-		Object[] copy = new Object[size()];
+	@SuppressWarnings("unchecked")
+	@Override public <T> T[] toArray(Class<T[]> ofType) {
+		T[] copy = (T[]) Array.newInstance(ofType.getComponentType(), size());
 		int put = copy.length;//FIXME: why opposite order?
 		for (E el : elements)
 			if (el != null) {
 				put--;
-				copy[put] = el;
+				copy[put] = (T)el;
 			}
 		return copy;
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override//Set
-	public <T> T[] toArray(T[] copy) {
-		Objects.requireNonNull(copy);
+	@Override public <T> T[] toArray(T[] copy) {
+		requireNonNull(copy);
 		int put = 0;//elements must be from start of array
 		int from = elements.length;//FIXME: why opposite order?
 		while (from > 0) {

@@ -5,24 +5,31 @@ import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.AbstractMap.SimpleImmutableEntry;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 @SuppressWarnings("unchecked")
 public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,V> {
-	public LeanHashMap(Map<K, V> map) {
-		super(requireNonNull(map).size(), 1.2f);
-		putAll(map);
-	}
-
-	public LeanHashMap(int initialCapacity, float ratio) {
-		super(initialCapacity, ratio);
-	}
-
 	protected LeanHashMap(Object[] elements, long[] buckets) {
 		super(elements, buckets);
 	}
+
+	public LeanHashMap() {
+		this(default_initial_size(), default_ratio);
+	}
+	public LeanHashMap(int initialCapacity, float ratio) {
+		super(initialCapacity, ratio);
+	}
+	public LeanHashMap(Map<K,V> map) {
+		this(requireNonNull(map).size(), 1.2f);
+		putAll(map);
+	}
+
 
 	@Override
 	protected int ew() {
@@ -30,14 +37,36 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 	}
 
 
-	public V get(Object key) {
+	@Override public void forEach(BiConsumer<? super K, ? super V> bc) {
+		for (long bucket : buckets) {
+			int start = index(bucket);
+			int end = start + elements(bucket)*ew();
+			for (int i=start; i<end; i+=ew())
+				bc.accept((K)elements[i], (V)elements[i+1]);
+		}
+	}
+	//can't improve on IterableMap's forEach(Entry<>)
+
+	public boolean removeIf(BiPredicate<? super K, ? super V> cond) {
+		boolean removed = false;
+		for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
+			if (cond.test((K)elements[index(b_i)], (V)elements[index(b_i)+1])) {
+				remove_index(hash(b_i), index(b_i));
+				removed = true;
+			}
+		return removed;
+	}
+
+
+
+	@Override public V get(Object key) {
 		int index = index(indexOf(key));
 		if (index == -1)
 			return null;
 		return (V)elements[index+1];
 	}
 
-	public V put(K key, V value) {
+	@Override public V put(K key, V value) {
 		long hash_index = indexOf(key);
 		int index = index(hash_index);
 		V prev = null;
@@ -49,57 +78,8 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 		return prev;
 	}
 
-	public V remove(Object key) {
-		int removed = remove_element(key);
-		if (removed == -1)
-			return null;
-		V old = (V)elements[removed+1];
-		elements[removed+1] = null;
-		return old;
-	}
-
-
-	/**Uses <tt>o.containsKey()</tt>*/@Override//Object
-	public boolean equals(Object obj) {
-		if (obj instanceof LeanHashMap)
-			return super.equals(obj);
-		if (! (obj instanceof Map))
-			return false;
-		Map<K,V> map = (Map<K,V>)obj;
-
-		if (this.size() != map.size())
-			return false;
-		//The loop only checks that this is a submap of map, size 
-
-		int i = -ew();
-		while ((i = nextAfter(i))  !=  -1);
-			if (! map.containsKey(elements[i]))
-				return false;
-		return true;
-	}
-
-
-	@Override
-	public LeanHashMap<K,V> clone() {
-		return new LeanHashMap<K,V>(elements.clone(), buckets.clone());
-	}
-
-
-	@Override
-	public boolean containsKey(Object key) {
-		return index(indexOf(key)) != -1;
-	}
-
-	@Override
-	public boolean containsValue(Object value) {
-		for (int i = 1;  i < elements.length;  i += 2)
-			if (elements[i] == value)
-				return true;
-		return false;
-	}
-	@Override
-	public void putAll(Map<? extends K, ? extends V> m) {
-		m.forEach((k,v)->put(k,v));
+	@Override public void putAll(Map<? extends K, ? extends V> m) {
+		m.forEach(this::put);
 		//// java 7:
 		//Iterable<Entry<K,V>> iterable;
 		//if (m instanceof Iterable)
@@ -110,108 +90,358 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 		//	put(e.getKey(), e.getValue());
 	}
 
-	@Override
-	public void forEach(BiConsumer<? super K, ? super V> bc) {
-		int i = -2;
-		while ((i = nextAfter(i))  !=  -1)
-			bc.accept((K)elements[i], (V)elements[i+1]);
+	@Override public V remove(Object key) {
+		long hash_index = indexOf(key);
+		if (index(hash_index) == -1)
+			return null;
+		V old = (V)elements[index(hash_index)+1];//is cleared by remove_index()
+		remove_index(hash(hash_index), index(hash_index));
+		return old;
+	}
+
+	@Override public boolean remove(Object key, Object value) {
+		long hash_index = indexOf(key);
+		if (index(hash_index) == -1  ||  !Objects.equals((V)elements[index(hash_index) + 1], value))
+			return false;
+		elements[index(hash_index) + 1] = null;
+		remove_index(hash(hash_index), index(hash_index));
+		return true;
 	}
 
 
-	/**So inner classes can get size()
-	 *@return <tt>this</tt>*/
-	protected LeanHashMap<K,V> outer() {
-		return this;
-	}
-	
+	@Override public boolean equals(Object obj) {
+		if (obj instanceof LeanHashMap)
+			return super.equals(obj);
+		if (! (obj instanceof Map))
+			return false;
+		Map<K,V> map = (Map<K,V>)obj;
 
-	public Collection<V> values() {
+		if (this.size() != map.size())
+			return false;
+		//The loop only checks that this is a submap of map, if there was more elements, sizes would be different 
+
+		for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
+			if (! map.containsKey(elements[index(b_i)])  ||  !Objects.equals(map.get(elements[index(b_i)]), elements[index(b_i)+1]))
+				return false;
+		return true;
+	}
+
+	@Override public int hashCode() {
+		int hashCode = 0;
+		for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i)) {
+			int keyHash = elements[index(b_i)].hashCode(); //is the same for each key in a bucket.
+            //(cannot use bucket index because it's only the n least significant bits.)
+			int valHash = elements[index(b_i)+1] == null ? 0 : elements[index(b_i)+1].hashCode();
+			hashCode += keyHash ^ valHash;
+		}
+		return hashCode;
+	}
+
+	/**the only difference between map.toString() and map.etrySet().toString() is the enclosing {} or []*/
+	protected String toString(char first, char last) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(first);
+		for (int i=0; i<elements.length; i+=ew())//must be the same order as entrySet().iterator()
+			if (elements[i] != null)
+				sb.append(elements[i]).append('=')
+				  .append(elements[i+1]).append(", ");
+		if (sb.length() > 1)
+			sb.delete(sb.length()-2, sb.length());
+		return sb.append(last).toString();
+	}
+
+	@Override public String toString() {
+		return toString('{', '}');
+	}
+
+	@Override public LeanHashMap<K,V> clone() {
+		return new LeanHashMap<K,V>(elements.clone(), buckets.clone());
+	}
+
+
+
+	  //////////
+	 //Values//
+	//////////
+
+	@Override public boolean containsValue(Object value) {
+		for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
+			if (Objects.equals(elements[index(b_i) + 1],  value))
+				return true;
+		return false;
+	}
+
+	@Override public Collection<V> values() {
 		return new ValueCollection();
 	}
 
-	protected class ValueCollection extends AbstractCollection<V> {
+	protected class ValueCollection extends AbstractCollection<V> implements CollectionWithToArrayType<V> {
 		@Override public Iterator<V> iterator() {
-			return new Iter<V>(-1);//gives offset indexes, => values
+			return new Iter<V>() {
+				@Override public V getIndex(int index) {
+					return (V)elements[index+1];
+				}
+			};
+		}
+		@Override public void forEach(Consumer<? super V> action) {
+			//LeanHashMap.this.forEach((k,v) -> action.accept(v));
+			for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
+				action.accept((V) elements[index(b_i) + 1]);
 		}
 		@Override public int size() {
-			return outer().size();
+			return LeanHashMap.this.size();
 		}
+		@Override public boolean contains(Object value) {
+			return LeanHashMap.this.containsValue(value);
+		}
+		@Override public boolean removeIf(Predicate<? super V> cond) {
+			boolean removed = false;
+			//LeanHashMap.this.removeIf((k,v)->cond.test(v));
+			for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
+				if (cond.test((V)elements[index(b_i) + 1 ])) {
+					remove_index(hash(b_i),  index(b_i));
+					removed = true;
+				}
+			return removed;
+		}
+		@Override public boolean removeAll(Collection<?> col) {//removes all occurrences of every element
+			return removeIf(col::contains);
+		}
+		@Override public boolean remove(Object o) {
+			//to only return true once, a Predicate varsion would be longer and less readable
+			for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
+				if (Objects.equals(elements[index(b_i) + 1],  o)) {
+					remove_index(hash(b_i),  index(b_i));
+					return true;//only remove the first occurrence
+				}
+			return false;
+		}
+		@Override public void clear() {
+			LeanHashMap.this.clear();
+		}
+		//toArray and toString might as well be Iterator-based since size is unknown
 	}
 
 
-	public Set<K> keySet() {
+
+	  ////////
+	 //keys//
+	////////
+
+	@Override public boolean containsKey(Object key) {
+		if (key == null)
+			return false;
+		return index(indexOf(key)) != -1;
+	}
+
+	@Override public Set<K> keySet() {
 		return new KeySet();
 	}
 
-	protected class KeySet extends AbstractSet<K> {
+	protected class KeySet extends AbstractSet<K> implements SetWithGet<K> {
 		@Override public Iterator<K> iterator() {
-			return new Iter<K>(-2);
-		}
-		@Override public int size() {
-			return outer().size();
-		}
-	}
-
-
-	/**{@inheritDoc}
-	 *Guaranteed fresh Entry instances, also immutable.*/
-	public Set<Map.Entry<K, V>> entrySet() {
-		return new EntrySet();
-	}
-
-	protected class EntrySet extends AbstractSet<Map.Entry<K,V>> {
-		@Override public Iterator<Map.Entry<K,V>> iterator() {
-			return new Iter<Map.Entry<K, V>>(-2) {
-				@Override protected SimpleImmutableEntry<K,V> value(int index) {
-					return new SimpleImmutableEntry<K,V>((K)elements[index], (V)elements[index+1]);
+			return new Iter<K>() {
+				@Override protected K getIndex(int index) {
+					return (K)elements[index];
 				}
 			};
 		}
 		@Override public int size() {
-			return outer().size();
+			return LeanHashMap.this.size();
+		}
+		@Override public boolean contains(Object key) {
+			return LeanHashMap.this.containsKey(key);
+		}
+		@Override public boolean remove(Object key) {
+			boolean removed = contains(key);
+			LeanHashMap.this.remove(key);
+			return removed;
+		}
+		@Override public void clear() {
+			LeanHashMap.this.clear();
+		}
+		@Override public K get(Object o) {
+			int index = index(indexOf(o));
+			return index == -1  ?  null  :  (K)elements[index];
+		}
+		@Override public int hashCode() {
+			return LeanHashMap.super.hashCode();
 		}
 	}
 
 
-	@Override//Iterable
+
+	  ///////////
+	 //entries//
+	///////////
+
+	public boolean contains(Object key, Object value) {
+		int index = index(indexOf(key));
+		return index != -1
+			&& Objects.equals(elements[index+1], value);
+	}
+
+	public boolean containsAll(Map<?,?> map) {
+		for (Entry<?,?> e : IterableMap.iterable(map))
+			if ( !contains(e.getKey(), e.getValue()))
+				return false;
+		return true;
+	}
+
+	/**{@inheritDoc}
+	 *Guaranteed fresh Entry instances, also immutable.*/
+	@Override public EntrySet entrySet() {
+		return new EntrySet();
+	}
+
+	protected class EntrySet extends AbstractSet<Entry<K,V>> implements CollectionWithToArrayType<Entry<K,V>> {
+		@Override public Iterator<java.util.Map.Entry<K,V>> iterator() {
+			return new Iter<Entry<K,V>>() {
+				@Override protected MutableEntry getIndex(int index) {
+					return new MutableEntry(index);
+				}
+			};
+		}
+
+		protected class MutableEntry extends SimpleEntry<K,V> {
+			protected int index;//might change by adding new keys or calling optimize 
+			//hash becomes invalid if buckets[] is resized, and out of range if it's shrinked
+			protected MutableEntry(int index) {
+				super((K)elements[index], (V)elements[index+1]);
+				this.index = index;
+			}
+			@Override public V getValue() {
+				if (index >= elements.length  ||  index < 0  ||  !getKey().equals(elements[index]))
+					index = index(indexOf(getKey()));
+				if (index >= 0)
+					super.setValue((V)elements[index+1]);
+				return super.getValue();
+			}
+			@Override public V setValue(V new_value) {
+				//LeanHashMap.this.replace(getKey(), getValue(), new_value);
+				V old_value = getValue();
+				if (index >= 0)
+					elements[index+1] = new_value;
+				return old_value;
+			}
+			public boolean remove() {
+				if (index < 0)
+					return false;
+				return LeanHashMap.this.remove(getKey(), getValue());
+			}
+			private static final long serialVersionUID = 1;
+		}
+
+		public LeanHashMap<K,V> backingMap() {
+			return LeanHashMap.this;
+		}
+		//methods that don't need a permanent Entry
+		@Override public String toString() {
+			return LeanHashMap.this.toString('[', ']');
+		}
+		@Override public int hashCode() {
+			return LeanHashMap.this.hashCode();
+		}
+		@Override public boolean equals(Object o) {
+			if (o instanceof LeanHashMap.EntrySet)
+				return LeanHashMap.super.equals(((EntrySet)o).backingMap());
+			if (o == null  ||  !(o instanceof Set))
+				return false;
+			Set<?> other = (Set<?>)o;
+			return this.size() == other.size()
+				&& this.containsAll(other);
+		}
+
+		@Override public int size() {
+			return LeanHashMap.this.size();
+		}
+		@Override public boolean contains(Object o) {
+			if (o == null  ||  !(o instanceof Entry<?,?>))
+				return false;
+			Entry<?,?> entry = (Entry<?,?>) o;
+			int index = index(indexOf(entry.getKey()));
+			return index >= 0  &&  Objects.equals(entry.getValue(), elements[index+1]);
+		}
+		@Override public boolean containsAll(Collection<?> col) {
+			if (col instanceof LeanHashMap.EntrySet)
+				return LeanHashMap.this.containsAll( ((EntrySet)col).backingMap() );
+
+			for (Object entry : col)
+				if ( !contains(entry))
+					return false;
+			return true;
+		}
+		@Override public boolean remove(Object o) {
+			if (o == null  ||  !(o instanceof Entry<?,?>))
+				return false;
+			Entry<?,?> entry = (Entry<?,?>) o;
+			return LeanHashMap.this.remove(entry.getKey(), entry.getValue());
+		}
+		/*Unsupported
+		@Override public boolean add(Entry<K,V> entry) {
+			boolean change = !LeanHashMap.this.contains(entry.getKey(), entry.getValue());
+			put(entry.getKey(), entry.getValue());
+			return change;
+		}*/
+	}
+
+
+
+	  ////////////
+	 //Iterable//
+	////////////
+
 	/**A more memory efficient alternative to entrySet().iterator().
 	 *Since this class doesn't use Entries internally, this iterator avoids creating a new Entry for each key/value. 
 	 * The Entrys returned by <tt>next()</tt> become invalid after the next next() call.
 	 *@returns an iterator that is also an Entry, so <tt>next()</tt> returns itself.*/
-	public IterVolatileEntry iterator() {
+	@Override public IterVolatileEntry iterator() {
 		return new IterVolatileEntry();
 	}
 
 	/**A dangerous but memory efficient Iterator for Entries
 	 * If you want to keep the Entry after <tt>next()</tt>, <tt>clone()</tt> will return a SimpleImmutableEntry.
-	 *///very little in common with UnsafeMapIterator
-	protected class IterVolatileEntry extends Iter<Entry<K,V>> implements Entry<K,V>, Cloneable {
-		protected IterVolatileEntry() {
-			super(-2);
-		}
-		@Override//Iter
-		protected Entry<K,V> value(int index) {
+	 */
+	protected class IterVolatileEntry extends Iter<Entry<K,V>> implements UnsafeEntryIterator<K,V> {
+		@Override//Iterable
+		protected UnsafeEntryIterator<K,V> getIndex(int index) {
 			return this;
 		}
 
-		@Override public K getKey() {
-			return (K)elements[lastIndex()];
+		//Iterator
+		@Override public UnsafeEntryIterator<K,V> next() {
+			return (UnsafeEntryIterator<K,V>) super.next();
 		}
-		@Override public V getValue() {
-			return (V)elements[lastIndex()+1];
-		}
-		@Override public V setValue(V value) {
-			int index = lastIndex();
-			V old = (V)elements[index+1];
-			elements[index+1] = value;
+
+		//Entry
+		@Override public K getKey() throws IllegalStateException {try {
+			return (K)elements[pos];
+		} catch (IndexOutOfBoundsException ioobe) {
+			throw new IllegalStateException();
+		}}
+		@Override public V getValue() throws IllegalStateException {try {
+			return (V)elements[pos+1];
+		} catch (IndexOutOfBoundsException ioobe) {
+			throw new IllegalStateException();
+		}}
+		@Override//Entry, not ListIterator
+		public V setValue(V value) throws IllegalStateException {try {
+			V old = (V)elements[pos+1];
+			elements[pos+1] = value;
 			return old;
-		}
-		
-		@Override public SimpleImmutableEntry<K,V> clone() {
-			return new SimpleImmutableEntry<K,V>(this);
-		}
+		} catch (IndexOutOfBoundsException ioobe) {
+			throw new IllegalStateException();
+		}}
+
+		//Entry
 		@Override public String toString() {
-			return getKey().toString() + '=' + getValue().toString();
+			return UnsafeEntryIterator.toString_of(this);
+		}
+		@Override public int hashCode() {
+			return UnsafeEntryIterator.hashCode_of(this);
+		}
+		@Override public boolean equals(Object o) {
+			return UnsafeEntryIterator.equals_of(this, o);
 		}
 	}
 

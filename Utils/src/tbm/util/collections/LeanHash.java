@@ -1,28 +1,22 @@
 package tbm.util.collections;
 import java.io.Serializable;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import static java.util.Objects.requireNonNull;
+import tbm.util.collections.randomAccessIterators.ModifiableOneWayListIterator;
 
 /**
  *A base class to create memory efficient hash structures
  *Uses one array with elements and another to store hash information.
- *Since multiple entries can have the same hash, A separate buckets array is 
+ *Since multiple entries can have the same hash, a separate buckets array is 
  *used as lookup from a hash value, and store the first index to elements with
  *that hash, the number of those elements.
  *To avoid creating an object for each bucket, the two integers are stored as
- *one long, and extracted by bitwise operations
+ *one long, and extracted by bitwise operations, which I hope the JVM will optimize away 
  *
  *Doesn't implement Collection since Map doesn't.
- **/@SuppressWarnings("unchecked")
+ */
 abstract class LeanHash<E> implements Cloneable, Serializable {
-	/**struct{int entries, first_index}
-	 * the 32 lsbs store the first index of elements with this hash
-	 * and the otheer half store the number of elements with this hash*/
-	protected long[] buckets;//struct{int entries, first_index}
-	protected E[] elements;
-
 	public static final int default_initial_buckets = 8;
 	public static final int minimum_initial_buckets = 4;
 	/**elements / buckets*/
@@ -31,6 +25,15 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	public static final int default_initial_size() {
 		return Math.round(default_initial_buckets * default_ratio);
 	}
+
+	/**struct{int entries, first_index}
+	 * the 32 lsbs store the first index of elements with this hash
+	 * and the otheer half store the number of elements with this hash*/
+	protected long[] buckets;//struct{int entries, first_index}
+	protected E[] elements;
+	//for small sets, my guess is all the bucket operations makes this slower than a linear search, which would also need even less memory 
+	//TODO size, ew as a field and short modCount are probably worth it
+
 
 	/**@return this(default_initial_buckets, default_ratio)*/
 	public LeanHash() {
@@ -42,7 +45,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	 * Not analogous to load_factor as it doesn't directly affect resizing,
 	 * but higher value will lead to less resizing and worse performance.
 	 * Must be positive.
-	 * */
+	 */@SuppressWarnings("unchecked")
 	public LeanHash(int initial_buckets, float ratio) {
 		if (! (ratio > 0))//ratio <= 0 won't catch NaN
 			throw new IllegalArgumentException( "ratio must be positive, but is "+ratio+".");
@@ -68,48 +71,80 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 
 	/**element width or index factor.
 	 *Is one for sets, and two for maps, so they can be stored key,value,key,value*/
-	//FIXME: can this be inlined?
+	//FIXME: will it be inlined?
 	protected abstract int ew();
 
 
-	/***/
-	protected final long new_bucket(int entries, int first_index) {
-		if (entries < 1  ||  first_index < 0)
-			throw new RuntimeException("Invalid input, entries = "+entries+", first_index = "+first_index);
-		return (long)entries << 32  |  first_index;
+  //////////////////////////////////////////
+ //bucket and other bit-twiddling methods//
+//////////////////////////////////////////
+
+	/**get the hash/bucket index out of the <tt>long</tt> returned by <tt>indexOf()</tt>*/
+	protected final int hash(long hash_index) {
+		return (int)(hash_index >> 32);
 	}
 	/**Get the number of elements in this bucket.
-	 *@return bucket>>32*/
+	 *@return {@code bucket>>32}*/
 	protected final int elements(long bucket) {
 		return (int)(bucket >> 32);
 	}
 	/**Get the elements[] index of the first element out of a long bucket.
-	 *@return bucket & 0xffff ffff*/
+	 *@param bucket can also be hash_index
+	 *@return bucket & 0xffff_ffff*/
 	protected final int index(long bucket) {
-		return (int)(bucket & 0xffffffffL);
+		return (int)(bucket & 0xffff_ffffL);
 	}
-	protected final int hash(long hash_index) {
-		return (int)(hash_index >> 32);
+
+	/**store two <tt>int</tt>s as a <tt>long</tt>
+	 * Warning: addition of negative first will overflow into elements and increment it
+	 *@return {@code (long)elements << 32  |  first_index}*/
+	private long bucket(int elements, int first_index) {
+		return ((long)elements << 32)  |  ((long)first_index & 0xffff_ffffL);
 	}
-	/**@return value.hashCode() & (buckets.length-1)*/
+	/**assert that elements is positive and start and end are within elements.length*/
+	private void valid_bucket(long bucket) {
+		assert !(elements(bucket) < 1  ||  index(bucket) < 0  ||  index(bucket)+elements(bucket)*ew() > elements.length)
+		:"Invalid bucket: "+elements(bucket)+" elements, starts at "+index(bucket)+", elements.length: "+elements.length;
+	}
+	/**create a new bucket and validate it*/
+	private long new_bucket(int entries, int first_index) {
+		long bucket = bucket(entries, first_index);
+		valid_bucket(bucket);
+		return bucket;
+	}
+
+
+
+  ////////////////
+ //get elements//
+////////////////
+
+	/**get the index of the bucket this object belongs to
+	 *@param value must be non-null
+	 *@return {@code value.hashCode() & (buckets.length-1)}*/
 	public int hash(Object value) {
 		return value.hashCode() & (buckets.length-1);
 	}
 
-
-	/**@return the first half is hash and the second half is index or -1
-	 * @throws NullPointerException if parameter is <tt>null</tt>*/
-	protected final long indexOf(Object element_or_key) {
-		requireNonNull(element_or_key);
-		int hash = hash(element_or_key);
+	/**get the bucket index and index (if found) of the object
+	 * 
+	 *@param o must be non-null*/
+	protected final long indexOf(Object o) {//TODO rename to something more accurate
+		requireNonNull(o, getClass().getName()+" cannot store null");
+		int hash = hash(o);
 		int from = index(buckets[hash]);
 		int to = from + elements(buckets[hash]) * ew();
 		for (int i = from;  i < to;  i += ew())
-			if (elements[i].equals(element_or_key))
-				return (long)(hash)<<32 | i;
-		return (long)(hash)<<32 | 0xffffffffL;
+			if (elements[i].equals(o))
+				return bucket(hash, i);
+		return bucket(hash, -1);
 	}
 
+
+
+  ////////////////////
+ //add new elements//
+////////////////////
 
 	/**Add a new element
 	 *@param element must not be equal to another element, or null
@@ -117,7 +152,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	 *@return index of element*/
 	protected int add_new(E element, int hash) {
 		if (element == this)
-			throw new RuntimeException("Cannot add itself.");//FIXME: exception type
+			throw new IllegalArgumentException("Cannot add itself.");//both Set and Map
 		int empty;
 		if (elements(buckets[hash]) == 0) {
 			//new bucket
@@ -134,6 +169,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		return empty;
 	}
 
+
 	/**make room for another entry with the same hash
 	 *First checks if index before or after are free,
 	 *Then checks if before and after are their own bucket and try to move that.
@@ -149,19 +185,19 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 
 		//null before or after
 		if (before >= 0  &&  elements[before] == null) {
-			buckets[hash] += (1L<<33)-ew();//increment entries and decrement index
+			valid_bucket(buckets[hash] += (1L<<32)-ew());//increment entries and decrement index (negative index overflows addition and increments elements)
 			return before;
 		} else if (after < elements.length  &&  elements[after] == null) {
-			buckets[hash] += 1L<<32;
+			valid_bucket(buckets[hash] += bucket(1, 0));//=1L<<32: increment entries
 			return after;
 		}
 
 		//the element before or after is alone in its bucket, so move that
 		else if (after < elements.length  &&  elements(buckets[hash(elements[after])]) == 1) {
-			if (relocate_single(after, hash, 1L<<32))
+			if (relocate_single(after, hash, bucket(1, 0)))
 				return after;
 		} else if (before >= 0  &&  elements(buckets[hash(elements[before])]) == 1) {
-			if (relocate_single(before, hash, (1L<<33)-ew()))
+			if (relocate_single(before, hash, (1L<<32)-ew()))
 				return before;
 		} else {//move this
 			int found = 0;
@@ -187,14 +223,17 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		return index;
 	}
 
+
 	/**Find a single unused slot and move an element to it.
-	 *Code was used twice in <tt>fit()</tt>*/
-	private boolean relocate_single(int to_move, int bucket_index, long add_to_bucket) {
+	 *Code was used twice in <tt>fit()</tt>
+	 *@param growing_hash hash of the new element
+	 *@return true if the element could be relocated*/
+	private boolean relocate_single(int to_move, int growing_hash, long add_to_growing_bucket) {
 		for (int i=elements.length-ew();  i>=0;  i-=ew())
 			if (elements[i] == null) {
 				System.arraycopy(elements, to_move, elements, i, ew());
-				buckets[hash(elements[to_move])] = 1<<32 | i;
-				buckets[bucket_index] += add_to_bucket;
+				buckets[hash(elements[i])] = new_bucket(1, i);
+				valid_bucket(buckets[growing_hash] += add_to_growing_bucket);
 				return true;
 			}
 		return false;
@@ -202,19 +241,31 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 
 
 	
+  /////////////////////
+ //growing/shrinking//
+/////////////////////
+
+	/**create a new array with the same type as elements without copying content
+	 */@SuppressWarnings("unchecked")
+	private E[] newElements(int length) {
+		return (E[]) Array.newInstance(elements.getClass().getComponentType(), length);
+	}
+
+
 	/**Multiply the size of arrays with grow_ratio,
 	 * and rehash since all buckets are split in two.
 	 *@param double_and_spread double size of elements along with buckets, and try spread out the elements. 
-	 *@return a free slot if <tt>double_and_spread</tt> or <tt>elements.length</tt.*/
+	 *@return a free slot if <tt>double_and_spread</tt> or <tt>elements.length</tt>.
+	 */
 	protected int grow_and_rehash(boolean double_and_spread) {
 		E[] old_elements = elements;
 		if (double_and_spread) {
-			elements = (E[])new Object[ elements.length * 2 ];
+			elements = newElements(old_elements.length * 2 );
 			//for each old_bucket there might be added an empty slot
 			if (elements.length/ew() <= 1+buckets.length)
 				double_and_spread = false;
 		} else
-			elements = (E[])new Object[ elements.length ];//when splitting buckets elements will be moved around without a buffer
+			elements = newElements(old_elements.length);//when splitting buckets elements will be moved around without a buffer
 		double_and_spread = false;//debug
 		
 		long[] old_buckets = buckets;
@@ -250,23 +301,19 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 					buckets[obi + buckets.length/2] = new_bucket(b_count, b_last-b_count+1);
 			}
 			if (double_and_spread)
-				next += ew();//skip one slot
+				next += ew();//leave some space between buckets
 		}
 		return next;
 	}
 
 
-	public float get_ratio() {
-		return (float)(elements.length / ew())  /  buckets.length;
-	}
-
-	public boolean set_ratio(float ratio) {
+	public boolean set_ratio(float ratio) throws IllegalArgumentException {
 		if (ratio <= 0)
 			throw new IllegalArgumentException("negative ratio: "+ratio);
 		if (Math.abs(ratio - get_ratio()) < 0.05)
 			return true;
 		if (ratio > get_ratio()) {
-			Object[] new_elements = new Object[(int)(buckets.length*ratio)];
+			E[] new_elements = newElements((int)(buckets.length*ratio));
 			System.arraycopy(elements, 0, new_elements, 0, elements.length);
 			elements = (E[])new_elements;
 			return true;
@@ -274,14 +321,10 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		int size = size();
 		if (buckets.length*ratio < size)
 			return false;
-		E[] new_elements = (E[])new Object[size];
+		E[] new_elements = newElements(size);
 		pack(new_elements);
 		elements = new_elements;
 		return true;
-	}
-
-	public int capacity() {
-		return elements.length;
 	}
 
 
@@ -292,7 +335,8 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		//copy everything until the first null
 		while (to < elements.length  &&  elements[to] != null)
 			to += ew();
-		System.arraycopy(elements, 0, new_elements, 0, to);
+		if (to != 0)
+			System.arraycopy(elements, 0, new_elements, 0, to);
 		//copy everything after
 		int from = to + ew();
 		while (from < elements.length)
@@ -326,7 +370,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 
 	/**Untested
 	 * Reduce capacity if sensible.
-	 *@return whether anything was done, currently false*/
+	 *@return true if anything was done, currently never*/
 	public boolean optimize() {
 		//get number of hashes and elements
 		int size=0, hashes=0;
@@ -344,12 +388,14 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 			grow_and_rehash(false);//and then size < elements.length*0.85f, inefficient, but simple. 
 		if (size < elements.length*0.85f) {
 			did_anything = true;
-			E[] new_elements = (E[])new Object[size];
+			E[] new_elements = newElements(size*ew());
 			pack(new_elements);
 			elements = new_elements;
 		}
 		return did_anything;
-	}/**Untested*/
+	}
+
+	/**Untested*/
 	public boolean optimize2() {
 		//get number of hashes and elements
 		int size=0, hashes=0;
@@ -360,7 +406,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 			}
 		E[] new_elements = elements;
 		if (size < elements.length*0.85f)
-			new_elements = (E[])new Object[size];
+			new_elements = newElements(size);
 		if (buckets.length >= 2*hashes) {
 			long[] new_buckets = buckets;
 			if (Integer.highestOneBit(hashes) != hashes)
@@ -391,6 +437,28 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	}
 
 
+
+  //////////
+ //remove//
+//////////
+
+	/**Removes all elements, but does not reduce the capacity*/
+	public void clear() {
+		Arrays.fill(elements, null);
+		Arrays.fill(buckets, 0);
+	}
+
+	/**Removes all elements reduce to 8 buckets and keep the ratio*/
+	public void clear_and_shrink() {
+		if (buckets.length > 8) {
+			float elsize = 8 * elements.length / (float)buckets.length;
+			elements = newElements((int) elsize);
+			buckets = new long[8];
+		} else
+			clear();
+	}
+
+
 	//Used by Iter.remove and remove_element 
 	protected void remove_index(int hash, int to_remove) {
 		if (elements(buckets[hash]) == 1)//only element in bucket, remove bucket
@@ -415,35 +483,22 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		return index(hash_index);
 	}
 
-	/**Get the next non-null element after the given index, or -1
-	 * final because null is
-	 *@return the index of the n*/
-	protected final int nextAfter(int index) {
-		do {
-			index += ew();
-			if (index >= elements.length)
-				return -1;
-		} while (elements[index] == null);
-		return index;
+
+
+  //////////////////////////////////////
+ //methods shared between Set and Map//
+//////////////////////////////////////
+
+	public float get_ratio() {
+		return (float)(elements.length / ew())  /  buckets.length;
 	}
 
-	/**Removes all elements, but does not reduce the capacity*/
-	public void clear() {
-		Arrays.fill(elements, null);
-		Arrays.fill(buckets, 0);
+	public int capacity() {
+		return elements.length;
 	}
 
-	/**Removes all elements reduce to 8 buckets and keep the ratio*/
-	public void clear_and_shrink() {
-		if (buckets.length > 8) {
-			float elsize = 8 * elements.length / (float)buckets.length;
-			elements = (E[]) new Object[(int) elsize];
-			buckets = new long[8];
-		} else
-			clear();
-	}
-
-	/**upper bound is O(buckets)</tt>*/
+	/**{@inheritDoc}
+	 * upper bound is O(buckets)</tt>*/
 	public boolean isEmpty() {
 		for (long bucket : buckets)
 			if (elements(bucket) != 0)
@@ -452,7 +507,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	}
 
 	/**{@inheritDoc}
-	 * Time is O(buckets)*/
+	 * takes O(bucket) time*/
 	public int size() {
 		int size = 0;
 		for (long bucket : buckets)
@@ -460,138 +515,132 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		return size;
 	}
 
-	/**{@inheritDoc}
-	 * Time is O(capacity)*/@Override
-	public int hashCode() {
-		int hash = 0;
-		int i = -ew();
-		while ((i = nextAfter(i))  !=  -1)
-			hash += elements[i].hashCode();
-		return hash;
+	@Override public int hashCode() {
+		int hashCode = 0;
+		for (long bucket : buckets)
+			if (elements(bucket) > 0)
+				hashCode += elements(bucket) * elements[index(bucket)].hashCode(); 
+		return hashCode;
 	}
 
-	public boolean equals(Object obj) {
-		if (obj == this)
+	@Override public boolean equals(Object o) {
+		if (o == this)
 			return true;
-		if (obj == null  ||  this.getClass() != obj.getClass())
+		if (o == null  ||  o.getClass() != this.getClass())
 			return false;
-		LeanHash<?> lh = (LeanHash<?>)obj;
+		LeanHash<?> other = (LeanHash<?>)o;
 
 		//make internal structures equal
-		optimize();
-		lh.optimize();
-		if (! Arrays.equals(buckets, lh.buckets))
+		this.optimize();
+		other.optimize();
+
+		if ( !Arrays.equals(this.buckets, other.buckets))
 			return false;
-		if (elements.length != lh.elements.length)
+		if (this.elements.length != other.elements.length)
 			return false;
 
-		int i = -ew();
-		while ((i = nextAfter(i))  !=  -1)
-			if (! elements[i].equals(lh.elements[i]))
+		for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
+			if (! this.elements[index(b_i)].equals(other.elements[index(b_i)]))
 				return false;
 		return true;
 	}
 
 
-	public abstract LeanHash<E> clone();
-	private static final long serialVersionUID = 1L;
-
-
-
-	/**For inner classes.
-	 *@return {@code this}*/
-	protected LeanHash<E> self() {
-		return this;
+	/**prints stackTrace and return null if super.clone() somehow fails*/
+	@Override public LeanHash<E> clone() {
+		try {
+			@SuppressWarnings("unchecked")
+			LeanHash<E> clone = (LeanHash<E>) super.clone();
+			clone.elements = elements.clone();
+			clone.buckets = buckets.clone();
+			return clone;
+		} catch  (CloneNotSupportedException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
-	
+
+
+
+  ///////////////////////
+ //a quittable foreach//
+///////////////////////
+	//uses the same hash_index format as indexOf()
+
+	//for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
+
+	/**get the index of the first element of the next non-empty bucket after b*/
+	private long nextAfter_bucket(int b) {
+		for (b++;  b < buckets.length;  b++)
+			if (elements(buckets[b]) != 0)
+				return bucket(b, index(buckets[b]));
+		return bucket(b, -1);
+	}
+
+	/**get the index of the first element of the first non-empty bucket after b*/
+	protected final long nextAfter_start() {
+		return nextAfter_bucket(-1);
+	}
+
+	/**get the index of the next element after i, or -1 if no more*/
+	protected final long nextAfter(long b_i) {
+		int index = index(b_i);
+		int hash = hash(b_i);
+		long bucket = buckets[hash];
+
+		if (index + ew() - index(bucket)  <  elements(bucket) * ew())
+			return bucket(hash, index+ew());//b_i+=ew()
+		else
+			return nextAfter_bucket(hash);
+	}
+
+
+
+	//TODO: bucket-based iterator, one problem: hash should start at -1, but there you can't see how many elements you have
+
 	/**{@inheritDoc}
 	 * A base for all iterators, Is bounded by capacity not size.
-	 * {@code if (hasNext())remove()} will
-	 *Supports <tt>remove()</tt>.*/
-	protected class Iter<T> implements Iterator<T> {
-		private int pos;
-		private int next = -1;
-		protected Iter(int before_start) {
-			pos = before_start;//so the first hasNext() works
+	 * Supports <tt>remove()</tt>.*/
+	protected abstract class Iter<T> extends ModifiableOneWayListIterator<T> {
+		/**nextIndex() cache*/
+		protected int next = -1;
+		protected Iter() {
+			pos = -ew();//so the first hasNext() works
 		}
 		public String toString() {
-			return ""+pos+": "+self().toString();
-		}
-		protected T value(int index) {
-			return (T)elements[index];
+			return LeanHash.this.toString() + '['+pos+']';
 		}
 
-		@Override public final boolean hasNext() {
-			if (next != -1)
-				return true;
-			next = nextAfter(pos);
-			return next != -1;
+		@Override protected int maxIndex() {
+			return elements.length;
 		}
-		@Override public T next() {
-			if (! hasNext())
-				throw new NoSuchElementException();
-			pos = next;
-			next = -1;
-			return value(pos);
-		}
-		@Override public void remove() {
-			if (pos < 0)
-				throw new IllegalStateException("next() threw NoSuchElementException or has not been called");
-			if (elements[pos] == null)
-				throw new IllegalStateException("Already removed element");
-			remove_index(hash(elements[pos]), pos);
-		}
-	}
-
-
-	/**{@inheritDoc}
-	 * A base for all iterators, Is bounded by capacity not size.
-	 * {@code if (hasNext())remove()} will
-	 *Supports <tt>remove()</tt>.*/
-	protected class OldIter<T> implements Iterator<T> {
-		public static final int PREV_REMOVED = -3;//less than -ew()
-		public static final int PREV_INVALID = -4;
-		private int prev, next;
-		protected OldIter(int before_start) {
-			prev = next = before_start;//so the first hasNext() works
-		}
-		protected T value(int index) {
-			return (T)elements[index];
-		}
-		/**Should only be called next(); returns -1 when called after hasNext() and remove().*/
-		public int lastIndex() {
-			if (prev < 0)
-				return -1;
-			return prev;
-		}
-
-		@Override public final boolean hasNext() {
-			if (next == prev) {
-				next = nextAfter(next);
-				if (next == -1)
-					return false;
-			} else if (next < 0)
-				return false;
-			prev = PREV_INVALID;
-			return true;
-		}
-		@Override public T next() {
-			if (! hasNext())
-				throw new NoSuchElementException();
-			prev = next;
-			return value(next);
-		}
-		@Override public void remove() throws IllegalStateException {
-			if (prev < 0) {
-				String error = "Must be called after next().";
-				if (prev == PREV_REMOVED)
-					error = "Already removed element.";
-				throw new IllegalStateException(error);
+		@Override public final int nextIndex() {
+			if (next == -1) {
+				next = pos;
+				do {
+					next += ew();
+				} while (next < elements.length  &&  elements[next] == null);
 			}
+			return next;
+		}
 
-			remove_index(hash(elements[prev]), prev);
-			hasNext();
-			prev = PREV_REMOVED;
+		@Override public T next() {
+			T e = super.next();
+			next = -1;
+			return e;
+		}
+
+		@Override public void remove() {
+			try {
+				if (elements[pos] == null)
+					throw new IllegalStateException("Already removed element");
+				remove_index(hash(elements[pos]), pos);
+			} catch (IndexOutOfBoundsException ioobe) {
+				throw new IllegalStateException("next() threw NoSuchElementException or has not been called");
+			}
 		}
 	}
+
+
+	private static final long serialVersionUID = 1L;
 }
