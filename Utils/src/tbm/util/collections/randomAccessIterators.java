@@ -5,7 +5,7 @@ import java.util.NoSuchElementException;
 //TODO javadoc
 /**Iterators for collections that have random access (are array-backed)*/
 public final class randomAccessIterators {
-	private static abstract class OneWayListIterator<E> implements Iterator<E>, Iterable<E> {
+	private static abstract class OneWayListIterator<E> implements tbm.util.collections.ExtendedIterator<E>, Iterable<E> {
 		protected abstract E getIndex(int index);
 		protected abstract int maxIndex();
 
@@ -20,19 +20,18 @@ public final class randomAccessIterators {
 		//If I override forEach or forEachRemaining, skipEmpty would have to override again
 
 		/**return the next index to be returned, or >= array.length if at the end*/
-		public int nextIndex() {
+		protected int nextIndex() {
 			return pos+1;
 		}
-		/**return index of the last element returned by next()*/
-		public int previousIndex() {
+		/**@return {@code this.pos}*/
+		protected int previousIndex() {
 			return pos;
 		}
 
 		@Override public final boolean hasNext() {
 			return nextIndex() < maxIndex();
 		}
-		/**@return true if <tt>next()</tt> has been called*/
-		public final boolean hasPrevious() {
+		@Override public final boolean hasPrevious() {
 			return previousIndex() >= 0;
 		}
 
@@ -56,15 +55,10 @@ public final class randomAccessIterators {
 			return get(nextIndex(), true);
 		}
 
-		/**Return the next element but don't advance the iteration
-		 *@throws NoSuchElementException if there are no more elements.
-		 * (returning null would be meaningless if there can be null elements in the array,
-		 * and {@code if (hasNext() && peek().someFunc())} is clearer than {@code if (peek() != null  &&  peek().somefunc())}
-		 */
-		public final E peekNext() {
+		@Override public final E peekNext() {
 			return get(nextIndex(), false);
 		}
-		public final E peekPrevious() {
+		@Override public final E peekPrevious() {
 			return get(previousIndex(), false);
 		}
 	}
@@ -76,6 +70,11 @@ public final class randomAccessIterators {
 		/**@throws UnsupportedOperationException always
 		 * @deprecated unsupported operation*/@Deprecated
 		@Override default void remove() throws UnsupportedOperationException {
+			throw new UnsupportedOperationException();
+		}
+		/**@throws UnsupportedOperationException always
+		 * @deprecated unsupported operation*/@Deprecated
+		default void set(E e) throws UnsupportedOperationException {
 			throw new UnsupportedOperationException();
 		}
 	}

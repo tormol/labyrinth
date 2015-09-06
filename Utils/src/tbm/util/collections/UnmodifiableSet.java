@@ -3,6 +3,7 @@ import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 
 public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWithGet<E>, Serializable {
@@ -88,8 +89,8 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override public arrayIterators.Unmodifiable<E> iterator() {
-		return new arrayIterators.Unmodifiable<E>((E[])elements);
+	@Override public ExtendedIterator<E> iterator() {
+		return new arrayIterators.UnmodifiableArrayIterator<E>((E[])elements);
 	}
 
 
