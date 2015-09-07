@@ -183,8 +183,8 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 				}
 				@Override public void set(V value) {
 					if ( !canRemove)
-						throw new IllegalStateException("no element to change");
-					elements[index + 1] = value;
+						throw new IllegalStateException("no element to replace");
+					elements[pos + 1] = value;
 				}
 			};
 		}

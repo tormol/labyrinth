@@ -249,15 +249,4 @@ public class ArrayCollection<E> extends AbstractCollection<E> implements Seriali
 	}
 
 	private static final long serialVersionUID = 1;
-
-
-	public static void main(String[] args) {
-		ArrayCollection<String> col = new ArrayCollection<>("a");
-		ModifiableSkipEmpty<String> iter = col.iterator();
-		iter.hasNext();
-		System.out.println(iter.next());
-		iter.remove();
-
-		System.out.println(col);
-	}
 }
