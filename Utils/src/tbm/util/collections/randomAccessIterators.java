@@ -82,18 +82,17 @@ public final class randomAccessIterators {
 
 	public static interface Modifiable<E> extends Iterator<E> {
 		@Override void remove();
+		//cannot have lastIndex since interface methods must be public
 	}
 
 
 
 
-	public static abstract class UnmodifiableOneWayListIterator<E> extends OneWayListIterator<E> implements Unmodifiable<E> {
-		
-	}
+	public static abstract class UnmodifiableOneWayListIterator<E> extends OneWayListIterator<E> implements Unmodifiable<E>
+		{}
 
-	public static abstract class ModifiableOneWayListIterator<E> extends OneWayListIterator<E> implements Modifiable<E> {
-		
-	}
+	public static abstract class ModifiableOneWayListIterator<E> extends OneWayListIterator<E> implements Modifiable<E>
+		{}
 
 
 
@@ -104,21 +103,20 @@ public final class randomAccessIterators {
 		/**cache for nextIndex()*/
 		protected int next = -1;
 
-		@Override public int nextIndex() {
+		@Override protected int nextIndex() {
 			if (next == -1)
 				for (next = pos+1;  next < maxIndex();  next++)
 					if (getIndex(next) != emptyElement())
 						break;
 			return next;
 		}
-
 		@Override public E next() {
 			E e = super.next();
 			next = -1;//reset if next() didn't throw
 			return e;
 		}
 
-		/**@return instance that signifies an unused slot.
+		/**@return an instance that signifies an unused slot.
 		 *Default is {@code null}*/
 		protected Object emptyElement() {
 			return null;
@@ -126,37 +124,29 @@ public final class randomAccessIterators {
 	}
 
 
-	public static abstract class UnmodifiableSkipEmpty<E> extends SkipEmpty<E> implements Unmodifiable<E> {
-		
-	}
+	public static abstract class UnmodifiableSkipEmpty<E> extends SkipEmpty<E> implements Unmodifiable<E>
+		{}
 
 
 	public static abstract class ModifiableSkipEmpty<E> extends SkipEmpty<E> implements Modifiable<E> {
 		protected abstract void setIndex(int index, E e);
-		protected abstract void delIndex(int index);
+		protected abstract void removeIndex(int index);
+
+		/**pos validation for set() and remove()*/
+		protected int lastIndex() {
+			if (pos < 0)
+				throw new IllegalStateException("call next() first");
+			if (getIndex(pos) == emptyElement())
+				throw new IllegalStateException("element has been removed");
+			return pos;
+		}
 
 		/**replaces the last returned element with e*/
 		public final void set(E e) {
-			try {
-				if (getIndex(pos) == emptyElement())
-					throw new IllegalStateException("Element has already been removed");
-				if (e == emptyElement())
-					delIndex(pos);
-				setIndex(pos, e);
-			} catch (IndexOutOfBoundsException ioobe) {
-				if (pos == -1)
-					throw new IllegalStateException("Must call next() first");
-				if (pos >= maxIndex())
-					throw new IllegalStateException("No more elements");
-				throw ioobe;
-			}	
+			setIndex(lastIndex(), e);
 		}
-
-		/**{@inheritDoc}
-		 *replaces the last returned element with empty*/
-		@SuppressWarnings("unchecked")
-		public final void remove() {
-			set((E) emptyElement());
+		@Override public final void remove() {
+			removeIndex(lastIndex());
 		}
 	}
 }

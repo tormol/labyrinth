@@ -601,6 +601,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	/**{@inheritDoc}
 	 * A base for all iterators,
 	 * Supports <tt>remove()</tt> but not <tt>set()</tt>.*/
+	//ew() and canRemove makes this class different enough that extending ModifiableSkipEmpty would just give me more indirection
 	protected class Iter<T> extends ModifiableOneWayListIterator<T> {
 		/**nextIndex() cache*/
 		protected int next = -1;
@@ -636,7 +637,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		@Override protected T getIndex(int index) {
 			return (T)elements[index];
 		}
-		@Override public void remove() {
+		@Override public final void remove() {
 			if ( !canRemove)
 				throw new IllegalStateException("no element to remove");
 			remove_index(hash(elements[pos]), pos);

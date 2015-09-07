@@ -188,7 +188,7 @@ public class ArrayCollection<E> extends AbstractCollection<E> implements Seriali
 			@Override protected    int	    maxIndex()                   	{return elements.length;}
 			@Override protected Object	    getIndex(int index)          	{return elements[index];}
 			@Override protected   void	    setIndex(int index, Object e)	{elements[index] = e;}
-			@Override protected   void	    delIndex(int index)          	{size--;}
+			@Override protected   void	 removeIndex(int index)          	{elements[index] = empty;  size--;}
 			@Override protected Object	emptyElement()                   	{return empty;}
 		};
 	}
