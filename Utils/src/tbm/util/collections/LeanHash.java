@@ -599,13 +599,14 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	//TODO: bucket-based iterator, one problem: hash should start at -1, but there you can't see how many elements you have
 
 	/**{@inheritDoc}
-	 * A base for all iterators, Is bounded by capacity not size.
-	 * Supports <tt>remove()</tt>.*/
-	protected abstract class Iter<T> extends ModifiableOneWayListIterator<T> {
+	 * A base for all iterators,
+	 * Supports <tt>remove()</tt> but not <tt>set()</tt>.*/
+	protected class Iter<T> extends ModifiableOneWayListIterator<T> {
 		/**nextIndex() cache*/
 		protected int next = -1;
+		boolean canRemove = false;
 		protected Iter() {
-			pos = -ew();//so the first hasNext() works
+			pos = -ew();//pos+=ew() == 0
 		}
 		public String toString() {
 			return LeanHash.this.toString() + '['+pos+']';
@@ -614,7 +615,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		@Override protected int maxIndex() {
 			return elements.length;
 		}
-		@Override public final int nextIndex() {
+		@Override protected final int nextIndex() {//safer to reimplement than multiply or divide by ew() everywhere
 			if (next == -1) {
 				next = pos;
 				do {
@@ -627,17 +628,24 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		@Override public T next() {
 			T e = super.next();
 			next = -1;
+			canRemove = true;
 			return e;
 		}
 
+		@SuppressWarnings("unchecked")
+		@Override protected T getIndex(int index) {
+			return (T)elements[index];
+		}
 		@Override public void remove() {
-			try {
-				if (elements[pos] == null)
-					throw new IllegalStateException("Already removed element");
-				remove_index(hash(elements[pos]), pos);
-			} catch (IndexOutOfBoundsException ioobe) {
-				throw new IllegalStateException("next() threw NoSuchElementException or has not been called");
-			}
+			if ( !canRemove)
+				throw new IllegalStateException("no element to remove");
+			remove_index(hash(elements[pos]), pos);
+			pos -= ew();//if the element was in the middle of its bucket, a later element took its place
+			next = -1; //else it is null and ignored
+			canRemove = false;
+		}
+		@Override public void set(T e) throws UnsupportedOperationException {
+			throw new UnsupportedOperationException();//if the new element would be put in a different bucket, it would have a new, possibly later index
 		}
 	}
 

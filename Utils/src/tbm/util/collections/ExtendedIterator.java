@@ -13,8 +13,10 @@ public interface ExtendedIterator<E> extends Iterator<E> {
 	 *	 is clearer than {@code if (peek() != null  &&  peek().somefunc())}
 	 */
 	E peekNext() throws NoSuchElementException;
-	/**get the last element returned by <tt>next()</tt>*/
-	E peekPrevious() throws NoSuchElementException;
+	/**get the last element returned by <tt>next()</tt>
+	 *@throws NoSuchElementException if there is no previous element
+	 *@throws IllegalStateException optionally if the previous element has been removed*/
+	E peekPrevious() throws NoSuchElementException, IllegalStateException;
 
 	/**replace the last element*/
 	void set(E e) throws IllegalStateException, UnsupportedOperationException;

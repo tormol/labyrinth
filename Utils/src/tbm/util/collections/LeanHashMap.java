@@ -3,7 +3,6 @@ import static java.util.Objects.requireNonNull;
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -171,15 +170,21 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 		return false;
 	}
 
-	@Override public Collection<V> values() {
+	@Override public ValueCollection values() {
 		return new ValueCollection();
 	}
 
 	protected class ValueCollection extends AbstractCollection<V> implements CollectionWithToArrayType<V> {
-		@Override public Iterator<V> iterator() {
+		/**supports <tt>set()</tt>*/
+		@Override public ExtendedIterator<V> iterator() {
 			return new Iter<V>() {
 				@Override public V getIndex(int index) {
-					return (V)elements[index+1];
+					return (V)elements[index + 1];
+				}
+				@Override public void set(V value) {
+					if ( !canRemove)
+						throw new IllegalStateException("no element to change");
+					elements[index + 1] = value;
 				}
 			};
 		}
@@ -234,17 +239,13 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 		return index(indexOf(key)) != -1;
 	}
 
-	@Override public Set<K> keySet() {
+	@Override public KeySet keySet() {
 		return new KeySet();
 	}
 
 	protected class KeySet extends AbstractSet<K> implements SetWithGet<K> {
-		@Override public Iterator<K> iterator() {
-			return new Iter<K>() {
-				@Override protected K getIndex(int index) {
-					return (K)elements[index];
-				}
-			};
+		@Override public ExtendedIterator<K> iterator() {
+			return new Iter<K>();
 		}
 		@Override public int size() {
 			return LeanHashMap.this.size();
@@ -295,7 +296,7 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 	}
 
 	protected class EntrySet extends AbstractSet<Entry<K,V>> implements CollectionWithToArrayType<Entry<K,V>> {
-		@Override public Iterator<java.util.Map.Entry<K,V>> iterator() {
+		@Override public ExtendedIterator<java.util.Map.Entry<K,V>> iterator() {
 			return new Iter<Entry<K,V>>() {
 				@Override protected MutableEntry getIndex(int index) {
 					return new MutableEntry(index);
@@ -420,7 +421,7 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 			throw new IllegalStateException();
 		}}
 		@Override public V getValue() throws IllegalStateException {try {
-			return (V)elements[pos+1];
+			return (V)elements[pos + 1];
 		} catch (IndexOutOfBoundsException ioobe) {
 			throw new IllegalStateException();
 		}}

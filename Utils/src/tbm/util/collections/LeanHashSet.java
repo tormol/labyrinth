@@ -3,7 +3,6 @@ import static java.util.Objects.requireNonNull;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Set;
 
 public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
@@ -93,12 +92,8 @@ public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
 	}
 
 
-	@Override public Iterator<E> iterator() {
-		return new Iter<E>() {
-			@Override protected E getIndex(int index) {
-				return elements[index];
-			}
-		};
+	@Override public ExtendedIterator<E> iterator() {
+		return new Iter<E>();
 	}
 
 	@Override public boolean equals(Object o) {
