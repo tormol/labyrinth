@@ -13,9 +13,6 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 	private static <E> UnmodifiableSet<E> create(E[] elements, boolean fromSet, boolean canContainNull) {
 		if (elements.length > linear_max_size)
 			try {
-				UnmodifiableHashSet<E> set = Bits.attemt(elements, fromSet);
-				if (set != null)
-					return set;
 				return new UnmodifiableStartTableHashSet<E>(elements, fromSet);	
 			} catch (NullPointerException npe) {
 				if ( !canContainNull)
@@ -153,27 +150,6 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 			return -1;
 		}
 
-		private static final long serialVersionUID = 1L;
-	}
-
-
-	private static class Bits<E> extends UnmodifiableHashSet<E> {
-		public static <E> UnmodifiableHashSet<E> attemt(E[] elements, boolean fromSet) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		protected final int addToHash;
-		protected final byte shiftLeft, shiftRight;
-		protected Bits(E[] elements, int addToHash, byte shiftLeft, byte shiftRight, boolean fromSet) {
-			super(elements, false);//everything has different hash
-			this.addToHash = addToHash;
-			this.shiftLeft = shiftLeft;
-			this.shiftRight = shiftRight;
-		}
-		@Override protected int hash(Object o) {
-			return ((o.hashCode() + addToHash) << shiftLeft) >> shiftRight;
-		}
 		private static final long serialVersionUID = 1L;
 	}
 }
