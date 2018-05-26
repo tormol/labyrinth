@@ -3,7 +3,7 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import static java.util.Objects.requireNonNull;
-import tbm.util.collections.randomAccessIterators.ModifiableSkipEmpty;
+import tbm.util.collections.randomAccessIterators.ModifiableOneWayListIterator;
 
 /**
  *A base class to create memory efficient hash structures
@@ -464,10 +464,10 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		if (elements(buckets[hash]) == 1)//only element in bucket, remove bucket
 			buckets[hash] = 0;
 		else if (to_remove == index(buckets[hash]))//first element, increment index in bucket
-			valid_bucket(buckets[hash] += bucket(-1, ew()));//decrement elements, increment index
+			buckets[hash] -= (1L<<33)-ew();//decrement elements, increment index
 		else {
-			valid_bucket(buckets[hash] += bucket(-1, 0));//decrement elements, index+elements now point at the last element
-			int last_element = index(buckets[hash]) + ew()*elements(buckets[hash]);
+			buckets[hash] -= 1L<<32;//decrement elements, index+elements now point at the last element
+			int last_element = index(buckets[hash]) + ew()*elements(buckets[hash]) - ew();
 			if (to_remove != last_element) {
 				System.arraycopy(elements, last_element, elements, to_remove, ew());
 				to_remove = last_element;
@@ -602,7 +602,10 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	 * A base for all iterators,
 	 * Supports <tt>remove()</tt> but not <tt>set()</tt>.*/
 	//ew() and canRemove makes this class different enough that extending ModifiableSkipEmpty would just give me more indirection
-	protected class Iter<T> extends ModifiableSkipEmpty<T> {
+	protected class Iter<T> extends ModifiableOneWayListIterator<T> {
+		/**nextIndex() cache*/
+		protected int next = -1;
+		boolean canRemove = false;
 		protected Iter() {
 			pos = -ew();//pos+=ew() == 0
 		}
@@ -613,7 +616,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		@Override protected int maxIndex() {
 			return elements.length;
 		}
-		@Override protected final int nextIndex() {//safer to reimplement than remember to multiply or divide by ew() everywhere
+		@Override protected final int nextIndex() {//safer to reimplement than multiply or divide by ew() everywhere
 			if (next == -1) {
 				next = pos;
 				do {
@@ -623,16 +626,26 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 			return next;
 		}
 
+		@Override public T next() {
+			T e = super.next();
+			next = -1;
+			canRemove = true;
+			return e;
+		}
+
 		@SuppressWarnings("unchecked")
 		@Override protected T getIndex(int index) {
 			return (T)elements[index];
 		}
-		@Override protected void removeIndex(int index) {
-			remove_index(hash(elements[index]), index);//cannot use getIndex() because map.valueColllection and map.entrySet ovveride it to return something else, which has a different hashcode
+		@Override public final void remove() {
+			if ( !canRemove)
+				throw new IllegalStateException("no element to remove");
+			remove_index(hash(elements[pos]), pos);
 			pos -= ew();//if the element was in the middle of its bucket, a later element took its place
-			            //else it is null and ignored
+			next = -1; //else it is null and ignored
+			canRemove = false;
 		}
-		@Override protected void setIndex(int index, T e) {
+		@Override public void set(T e) throws UnsupportedOperationException {
 			throw new UnsupportedOperationException();//if the new element would be put in a different bucket, it would have a new, possibly later index
 		}
 	}

@@ -129,23 +129,16 @@ public final class randomAccessIterators {
 
 
 	public static abstract class ModifiableSkipEmpty<E> extends SkipEmpty<E> implements Modifiable<E> {
-		protected boolean canRemove = false;
 		protected abstract void setIndex(int index, E e);
 		protected abstract void removeIndex(int index);
 
 		/**pos validation for set() and remove()*/
 		protected int lastIndex() {
-			if (canRemove)
-				return pos;
 			if (pos < 0)
 				throw new IllegalStateException("call next() first");
-			throw new IllegalStateException("element has been removed");
-		}
-
-		@Override public E next() {//debuggers are gonna jump around a lot
-			E e = super.next();
-			canRemove = true;
-			return e;
+			if (getIndex(pos) == emptyElement())
+				throw new IllegalStateException("element has been removed");
+			return pos;
 		}
 
 		/**replaces the last returned element with e*/
@@ -154,7 +147,6 @@ public final class randomAccessIterators {
 		}
 		@Override public final void remove() {
 			removeIndex(lastIndex());
-			canRemove = false;
 		}
 	}
 }

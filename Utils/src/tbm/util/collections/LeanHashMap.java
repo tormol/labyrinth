@@ -178,11 +178,13 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 		/**supports <tt>set()</tt>*/
 		@Override public ExtendedIterator<V> iterator() {
 			return new Iter<V>() {
-				@Override protected V getIndex(int index) {
+				@Override public V getIndex(int index) {
 					return (V)elements[index + 1];
 				}
-				@Override protected void setIndex(int index, V value) {
-					elements[index + 1] = value;
+				@Override public void set(V value) {
+					if ( !canRemove)
+						throw new IllegalStateException("no element to replace");
+					elements[pos + 1] = value;
 				}
 			};
 		}
