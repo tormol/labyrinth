@@ -88,12 +88,14 @@ public final class randomAccessIterators {
 
 
 
-	public static abstract class UnmodifiableOneWayListIterator<E> extends OneWayListIterator<E> implements Unmodifiable<E>
-		{}
+	public static abstract class UnmodifiableOneWayListIterator<E> extends OneWayListIterator<E> implements Unmodifiable<E> {
+		@Override public final void set(E element) {
+			Unmodifiable.super.set(element);
+		}
+	}
 
 	public static abstract class ModifiableOneWayListIterator<E> extends OneWayListIterator<E> implements Modifiable<E>
 		{}
-
 
 
 	/**{@inheritDoc}
@@ -124,8 +126,11 @@ public final class randomAccessIterators {
 	}
 
 
-	public static abstract class UnmodifiableSkipEmpty<E> extends SkipEmpty<E> implements Unmodifiable<E>
-		{}
+	public static abstract class UnmodifiableSkipEmpty<E> extends SkipEmpty<E> implements Unmodifiable<E> {
+		@Override public final void set(E element) {
+			Unmodifiable.super.set(element);
+		}
+	}
 
 
 	public static abstract class ModifiableSkipEmpty<E> extends SkipEmpty<E> implements Modifiable<E> {
