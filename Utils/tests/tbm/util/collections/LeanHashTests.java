@@ -15,8 +15,8 @@ import com.google.common.collect.testing.features.*;
 /**Can only test features from existing interfaces*/
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	LeanHashTests.GuavaTests.class,
-	LeanHashTests.NonMapFeaturesTests.class
+	// LeanHashTests.NonMapFeaturesTests.class,
+	LeanHashTests.GuavaTests.class
 })public class LeanHashTests {
 
 public static class GuavaTests {

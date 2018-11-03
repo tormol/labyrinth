@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 public class StackableTest {
-
+/*
 	@Test
 	public void testPush() {
 		fail("Not yet implemented");
@@ -70,5 +70,5 @@ public class StackableTest {
 	public void testToString() {
 		fail("Not yet implemented");
 	}
-
+*/
 }

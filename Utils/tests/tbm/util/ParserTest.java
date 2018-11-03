@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 public class ParserTest {
-
+/*
 	@Test
 	public void testCheckEnd() {
 		fail("Not yet implemented");
@@ -185,4 +185,5 @@ public class ParserTest {
 	public void testToString1() {
 		fail("Not yet implemented");
 	}
+*/
 }
