@@ -18,3 +18,11 @@ hs_err_pid*
 .project
 .classpath
 .settings/
+
+##VS Code
+.vscode
+
+## gradle
+build
+gradle
+.gradle
