@@ -167,7 +167,7 @@ public interface Value {
 		/***/
 		@Override default void setMember(String name, Value v) {
 			getMember(name);//throws if name doesn't even exist or not a map
-			throw Script.error("%ss are immutable.", map_firstKey(types, this.getClass()));
+			throw Script.error("%ss are immutable.", map_firstKey(types, this.getClass(), (k,c) -> k==c ));
 		}	//             plural s, eg strings not string
 		//a default setN here would be nice, but subclasses implementing this and VList must implement it anyway.
 	}

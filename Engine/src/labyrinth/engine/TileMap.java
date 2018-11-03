@@ -6,7 +6,7 @@ import java.awt.GridLayout;
 import java.util.Queue;
 import java.util.function.Consumer;
 import static tbm.util.statics.*;
-import tbm.util.Wrapper;
+import tbm.util.Reference;
 import tbm.util.geom.Point;
 
 
@@ -85,9 +85,9 @@ public class TileMap {
 
 	/**Are there any tiles of this type?*/
 	public static boolean anyTiles(String type) {
-		Wrapper<Boolean> any = new Wrapper<>(false);
-		all(type, t->any.v=true);
-		return any.v;
+		Reference<Boolean> any = new Reference<>(false);
+		all(type, t->any.value=true);
+		return any.value;
 	}
 
 	/**Returnerer alle rutene på brettet*/

@@ -199,8 +199,10 @@ public class StandardLibrary extends VFunc.Method {
 				if (y != null)
 					return VPoint.v(v.Int(), y.Int());
 			}
-			if (required)
-				throw Script.error("%d. parameter should be of type %s.", i, map_firstKey(Value.types, type));
+			if (required) {
+				String t = map_firstKey(Value.types, type, Object::equals);
+				throw Script.error("%d. parameter should be of type %s.", i, t);
+			}
 			return null;
 		}
 		public Value get(boolean required) {

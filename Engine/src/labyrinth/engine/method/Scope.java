@@ -93,7 +93,7 @@ public class Scope {
 			value = v;
 		}
 		public String findName() {
-			return map_firstKey(vars, this);
+			return map_firstKey(vars, this, Object::equals);
 		}
 		public Scope getScope() {
 			return outerClass();

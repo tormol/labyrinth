@@ -17,27 +17,17 @@ import labyrinth.engine.method.Operation.UnDeclare;
 import labyrinth.engine.method.Value.VChar;
 import labyrinth.engine.method.Value.VInt;
 import labyrinth.engine.method.Value.VString;
+import tbm.util.ParseNum;
 
 public class Parser extends tbm.util.Parser {
 	public Parser(File file) throws FileNotFoundException {
-		super(file, true);
+		super(file,
+			  tbm.util.Parser.Source.NEWLINE_IS_WHITESPACE,
+			  tbm.util.Parser.Source.HASH_STARTS_COMMENT);
 	}
 	public Parser(tbm.util.Parser p) {
-		super(p, true, p.getLine(), p.getCol());
-	}
-
-	@Override/**@super Additionally skips comments.*/
-	public Parser skip_whitespace(boolean newline) throws IOException {
-		super.skip_whitespace(newline);
-		if (ipeek() == '#')
-			if (!newline)
-				setPos(getLine(), length(getLine()));
-			else
-				do {
-					line();
-					super.skip_whitespace(newline);
-				} while (ipeek() == '#');
-		return this;
+		super(p.getSource());
+		this.setPos(p);
 	}
 
 	@Override
@@ -54,9 +44,9 @@ public class Parser extends tbm.util.Parser {
 			//might be used for program arguments
 			throw p.error("A file cannot start with a '('.");
 		ArrayDeque<Object> ops = new ArrayDeque<>();
-		while (c != ';'  &&  c != Parser.END) {
+		while (c != ';'  &&  c != -1) {
 			statement((char)c, p, ops, scr);
-			c = p.sw().inext();
+			c = p.sw().next();
 		}
 		return ops;
 	}
@@ -165,11 +155,12 @@ public class Parser extends tbm.util.Parser {
 		  case'1':case'2':case'3':case'4':case'5':
 		  case'6':case'7':case'8':case'9':case'0':
 			p.back();
-			ops.add(VInt.v(parseInt(p, false)));
+			ops.add(VInt.v(parseInt(p)));
 			break;
 		  case'-'://negative int if directly followed by a number
 			if (char_num((char)p.ipeek())) {
-				ops.add(VInt.v(parseInt(p, true)));
+				p.back();
+				ops.add(VInt.v(parseInt(p)));
 				break;
 			}	
 		  default: //name
@@ -188,10 +179,16 @@ public class Parser extends tbm.util.Parser {
 	private static boolean isStartVar(char c) {
 		return isContVar(c) && c!='"' && c!='\'' && !char_num(c);
 	}
-	private static int parseInt(Parser p, boolean negative) throws EOFException, IOException, ParseException {
+	private static int parseInt(Parser p) throws EOFException, IOException, ParseException {
 		int num;
 		try {
-			num = p._uint(negative, true, "_");
+			int flags = ParseNum.SKIP_UNDERSCORE | ParseNum.ANY_FLAGS;
+			num = (int)new ParseNum(flags, p).bits(Integer.SIZE);
+			// called _uint(negative, other_systems=true, spaces="_")
+			// called parseNum.unsigned_int() and then this.back()
+			// called parse_unsigned(ch, Integer.SIZE, negative, other_systems, spaces)
+			// called parse(ch, ch.fetch(), bits, false, negative, other_systems, spaces);
+			p.back();
 		} catch (NumberFormatException e) {
 			throw p.error(e.getMessage());
 		} if (isContVar((char)p.ipeek()))

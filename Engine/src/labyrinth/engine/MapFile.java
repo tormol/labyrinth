@@ -34,7 +34,7 @@ public class MapFile {
 	public static void read(File path) {
 		try (Parser p = new Parser(path)) {
 			Queue<char[]> map = new LinkedList<char[]>();
-			while (!p.empty() && (p.peek() != '\n' || map.isEmpty()))
+			while (!p.isEmpty() && (p.peek() != '\n' || map.isEmpty()))
 				map.add(p.line().toCharArray());
 			TileMap.start(map);
 			new Script(p, path.getName(), StandardLibrary.get(), LabyrinthLibrary.get());
