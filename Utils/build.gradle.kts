@@ -33,3 +33,10 @@ sourceSets {
 val jar by tasks.existing(Jar::class) {
     archiveName = "tbm-utils.jar"
 }
+
+// merge repo into labyrinth when you've got this working
+//  https://github.com/mbitsnbites/git-tools
+// Currently requires java 8 due to https://github.com/gradle/gradle/issues/7059
+//  (fix has not been released as of 2018-11-03)
+// Once that is fixed this library can be turned into a Java 11 module
+//  https://guides.gradle.org/building-java-9-modules/
