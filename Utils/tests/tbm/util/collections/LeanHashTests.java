@@ -15,11 +15,11 @@ import com.google.common.collect.testing.features.*;
 /**Can only test features from existing interfaces*/
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	LeanHashTests.JUnit4Wrapper.class,
-	LeanHashTests.JUnit3Wrapper.class
+	LeanHashTests.GuavaTests.class,
+	LeanHashTests.NonMapFeaturesTests.class
 })public class LeanHashTests {
 
-public static class JUnit3Wrapper {
+public static class GuavaTests {
 	public static junit.framework.Test suite() {
 		TestSuite s = new TestSuite("tbm.util.LeanHash");
 		s.addTest(SetTestSuiteBuilder
@@ -52,7 +52,7 @@ public static class JUnit3Wrapper {
 }
 
 
-public static class JUnit4Wrapper {
+public static class NonMapFeaturesTests {
 	//TODO test LeanHashSets SetWithGet implementation
 	//TODO test LeanHashMap.iterator();
 }

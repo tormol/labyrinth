@@ -17,7 +17,6 @@ repositories {
 
 dependencies {
     testImplementation("junit:junit:4.12") // latest as of 2018-11-01, junit5 is a different package
-    testImplementation("junit:junit:3.8") // both 3 and 4 are used
     // junit5 info: https://github.com/junit-team/junit5-samples/blob/r5.3.1/junit5-jupiter-starter-gradle-kotlin/build.gradle.kts
     testImplementation("com.google.guava:guava-testlib:19.0") // what's in guava/
     //testImplementation("com.google.guava:guava-testlib:27.0-jre") // latest as of 2018-11-01

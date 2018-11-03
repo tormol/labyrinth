@@ -11,11 +11,11 @@ import static org.junit.Assert.*;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	ArrayCollectionTest.JUnit4Wrapper.class,
-	ArrayCollectionTest.JUnit3Wrapper.class
+	ArrayCollectionTest.GuavaTests.class,
+	ArrayCollectionTest.NonListFeaturesTests.class
 })public class ArrayCollectionTest {
 
-public static class JUnit3Wrapper {
+public static class GuavaTests {
 	public static junit.framework.Test suite() {
 		junit.framework.TestSuite s = new junit.framework.TestSuite("guava");
 		s.addTest(CollectionTestSuiteBuilder
@@ -32,7 +32,7 @@ public static class JUnit3Wrapper {
 	}
 }
 
-public static class JUnit4Wrapper {
+public static class NonListFeaturesTests {
 	@Test public void toArrayClassTest() {
 		assertEquals("correct class",
 				String[].class,
