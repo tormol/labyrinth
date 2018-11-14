@@ -1,0 +1,16 @@
+ # A#
+t# X#
+ #   
+-#0#*
+
+.[A] =(: set(4 0 'B) set(3 0 '\s);) # remove this and enable B
+.[B] =(: set(4 1 'C);) # enable C
+.[C] =(: set(1 0 '\s);) # open first collumn
+.[t] =(: set(0 3 '*) set(4 3 '-);) # swap entrance and exit (once)
+.[0] =(: move(0 3);) # teleport to exit
+
+# remove teleportation tile, and afterward toggle wall
+.[X] =(: set(2 3 '#) set(3 1 'Y);)
+.[Y] =(: set(2 3 ' ) set(3 1 'X);)
+
+#.viewDistance =(2)
