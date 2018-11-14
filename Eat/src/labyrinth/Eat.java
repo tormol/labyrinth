@@ -7,6 +7,8 @@ import javax.swing.SwingUtilities;
 import tbm.util.geom.Point;
 import labyrinth.engine.*;
 import labyrinth.engine.TileMap.InvalidMapException;
+import labyrinth.engine.method.Parser;
+import labyrinth.engine.method.Script;
 
 public class Eat {
 	public static final int DOTS = 5;
@@ -20,6 +22,13 @@ public class Eat {
 
 		TileMap.start(10, 10);
 		TileMap.visible(Arrays.asList(TileMap.all()));
+		// initialize Script.scr
+		try {
+			var emptyParser = new tbm.util.Parser(new tbm.util.Parser.SourceString("\n", false, false));
+			new Script(new Parser(emptyParser), "Eat - unused");
+		} catch (Exception e) {
+			throw new RuntimeException("Should not happen", e);
+		}
 		player = new Player("res/player.png", new Consumer<Player>(){
 			int enemies = 1;
 			public void accept(Player player) {
