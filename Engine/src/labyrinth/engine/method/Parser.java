@@ -46,7 +46,7 @@ public class Parser extends tbm.util.Parser {
 		ArrayDeque<Object> ops = new ArrayDeque<>();
 		while (c != ';'  &&  c != -1) {
 			statement((char)c, p, ops, scr);
-			c = p.sw().next();
+			c = p.sw().inext();
 		}
 		return ops;
 	}
