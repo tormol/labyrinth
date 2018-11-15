@@ -30,6 +30,9 @@ public interface Value {
 			//return false would make it impossible to check if a variable is void in a script.
 			return v==Void;
 		}
+		public String toString() {
+			return "void";
+		}
 	}
 	public static final VVoid Void = new VVoid();
 
@@ -51,6 +54,9 @@ public interface Value {
 			//return v==this is a premature optimization that would bite in the ass if another type ovverride .Bool()
 			return bool==v.Bool();
 		}
+		public String toString() {
+			return bool ? "true" : "false";
+		}
 		public static VBool v(boolean b) {
 			return b?True:False;
 		}
@@ -69,6 +75,9 @@ public interface Value {
 		}@Override
 		public boolean eq(Value v) {
 			return c==v.Char();
+		}
+		public String toString() {
+			return Character.toString(c);
 		}
 		public static VChar v(char ch) {
 			if (ch < 0  ||  ch > 128)
@@ -89,6 +98,9 @@ public interface Value {
 		}@Override
 		public boolean eq(Value v) {
 			return str.equals(v.String());
+		}
+		public String toString() {
+			return str;
 		}
 		public static VString v(String str) {
 			return new VString(str);
@@ -120,6 +132,9 @@ public interface Value {
 		}@Override
 		public boolean eq(Value v) {
 			return n==v.Int();
+		}
+		public String toString() {
+			return Integer.toString(n);
 		}
 		public static VInt v(int n) {
 			if (n < start  ||  n > flyweight.length+start)
@@ -213,6 +228,22 @@ public interface Value {
 					return false;
 			return true;
 		}
+
+		static String toString_helper(VList l) {
+			int len = l.length();
+			if (len == 0) {
+				return "[]";
+			}
+			StringBuilder sb = new StringBuilder("[");
+			sb.append(l.getN(0));
+			for (int i=1; i<len; i++) {
+				sb.append(' ');
+				sb.append(l.getN(i));
+			}
+			sb.append(']');
+			return sb.toString();
+		}
+
 		int length();
 		Value getN(int index);
 		void setN(int index, Value v);
