@@ -12,21 +12,20 @@
 
 .code =("7532")
 .entered =("")
-.c = ("") # script-defined functions doesn't support parameters
-.press =(:
+.press =(:(c)
     entered =(cat(entered c))
     if(=(entered code) :set(6 8 ' ) set(6 9 ' ) set(7 8 ' );)
 ;)
-.[a] =(: c =("0") press() ;)
-.[b] =(: c =("1") press() ;)
-.[c] =(: c =("2") press() ;)
-.[d] =(: c =("3") press() ;)
-.[e] =(: c =("4") press() ;)
-.[f] =(: c =("5") press() ;)
-.[g] =(: c =("6") press() ;)
-.[h] =(: c =("7") press() ;)
-.[i] =(: c =("8") press() ;)
-.[j] =(: c =("9") press() ;)
+.[a] =(: press("0") ;)
+.[b] =(: press("1") ;)
+.[c] =(: press("2") ;)
+.[d] =(: press("3") ;)
+.[e] =(: press("4") ;)
+.[f] =(: press("5") ;)
+.[g] =(: press("6") ;)
+.[h] =(: press("7") ;)
+.[i] =(: press("8") ;)
+.[j] =(: press("9") ;)
 
 .[0] =(: entered =("") move(4 1) ;)
 

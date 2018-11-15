@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
 import labyrinth.engine.method.Operation.Call;
@@ -54,8 +55,13 @@ public class Parser extends tbm.util.Parser {
 	private static Procedure parse_method(Parser p, Script scr) throws IOException, EOFException, ParseException {
 		Parser start = p.clone();
 		scr.current = new Scope(scr.current, "parse_method()");
+		List<String> param_names = null;
 		if (p.sw().peek() == '(') {
-			parse_param(p);
+			param_names = parse_param(p);
+			// make the variables known
+			for (String name : param_names) {
+				scr.current.declare(name, false, null);
+			}
 		}
 		ArrayDeque<Object> ops = new ArrayDeque<>();
 		char c;
@@ -63,7 +69,7 @@ public class Parser extends tbm.util.Parser {
 			statement(c, p, ops, scr);
 		scr.current = scr.current.parent;
 		String desc = String.format("start %d:%d, end %d:%d", start.getLine(), start.getCol(), p.getLine(), p.getCol());
-		return new Procedure(ops, desc);
+		return new Procedure(ops, param_names, desc);
 	}
 
 	private static Deque<Object> parse_call(Parser p, Script scr) throws EOFException, IOException, ParseException {
@@ -87,9 +93,19 @@ public class Parser extends tbm.util.Parser {
 		return params;
 	}
 
-	private static List<Object> parse_param(Parser p) {
-		p.error("Parameters are not supported yet");
-		return null;
+	private static List<String> parse_param(Parser p) throws IOException, ParseException {
+		p.skip();//'('
+		char c;
+		List<String> param_names = new ArrayList<>();
+		while ((c = p.sw().peek()) != ')') {
+			if (!isStartVar(c)) {
+				throw p.error("parameter list can only contain variable names");
+			}
+			String name = p.next(ch->isContVar(ch));
+			param_names.add(name);
+		}
+		p.skip();//')'
+		return param_names;
 	}
 
 	static void statement(char c, Parser p, Deque<Object> ops, Script scr) throws EOFException, IOException, ParseException {
