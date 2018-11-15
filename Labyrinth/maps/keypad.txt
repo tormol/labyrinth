@@ -1,0 +1,33 @@
+#########
+#   *   #
+# h i j #
+#       #
+# e f g #
+#       #
+# b c d #
+#       #
+# 0 a ###
+#     #-#
+#########
+
+.code =("7532")
+.entered =("")
+.c = ("") # script-defined functions doesn't support parameters
+.press =(:
+    entered =(cat(entered c))
+    if(=(entered code) :set(6 8 ' ) set(6 9 ' ) set(7 8 ' );)
+;)
+.[a] =(: c =("0") press() ;)
+.[b] =(: c =("1") press() ;)
+.[c] =(: c =("2") press() ;)
+.[d] =(: c =("3") press() ;)
+.[e] =(: c =("4") press() ;)
+.[f] =(: c =("5") press() ;)
+.[g] =(: c =("6") press() ;)
+.[h] =(: c =("7") press() ;)
+.[i] =(: c =("8") press() ;)
+.[j] =(: c =("9") press() ;)
+
+.[0] =(: entered =("") move(4 1) ;)
+
+.viewDistance =("disabled")
