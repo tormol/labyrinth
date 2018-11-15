@@ -168,7 +168,7 @@ public class StandardLibrary extends VFunc.Method {
 		});
 
 		new StandardLibrary("[]", array(VString.class, VInt.class), param->{
-			return VChar.v( param[0].String() .charAt( param[1].Int() ) );
+			return VChar.v( param[0].String().charAt( param[1].Int() ) );
 		});
 
 		lib.put("length", new OneP(VString.v("st"), vstr->VInt.v(vstr.String().length())));

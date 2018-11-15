@@ -5,6 +5,7 @@ import java.util.Map;
 import tbm.util.geom.Point;
 import static tbm.util.statics.*;
 
+/**Variable types base class*/
 public interface Value {
 	/**for maps, not directly exposed to script code*/
 	default Value getMember(String name) {throw Script.error("this type have no members");}
@@ -145,7 +146,7 @@ public interface Value {
 		}
 		//premature but I want to.
 		private static final VInt[] flyweight = new VInt[256];
-		private static final int start = -32;//asymetric because I think positive values are used more frequently than smaller ones
+		private static final int start = -32;//asymmetric because I think positive values are used more frequently than negative ones
 	}
 
 

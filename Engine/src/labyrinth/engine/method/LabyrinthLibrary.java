@@ -21,7 +21,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 	}
 
 
-	//methods add themselves to Moethod.map in the constructor.
+	//methods add themselves to Method.map in the constructor.
 	static {
 		ParameterWalker pa = new ParameterWalker(null);
 
@@ -60,7 +60,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 			pa.start(param);
 			Point pos = pa.get(VPoint.class).Point();
 			pa.finish();
-			//i think changing tile and mob for the rest of the function is OK
+			// I think changing tile and mob for the rest of the function is OK
 			if (pos != null)
 				Script.scr.tile = TileMap.get(pos);
 			if (Script.scr.tile.mob() != null)
@@ -85,10 +85,6 @@ public class LabyrinthLibrary extends VFunc.Method {
 			return Void;
 		});
 
-		/*new LabyrinthLibrary("", array(), param->{
-			
-			return Value.Void;
-		});//*/
 		new LabyrinthLibrary("error", array(Value.class, null), param->{
 			throw Script.error(Script.scr.root.value("cat").call(Arrays.asList(param)).toString());
 		});
