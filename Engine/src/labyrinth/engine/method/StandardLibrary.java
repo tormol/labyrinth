@@ -32,7 +32,7 @@ public class StandardLibrary extends VFunc.Method {
 		});//*/
 		new StandardLibrary("=", array(Value.class, null), param->{
 			if (param.length == 2)
-				if (param[0].equals(param[1]))
+				if (param[0].eq(param[1]))
 					return Value.True;
 				else
 					return Value.False;
