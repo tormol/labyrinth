@@ -43,6 +43,18 @@ public class LabyrinthLibrary extends VFunc.Method {
 			return Void;
 		});
 
+
+		new LabyrinthLibrary("get", array(VPoint.class), param->{
+			pa.start(param);
+			Point p = pa.get(VPoint.class).Point();
+			pa.finish();
+			Tile target = Script.scr.tile;
+			if (p != null)
+				target = TileMap.get(p);
+			char one = target.getType().getSymbols()[0];
+			return VChar.v(one);
+		});
+
 		/**run the method of another tile*/
 		new LabyrinthLibrary("trigger", array(VPoint.class), param->{
 			pa.start(param);
