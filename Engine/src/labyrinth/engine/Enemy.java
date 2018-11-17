@@ -105,36 +105,38 @@ public abstract class Enemy extends Mob implements Runnable {
 			super(start, imagePath, waitStart, waitShorter, waitMin);
 		}
 
-		@Override//Fiende
+		@Override//Enemy
 		protected Tile findTile() {
 			direction = Direction.find( (int)(Math.random()*4),  0, 1, 2, 3);
 			final Tile to = TileMap.get( tile().pos().plus(direction) );
-			if (to.canEnter(this, false)  &&  !(to.mob() instanceof Enemy))
+			if (to.canEnter(this, false)  &&  !(to.mob() instanceof Enemy)) {
 				return to;
+			}
 			return null;
 		}
 	}
 
 	/**Moves in random direction, and can move trough wall.*/
 	public static class Ghost extends Enemy {
-		public Ghost(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
-			super(start, fil, ventStart, ventRaskere, ventMin);
+		public Ghost(Tile start, String imagePath, int waitStart, int waitShorter, int waitMin) {
+			super(start, imagePath, waitStart, waitShorter, waitMin);
 		}
 
 		@Override//Enemy
 		protected Tile findTile() {
 			direction = Direction.find( (int)(Math.random()*4),  0, 1, 2, 3);
 			final Tile to = TileMap.get( tile().pos().plus(direction) );
-			if (!to.isType("outside")  &&  !(to.mob() instanceof Enemy))
+			if (!to.isType("outside")  &&  !(to.mob() instanceof Enemy)) {
 				return to;
+			}
 			return null;
 		}
 	}
 
 	/**Moves towards player, one axis at a time.*/
 	public static class Targeting extends Enemy {
-		public Targeting(Tile start, String fil, int ventStart, int ventRaskere, int ventMin) {
-			super(start, fil, ventStart, ventRaskere, ventMin);
+		public Targeting(Tile start, String imagePath, int waitStart, int waitShorter, int waitMin) {
+			super(start, imagePath, waitStart, waitShorter, waitMin);
 		}
 
 		@Override//Enemy
@@ -162,12 +164,14 @@ public abstract class Enemy extends Mob implements Runnable {
 			}
 
 			for (Point move : alt) {
-				if (move.equals(0, 0))
+				if (move.equals(0, 0)) {
 					continue;
+				}
 				Tile tile = TileMap.get(pos.plus(move));
 				if (tile.canEnter(this, false)
-				 && !(tile.mob() instanceof Enemy))
+				 && !(tile.mob() instanceof Enemy)) {
 					return tile;
+				}
 			}
 			//cannot move: TODO: throw? return current tile?
 			return null;

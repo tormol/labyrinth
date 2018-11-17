@@ -8,41 +8,47 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**Siden ruter kan skifte type, og det ikke er mulig å erstatte komponenter i GridLayout*/
+/**Separate from Tile Because tiles can change but components in GridLayout cannot be replaced*/
 public class Type {
 	private static List<Type> types = new ArrayList<Type>(20);
 
 	public static Type get(char symbol) {
-		for (Type type : types)
-			if (type.symbol(symbol))
+		for (Type type : types) {
+			if (type.symbol(symbol)) {
 				return type;
-			return null;
+			}
+		}
+		return null;
 	}
 	public static Type get(String name) {
-		for (Type type : types)
-			if (name.equalsIgnoreCase(type.name))
+		for (Type type : types) {
+			if (name.equalsIgnoreCase(type.name)) {
 				return type;
+			}
+		}
 		return null;
 	}
 
-	/**Returnerer den første typen som har tegnet tegn
-	 * Gir en feilmelding hvis den ikke finner noen.*/
+	/**@return the first type associated to a symbol.
+	 * Creates an error if no type matches.*/
 	public static Type t(char symbol) {
 		Type type = get(symbol);
-		if (type == null)
-			throw Window.error("Ukjent type '%c'", symbol);
+		if (type == null) {
+			throw Window.error("Unknown type '%c'", symbol);
+		}
 		return type;
 	}
-	/**Returnerer den første typen med navn nanv
-	 * Gir en feilmelding hvis den ikke finner noen.*/
+	/**@return the type with name.
+	 * Creates an error if the type doesn't exist.*/
 	public static Type t(String name) {
 		Type type = get(name);
-		if (type == null)
-			throw Window.error("Ukjent type \"%s\"", name);
+		if (type == null) {
+			throw Window.error("Unknown type \"%s\"", name);
+		}
 		return type;
 	}
 
-	/**Lager en ny type, og legger den i listen.*/
+	/**Creates a new tile type add adds it to the (global) list*/
 	public static Type add(String name, boolean solid, boolean method, String imagePath, Color color, String symbol) {
 		Type type = new Type(name, solid, method, imagePath, color, symbol);
 		types.add(type);
@@ -54,32 +60,32 @@ public class Type {
 
 	/***/
 	public final String name;
-	/**Bakgrunnsfarge*/
+	/**background color*/
 	public final Color color;
 	public final BufferedImage image;
-	/**Enheter kan ikke flytte til solide ruter*/
+	/**Can units enter tiles of this type?*/
 	public final boolean solid;
-	/**Kan felt av denne typen ha en metode*/
+	/**Can tiles of this type trigger functions?*/
 	public final boolean method;
-	/**Hvilke tegn angir denne typen*/
+	/**Characters that become this type*/
 	private final char[] symbols;
 	protected Type(String name, boolean solid, boolean method, String imagePath, Color color, String symbol) {
-		this.name=name;
-		this.symbols=symbol.toCharArray();
-		this.color=color;
-		this.solid=solid;
-		this.method=method;
+		this.name = name;
+		this.symbols = symbol.toCharArray();
+		this.color = color;
+		this.solid = solid;
+		this.method = method;
 		BufferedImage image = null;
-		if (imagePath != null)
+		if (imagePath != null) {
 			try {
 				image = ImageIO.read(new File(imagePath));
 			} catch (IOException e) {
 				throw Window.error(
-						"Feil under lasting av bildefil \"%s\" til RuteType %s:\n"
-						+"Det kan skyldes at working directory ikke er satt til pakkeNavnet\n"+"%s",
+						"Could not load image \"%s\" for tile type %s:\n%s",
 						imagePath, name, e.getMessage()
-					);
+				);
 			}
+		}
 		this.image=image;
 	}
 
@@ -87,15 +93,17 @@ public class Type {
 		return symbols.clone();
 	}
 
-	/**Er en rute angitt med tegn denne typen?*/
+	/**Is this type used for tiles defined with character symbol? */
 	public boolean symbol(char symbol) {
-		for (char c : this.symbols)
-			if (symbol==c)
+		for (char c : this.symbols) {
+			if (symbol == c) {
 				return true;
+			}
+		}
 		return false;
 	}
 
-	/**Starter navnet til denne typen med navn*/
+	/** Does the name of this type start with name? */
 	public boolean type(String name) {
 		return this.name.startsWith(name);
 	}

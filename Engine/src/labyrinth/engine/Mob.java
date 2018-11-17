@@ -16,8 +16,9 @@ import tbm.util.geom.Direction;
 public abstract class Mob {
 	public static final List<Mob> mobs = new ArrayList<Mob>();
 	public static void pauseAll(boolean pause) {
-		for (Mob enhet : Mob.mobs)
-			enhet.pause(pause);
+		for (Mob unit : Mob.mobs) {
+			unit.pause(pause);
+		}
 	}
 
 
@@ -74,8 +75,9 @@ public abstract class Mob {
 
 	/**Move from tile, and remove from Mob.mobs.*/
 	public void remove() {
-		if (tile != null)
+		if (tile != null) {
 			tile.leave(false);
+		}
 		mobs.remove(this);
 	}
 

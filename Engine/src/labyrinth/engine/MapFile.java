@@ -23,8 +23,9 @@ public class MapFile {
 		fd.setFile("*.txt");
 		fd.setVisible(true);
 		String file = fd.getFile();
-		if (file == null)
+		if (file == null) {
 			throw Window.error("No file selected.");
+		}
 		return new File(fd.getDirectory(), file);
 	}
 
@@ -34,8 +35,9 @@ public class MapFile {
 	public static void read(File path) {
 		try (Parser p = new Parser(path)) {
 			Queue<char[]> map = new LinkedList<char[]>();
-			while (!p.isEmpty() && (p.peek() != '\n' || map.isEmpty()))
+			while (!p.isEmpty() && (p.peek() != '\n' || map.isEmpty())) {
 				map.add(p.line().toCharArray());
+			}
 			TileMap.start(map);
 			new Script(p, path.getName(), StandardLibrary.get(), LabyrinthLibrary.get());
 		} catch (FileNotFoundException e) {

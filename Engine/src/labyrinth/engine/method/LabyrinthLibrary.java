@@ -49,8 +49,9 @@ public class LabyrinthLibrary extends VFunc.Method {
 			Point p = pa.get(VPoint.class).Point();
 			pa.finish();
 			Tile target = Script.scr.tile;
-			if (p != null)
+			if (p != null) {
 				target = TileMap.get(p);
+			}
 			char one = target.getType().getSymbols()[0];
 			return VChar.v(one);
 		});

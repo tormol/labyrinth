@@ -10,12 +10,14 @@ import tbm.util.geom.Point;
 public class LoS {
 	//how many tiles can one see straight forward?
 	public static int line(Point p, Direction d, int max, Consumer<Tile> a) {
-		int len=0; Tile t;
+		int len = 0;
+		Tile t;
 		do {
 			len++;
 			t = TileMap.get(p);
-			if (a != null)
+			if (a != null) {
 				a.accept(t);
+			}
 			p=p.plus(d);
 		} while (!t.getType().solid && len<max);
 		return len-1;
@@ -36,15 +38,18 @@ public class LoS {
 				Tile t = TileMap.get(p);
 				a.accept(t);
 				if (t.getType().solid) {
-					if (opening>1)
+					if (opening>1) {
 						lines.add(new Line(p.plus(back, opening-1), l.side, opening-1));
+					}
 					opening = 0;
-				} else
+				} else {
 					opening++;
+				}
 				p=p.plus(forward);
 			}
-			if (i==l.max)
+			if (i==l.max) {
 				a.accept(TileMap.get(p));
+			}
 		}
 
 		//Look behind

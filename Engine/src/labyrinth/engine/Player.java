@@ -42,8 +42,9 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 	public void keyPressed(KeyEvent e) {
 		Direction direction = Direction.find(e.getKeyCode(), VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT);
 		if (direction==Direction.NONE || pause) {
-			if (e.getKeyCode() == VK_ESCAPE)
+			if (e.getKeyCode() == VK_ESCAPE) {
 				Mob.pauseAll(!pause);
+			}
 			return;
 		}
 		this.direction = direction;
@@ -55,10 +56,12 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 			tile().leave(true);
 			setTile(to);
 			tile().enter(this, true);
-			if (onMove != null)
+			if (onMove != null) {
 				onMove.accept(this);
-		} else
+			}
+		} else {
 			tile().repaint();
+		}
 		LoS.triangle(tile().pos(), direction, (tile) -> tile.visible());
 		TileMap.panel.repaint();
 	}
@@ -66,14 +69,15 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 
 	/**With an hammer, its the enemies who lose.
 	 * Note that the hammer is invisible (TODO)
-	 *@param millisekunder how long the hammer last*/
-	public synchronized void hammer(final int millisekunder) {
-		if (hammer)
-			throw Window.error("Spilleren har allerede en hammer.");
+	 *@param millis how long the hammer last*/
+	public synchronized void hammer(final int millis) {
+		if (hammer) {
+			throw Window.error("Player alreadyhas a hammer.");
+		}
 		hammer = true;
 		Thread t = new Thread(() -> {
 			try {
-				Thread.sleep(millisekunder);
+				Thread.sleep(millis);
 			} catch (InterruptedException e)
 				{}
 			hammer = false;
@@ -87,10 +91,13 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 	@Override//Mob
 	public void moveTo(Tile t) {
 		super.moveTo(t);
-		if (t != null)
-			SwingUtilities.invokeLater(()->LoS.triangle(
-					tile().pos(), direction,
-					tile->tile.visible()));
+		if (t != null) {
+			SwingUtilities.invokeLater(() -> LoS.triangle(
+					tile().pos(),
+					direction,
+					tile -> tile.visible()
+			));
+		}
 	}
 
 

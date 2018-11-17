@@ -32,19 +32,22 @@ public class Tile extends javax.swing.JPanel {
 
 	/**Most mobs cannot enter solid tiles, and if trigger=true a method might be called*/
 	public boolean canEnter(Mob mob, boolean trigger) {
-		if (trigger && type.type("button"))
+		if (trigger && type.type("button")) {
 			Script.call('['+method+']', this, mob);
+		}
 		return !type.solid;
 	}
 
 	public Tile enter(Mob mob, boolean trigger) {
 		//if there is a mob in the tile, let it know it has been removed.
 		//the mob entering the tile can check if its occupied before moving.
-		if (this.mob != null)
+		if (this.mob != null) {
 			this.mob.hit(mob);
+		}
 		this.mob = mob;
-		if (type.method && trigger)
+		if (type.method && trigger) {
 			Script.call('['+method+']', this, mob);
+		}
 		repaint();
 		return this;
 	}
@@ -66,10 +69,12 @@ public class Tile extends javax.swing.JPanel {
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		if (visible) {
-			if (type.image != null)
+			if (type.image != null) {
 				g.drawImage(type.image, 0, 0, getWidth(), getHeight(), type.color, null);
-			if (mob != null)
+			}
+			if (mob != null) {
 				mob.draw(g, getWidth(), getHeight());
+			}
 		}
 	}
 
@@ -93,8 +98,9 @@ public class Tile extends javax.swing.JPanel {
 
 
 	public Point pos() {
-		if (pos==null)
+		if (pos==null) {
 			return Point.p(0, 0);//TODO: Why?
+		}
 		return pos;
 	}
 

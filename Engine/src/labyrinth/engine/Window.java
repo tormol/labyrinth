@@ -47,8 +47,9 @@ public class Window {
 	}
 
 	public static void end(String text) {
-		for (Mob e : Mob.mobs)
-			e.pause(true);
+		for (Mob unit : Mob.mobs) {
+			unit.pause(true);
+		}
 		JOptionPane.showMessageDialog(window,
 				text, window.getTitle(), JOptionPane.PLAIN_MESSAGE
 			);
@@ -71,8 +72,9 @@ public class Window {
 				);
 			//this exception won't stop other threads,
 			//Don't know whether this code does that, or I got stuck.
-			if (window != null)
+			if (window != null) {
 				window.dispose();
+			}
 		}
 		private static final long serialVersionUID = 1L;
 	}

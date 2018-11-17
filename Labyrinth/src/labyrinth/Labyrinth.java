@@ -25,10 +25,11 @@ public class Labyrinth {
 		Type.add("enemy",  false, false, null,           WHITE,  "!");
 		Type.add("hammer", false, false, l+"hammer.png", WHITE,  "^");
 
-		if (args.length == 1)
+		if (args.length == 1) {
 			MapFile.read(new File(args[0]));
-		else //show a fileChooser
+		} else {//show a fileChooser
 			MapFile.read(MapFile.choose("maps/"));
+		}
 		TileMap.all("enemy", tile -> {
 			tile.setType("floor");
 			new Enemy.Normal(tile, l+"enemy.png", 600, 0, 600);
@@ -55,8 +56,9 @@ public class Labyrinth {
 		Tile start = findStart(p);
 		p.moveTo( start );
 		//see in all directions, except NONE
-		for (Direction d : new Direction[]{NORTH, SOUTH, EAST, WEST})
+		for (Direction d : new Direction[]{NORTH, SOUTH, EAST, WEST}) {
 			LoS.triangle(p.tile().pos(), d, t -> t.visible());
+		}
 		p.start();
 		Mob.pauseAll(false);
 	}
@@ -71,10 +73,12 @@ public class Labyrinth {
 				tile.visible();
 			}
 		});
-		if (start.isEmpty())
+		if (start.isEmpty()) {
 			throw Window.error("No start tile.");
-		if (start.size() == 1)
+		}
+		if (start.size() == 1) {
 			return start.get(0);
+		}
 
 		LinkedTransferQueue<KeyEvent> queue = new LinkedTransferQueue<>();
 		awtKeyListen.Pressed klp = event->queue.add(event);
@@ -83,27 +87,32 @@ public class Labyrinth {
 
 		int index = 0;
 		boolean finished = false;
-		while (!finished)
-			try {switch (queue.take().getKeyCode()) {
-				case VK_LEFT :
-					start.get(index).leave(false);
-					if (index == 0)
-						index = start.size();
-					index--;
-					start.get(index).enter(player, false);						
-					break;
-				case VK_RIGHT:
-					start.get(index).leave(false);
-					index++;
-					if (index == start.size())
-						index = 0;
-					start.get(index).enter(player, false);
-					break;
-				case VK_ENTER:
-					finished = true;
-			}} catch (InterruptedException e1) {
+		while (!finished) {
+			try {
+				switch (queue.take().getKeyCode()) {
+					case VK_LEFT:
+						start.get(index).leave(false);
+						if (index == 0) {
+							index = start.size();
+						}
+						index--;
+						start.get(index).enter(player, false);
+						break;
+					case VK_RIGHT:
+						start.get(index).leave(false);
+						index++;
+						if (index == start.size()) {
+							index = 0;
+						}
+						start.get(index).enter(player, false);
+						break;
+					case VK_ENTER:
+						finished = true;
+				}
+			} catch (InterruptedException e1) {
 				finished = true;
 			}
+		}
 		Window.window.removeKeyListener(klp);
 		start.get(index).leave(false);
 		return start.get(index);

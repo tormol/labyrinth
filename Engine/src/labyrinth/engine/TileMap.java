@@ -10,11 +10,10 @@ import tbm.util.Reference;
 import tbm.util.geom.Point;
 
 
-/**Originalt var denne ikke statisk, men siden jeg aldri vil trenge mer enn en instans, og den brukes overalt ble det tungvindt å sende den ene instansen rundt til alle metoder.
- * Holder alle rutene på skjermen.*/
+/**Contains all the tiles of the map*/
 public class TileMap {
 	private static Tile[][] map;
-	/**Panelet som inneholder rutene*/
+	/**Swing panel that displays the tiles*/
 	public static final JPanel panel = new JPanel(); 
 	
 
@@ -27,51 +26,55 @@ public class TileMap {
 				map[y][x] = ' ';
 		start(map);
 	}
-	/**
-	 * @throws InvalidMapException */
+	/**@throws InvalidMapException */
 	public static void start(String[] lines) throws InvalidMapException {
 		char[][] symbol = new char[lines.length][];
-		for (int i=0; i<symbol.length; i++)
+		for (int i=0; i<symbol.length; i++) {
 			symbol[i] = lines[i].toCharArray();
+		}
 		start(symbol);
 	}
 	public static void start(Queue<char[]> symbol) throws InvalidMapException {
 		start(symbol.toArray(new char[symbol.size()][]));
 	}
-	public static void start(char[][] tegn) throws InvalidMapException {
+	public static void start(char[][] symbol) throws InvalidMapException {
 		Type.add("outside", true, false, null, Color.CYAN, "");
-		int collumns = tegn[0].length;
-		map = new Tile[tegn.length][collumns];
+		int columns = symbol[0].length;
+		map = new Tile[symbol.length][columns];
 		panel.setLayout(new GridLayout( map.length, map[0].length));
 
-		//lager Ruter
+		// create tiles
 		for (int y=0;  y<map.length;  y++) {
-			if (tegn[y].length != collumns)
+			if (symbol[y].length != columns) {
 				throw new InvalidMapException(y, "Length doesn't match the previous rows");
+			}
 			for (int x=0; x<map[0].length; x++) {
-				Type type = Type.get(tegn[y][x]);
-				if (type == null)
-					throw new InvalidMapException(y, "collumn %d: Unknown symbol '%c'", x, tegn[y][x]);
+				Type type = Type.get(symbol[y][x]);
+				if (type == null) {
+					throw new InvalidMapException(y, "column %d: Unknown symbol '%c'", x, symbol[y][x]);
+				}
 				map[y][x] = new Tile(type, Point.p(x, y));
-				if (type.method)
-					map[y][x].method = char2str(tegn[y][x]);
+				if (type.method) {
+					map[y][x].method = char2str(symbol[y][x]);
+				}
 				panel.add(map[y][x]);
 			}
 		}
 	}
 
-	
-	/**returnerer ruten i rad y, kolonner x
-	 * hvis koordinatene er utenfor brettet returneres en ny rute av type vegg*/
+
+	/**@return the tile in row y, column x
+	 * If the coordinate is outside the map, a new tile which acts like a wall is returned*/
 	public static Tile get(Point p) {
 		return get(p.x, p.y);
 	}
-	/**returnerer ruten i rad y, kolonner x
-	 * hvis koordinatene er utenfor brettet returneres en ny rute av type vegg*/
+	/**@return the tile in row y, column x
+	 * If the coordinate is outside the map, a new tile which acts like a wall is returned,
+	 * this way I don't need to check for edge cases other places*/
 	public static Tile get(int x, int y) {
-		if (y < 0  ||  y >= map.length  ||  x < 0  ||  x >= map[0].length)
-			//På denne måten slipper jeg å sjekke om jeg er utenfor brettet andre steder.
+		if (y < 0  ||  y >= map.length  ||  x < 0  ||  x >= map[0].length) {
 			return new Tile(Type.t("outside"), null);
+		}
 		return map[y][x];
 	}
 
@@ -90,7 +93,7 @@ public class TileMap {
 		return any.value;
 	}
 
-	/**Returnerer alle rutene på brettet*/
+	/**@return all tiles on the map*/
 	public static Tile[] all() {
 		Tile[] all = new Tile[numberOfTiles()];
 		int pos=0;
@@ -104,7 +107,7 @@ public class TileMap {
 	public static void all(String type, Consumer<Tile> c) {
 		all(Type.t(type), c);
 	}
-	/**Returnerer alle ruter av typen*/
+	/**Calls consumer for each tile of type*/
 	public static void all(Type type, Consumer<Tile> consumer) {
 		for (Tile[] row : map)
 			for (Tile t : row)
@@ -124,14 +127,13 @@ public class TileMap {
 			super(String.format(f, a));
 			this.row = row;
 		}
-		@Override
+		@Override//Exception
 		public String getMessage() {
 			return String.format("Row %d %s", row, super.getMessage());
 		}
 		public String getOffsetMessage(int lineOffset) {
 			return String.format("Line %d %s", lineOffset+row, super.getMessage());
 		}
-		//TODO: LocalizedMessage
 		public int getRow() {
 			return row;
 		}
