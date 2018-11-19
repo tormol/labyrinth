@@ -4,8 +4,8 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.function.Consumer;
 
-import tbm.util.geom.Direction;
-import tbm.util.geom.Point;
+import no.torbmol.util.geom.Direction;
+import no.torbmol.util.geom.Point;
 
 public class LoS {
 	//how many tiles can one see straight forward?

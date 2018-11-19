@@ -1,6 +1,6 @@
 package labyrinth.engine;
-import tbm.util.geom.Point;
-import tbm.util.geom.Direction;
+import no.torbmol.util.geom.Point;
+import no.torbmol.util.geom.Direction;
 import java.util.ArrayList;
 
 public abstract class Enemy extends Mob implements Runnable {

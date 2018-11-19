@@ -1,15 +1,15 @@
 package labyrinth;
 import static java.awt.Color.*;
 import static java.awt.event.KeyEvent.*;
-import static tbm.util.geom.Direction.*;
+import static no.torbmol.util.geom.Direction.*;
 import java.io.File;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedTransferQueue;
-import tbm.util.awtKeyListen;
-import java.util.LinkedList;
-import tbm.util.geom.Direction;
+import no.torbmol.util.awtKeyListen;
+import no.torbmol.util.geom.Direction;
 import labyrinth.engine.*;
 import labyrinth.engine.method.*;
 

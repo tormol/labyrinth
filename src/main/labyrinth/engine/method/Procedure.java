@@ -1,6 +1,6 @@
 package labyrinth.engine.method;
 import java.util.List;
-//import static tbm.util.statics.*;
+//import static no.torbmol.util.statics.*;
 
 /**script-created functions*/
 public class Procedure implements Operation {

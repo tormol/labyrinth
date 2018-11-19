@@ -1,5 +1,5 @@
 package labyrinth.engine.method;
-import static tbm.util.statics.map_firstKey;
+import static no.torbmol.util.statics.map_firstKey;
 import java.util.HashMap;
 import java.util.Map;
 

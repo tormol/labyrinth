@@ -22,19 +22,6 @@ dependencies {
     //testImplementation("com.google.guava:guava-testlib:27.0-jre") // latest as of 2018-11-01
 }
 
-sourceSets {
-    // this library (currently) doesn't follow the standard gradle directory structure
-    // Is there a more idiomatic way to apply these settings? https://github.com/gradle/kotlin-dsl/issues/443
-    getByName("main").java.srcDirs("src")
-    getByName("main").java.exclude("src/tbm/programs/**")
-    getByName("test").java.srcDirs("tests")
-}
-
 val jar by tasks.existing(Jar::class) {
     archiveName = "tbm-utils.jar"
 }
-
-// Currently requires java 8 due to https://github.com/gradle/gradle/issues/7059
-//  (fix has not been released as of 2018-11-03)
-// Once that is fixed this library can be turned into a Java 11 module
-//  https://guides.gradle.org/building-java-9-modules/

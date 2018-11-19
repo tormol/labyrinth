@@ -3,7 +3,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import labyrinth.engine.method.Script;
-import tbm.util.geom.Point;
+import no.torbmol.util.geom.Point;
 
 
 public class Tile extends javax.swing.JPanel {

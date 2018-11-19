@@ -5,9 +5,9 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.util.Queue;
 import java.util.function.Consumer;
-import static tbm.util.statics.*;
-import tbm.util.Reference;
-import tbm.util.geom.Point;
+import static no.torbmol.util.statics.*;
+import no.torbmol.util.Reference;
+import no.torbmol.util.geom.Point;
 
 
 /**Contains all the tiles of the map*/

@@ -2,8 +2,8 @@ package labyrinth.engine.method;
 import java.util.List;
 import java.util.Map;
 
-import tbm.util.geom.Point;
-import static tbm.util.statics.*;
+import no.torbmol.util.geom.Point;
+import static no.torbmol.util.statics.*;
 
 /**Variable types base class*/
 public interface Value {

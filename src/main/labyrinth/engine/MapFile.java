@@ -1,5 +1,5 @@
 package labyrinth.engine;
-//import static tbm.util.statics.*;
+//import static statics.*;
 import java.awt.FileDialog;
 import java.io.EOFException;
 import java.io.File;
@@ -7,7 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
-import tbm.util.Parser.ParseException;
+import no.torbmol.util.Parser.ParseException;
 import labyrinth.engine.TileMap.InvalidMapException;
 import labyrinth.engine.method.*;
 

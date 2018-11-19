@@ -1,10 +1,10 @@
 package labyrinth.engine.method;
-import static tbm.util.statics.*;
+import static no.torbmol.util.statics.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.function.Function;
 import labyrinth.engine.method.StandardLibrary;
-import tbm.util.geom.Point;
+import no.torbmol.util.geom.Point;
 
 public class StandardLibrary extends VFunc.Method {
 	private static HashMap<String, Value> lib = new HashMap<>();

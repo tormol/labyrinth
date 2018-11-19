@@ -1,9 +1,9 @@
 package labyrinth.engine;
 import static java.awt.event.KeyEvent.*; 
 import javax.swing.SwingUtilities;
-import tbm.util.geom.Direction;
-import tbm.util.geom.Point;
-import tbm.util.awtKeyListen;
+import no.torbmol.util.geom.Direction;
+import no.torbmol.util.geom.Point;
+import no.torbmol.util.awtKeyListen;
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
 import labyrinth.engine.method.Script;

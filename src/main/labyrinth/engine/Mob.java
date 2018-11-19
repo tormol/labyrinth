@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import tbm.util.geom.Direction;
+import no.torbmol.util.geom.Direction;
 
 
 public abstract class Mob {

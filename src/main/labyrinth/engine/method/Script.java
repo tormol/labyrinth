@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Map;
-import tbm.util.Parser.ParseException;
+import no.torbmol.util.Parser.ParseException;
 import labyrinth.engine.Mob;
 import labyrinth.engine.Tile;
 import labyrinth.engine.Window;

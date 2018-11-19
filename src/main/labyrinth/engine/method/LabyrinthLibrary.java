@@ -1,5 +1,5 @@
 package labyrinth.engine.method;
-import static tbm.util.statics.*;
+import static no.torbmol.util.statics.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,7 +9,7 @@ import java.util.function.Function;
 import labyrinth.engine.*;
 import labyrinth.engine.method.LabyrinthLibrary;
 import labyrinth.engine.method.StandardLibrary.ParameterWalker;
-import tbm.util.geom.Point;
+import no.torbmol.util.geom.Point;
 
 public class LabyrinthLibrary extends VFunc.Method {
 	private static HashMap<String, Value> lib = new HashMap<>();

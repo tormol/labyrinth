@@ -1,8 +1,8 @@
 package labyrinth.engine.method;
 import static labyrinth.engine.method.Operation.GetLast;
-import static tbm.util.statics.char_anyof;
-import static tbm.util.statics.char_num;
-import static tbm.util.statics.char_whitespace;
+import static no.torbmol.util.statics.char_anyof;
+import static no.torbmol.util.statics.char_num;
+import static no.torbmol.util.statics.char_whitespace;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,15 +18,15 @@ import labyrinth.engine.method.Operation.UnDeclare;
 import labyrinth.engine.method.Value.VChar;
 import labyrinth.engine.method.Value.VInt;
 import labyrinth.engine.method.Value.VString;
-import tbm.util.ParseNum;
+import no.torbmol.util.ParseNum;
 
-public class Parser extends tbm.util.Parser {
+public class Parser extends no.torbmol.util.Parser {
 	public Parser(File file) throws FileNotFoundException {
 		super(file,
-			  tbm.util.Parser.Source.NEWLINE_IS_WHITESPACE,
-			  tbm.util.Parser.Source.HASH_STARTS_COMMENT);
+			  no.torbmol.util.Parser.Source.NEWLINE_IS_WHITESPACE,
+			  no.torbmol.util.Parser.Source.HASH_STARTS_COMMENT);
 	}
-	public Parser(tbm.util.Parser p) {
+	public Parser(no.torbmol.util.Parser p) {
 		super(p.getSource());
 		this.setPos(p);
 	}
