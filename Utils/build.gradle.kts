@@ -25,3 +25,30 @@ dependencies {
 val jar by tasks.existing(Jar::class) {
     archiveName = "tbm-utils.jar"
 }
+
+// Add examples as a new source type
+sourceSets.create("examples") {
+    java.srcDirs("src/examples/java/")
+    java.srcDirs(sourceSets["main"].java)
+}
+
+// Make :check compile the examples
+val check by tasks.existing(DefaultTask::class) {
+    dependsOn("examplesClasses") // that task is automatically generated!
+}
+
+// Create tasks to run the examples
+// main = project.property("example").toString() requires the property to be present even when other
+// tasks are being run.
+// for only two examples this is OK.
+// TODO lazy creation
+tasks.create("cat", JavaExec::class) {
+    main = "cat"
+    group = "runExamples"
+    classpath = sourceSets["examples"].runtimeClasspath
+}
+tasks.create("primitivePreProcessor", JavaExec::class) {
+    main = "primitivePreProcessor"
+    group = "runExamples"
+    classpath = sourceSets["examples"].runtimeClasspath
+}
