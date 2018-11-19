@@ -4,11 +4,14 @@ import static java.awt.event.KeyEvent.*;
 import static tbm.util.geom.Direction.*;
 import java.io.File;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.LinkedTransferQueue;
 import tbm.util.awtKeyListen;
 import java.util.LinkedList;
 import tbm.util.geom.Direction;
 import labyrinth.engine.*;
+import labyrinth.engine.method.*;
 
 public class Labyrinth {
 	public static void main(String[] args) {
@@ -48,13 +51,18 @@ public class Labyrinth {
 			}
 			else if (player.tile().isType("dot")) {
 				player.tile().setType("floor");
-				if (!TileMap.anyTiles("dot"))
-					Window.won();
+				boolean last = !TileMap.anyTiles("dot");
+				Scope.Variable f = Script.scr.root.get_variable("onDot");
+				f.getRef().call(List.of(Value.VBool.v(last)));
 			}
 		});
 		Window.display();
 		Tile start = findStart(p);
 		p.moveTo( start );
+		var afterInit = Script.scr.root.get_variable("start");
+		if (afterInit != null) {
+			afterInit.getRef().call(List.of());
+		}
 		//see in all directions, except NONE
 		for (Direction d : new Direction[]{NORTH, SOUTH, EAST, WEST}) {
 			LoS.triangle(p.tile().pos(), d, t -> t.visible());

@@ -11,6 +11,17 @@ import labyrinth.engine.method.Value;
 import labyrinth.engine.method.Value.*;
 
 public class Player extends Mob implements awtKeyListen.Pressed {
+	/**Get the (first) Player object from Mob.mobs
+	 *@return null if no player is found.*/
+	public static Player get() {
+		for (Mob m : Mob.mobs) {
+			if (m instanceof Player) {
+				return (Player)m;
+			}
+		}
+		return null;
+	}
+
 	public final Consumer<Player> onMove;
 	protected boolean hammer = false;
 

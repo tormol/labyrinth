@@ -1,8 +1,10 @@
 package labyrinth.engine.method;
 import static tbm.util.statics.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 import labyrinth.engine.*;
 import labyrinth.engine.method.LabyrinthLibrary;
@@ -43,7 +45,6 @@ public class LabyrinthLibrary extends VFunc.Method {
 			return Void;
 		});
 
-
 		new LabyrinthLibrary("get", array(VPoint.class), param->{
 			pa.start(param);
 			Point p = pa.get(VPoint.class).Point();
@@ -54,6 +55,49 @@ public class LabyrinthLibrary extends VFunc.Method {
 			}
 			char one = target.getType().getSymbols()[0];
 			return VChar.v(one);
+		});
+
+		new LabyrinthLibrary("mobAt", array(VPoint.class), param->{
+			pa.start(param);
+			Point p = pa.get(VPoint.class).Point();
+			pa.finish();
+			for (Mob mob : Mob.mobs) {
+				if (mob.tile().pos().equals(p)) {
+					return VString.v(mob.name());
+				}
+			}
+			return Void;
+		});
+
+		new LabyrinthLibrary("addEnemy", array(VPoint.class, VString.class, VString.class, VInt.class, VInt.class, VInt.class), param->{
+			pa.start(param);
+			Point pos = pa.get(VPoint.class).Point();
+			String path = pa.get(VString.class).String();
+			String type = pa.get(VString.class).String();
+			int waitStart = pa.get(VInt.class).Int();
+			int waitShorter = pa.get(VInt.class).Int();
+			int waitMin = pa.get(VInt.class).Int();
+			pa.finish();
+			Tile start = TileMap.get(pos);
+			if (type == null || type.equals("normal")) {
+				new Enemy.Normal(start, path, waitStart, waitShorter, waitMin).pause(false);
+			} else if (type.equals("Ghost")) {
+				new Enemy.Ghost(start, path, waitStart, waitShorter, waitMin).pause(false);
+			} else if (type.equals("Targeting")) {
+				new Enemy.Targeting(start, path, waitStart, waitShorter, waitMin).pause(false);
+			} else {
+				throw Script.error("Unknown enemy type "+type);
+			}
+			return Void;
+		});
+
+		new LabyrinthLibrary("enemyPos", array(VInt.class), param->{
+			int want = param[0].Int();
+			try {
+				return VPoint.v(Enemy.getAll().get(want).tile().pos());
+			} catch (IndexOutOfBoundsException oob) {
+				throw Script.error("Enemy index %d out of range (current enemies: %d)", want, Enemy.getAll().size());
+			}
 		});
 
 		/**run the method of another tile*/
@@ -72,17 +116,59 @@ public class LabyrinthLibrary extends VFunc.Method {
 		});
 
 		/**teleport*/
-		new LabyrinthLibrary("move", array(VPoint.class), param->{
+		new LabyrinthLibrary("move", array(VPoint.class, null), param-> {
 			pa.start(param);
 			Point pos = pa.get(VPoint.class).Point();
+			Value enemy = pa.get(VInt.class, false);
 			pa.finish();
 			Tile to = TileMap.get(pos);
-			if (Script.scr.mob==null)
-				throw Script.error("LabyrinthLibrary move: mob==null");
-			//if the target is also a teleporter, you could end up teleporting infinitely.
-			//using Mob.move() prevents that because it doesn't trigger tiles.
-			Script.scr.mob.moveTo(to);
+			if (enemy != null) {
+				int want = enemy.Int();
+				try {
+					Enemy.getAll().get(want).moveTo(to);
+				} catch (IndexOutOfBoundsException oob) {
+					throw Script.error("Enemy index %d out of range (current enemies: %d)", want, Enemy.getAll().size());
+				}
+			} else if (Script.scr.mob != null) {
+				//if the target is also a teleporter, you could end up teleporting infinitely.
+				//using Mob.move() prevents that because it doesn't trigger tiles.
+				Script.scr.mob.moveTo(to);
+			} else {
+				Player.get().moveTo(to);
+			}
 			TileMap.panel.repaint();
+			return Void;
+		});
+
+		new LabyrinthLibrary("playerPos", array(), param->{
+			pa.start(param).finish();
+			for (Mob mob : Mob.mobs) {
+				if (mob instanceof Player) {
+					return VPoint.v(mob.tile().pos());
+				}
+			}
+			throw Script.error("playerPos(): Player not found in Mob.mobs");
+		});
+
+		new LabyrinthLibrary("text", array(VString.class, null), param->{
+			switch (param.length) {
+				case 0:
+					Window.hideText();
+					break;
+				case 1:
+					Window.setText(param[0].String());
+					break;
+				case 2:
+					Window.setText(param[0].String(), param[1].String());
+					break;
+				default:
+					throw Script.error("Too many arguments to text()");
+			}
+			return Void;
+		});
+
+		new LabyrinthLibrary("end", array(VString.class), param->{
+			Window.end(param[0].String());
 			return Void;
 		});
 

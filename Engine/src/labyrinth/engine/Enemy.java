@@ -1,8 +1,19 @@
 package labyrinth.engine;
 import tbm.util.geom.Point;
 import tbm.util.geom.Direction;
+import java.util.ArrayList;
 
 public abstract class Enemy extends Mob implements Runnable {
+	/**Get a list of all enemies in Mob.mobs*/
+	public static ArrayList<Enemy> getAll() {
+		ArrayList<Enemy> enemies = new ArrayList<>();
+		for (Mob m : Mob.mobs) {
+			if (m instanceof Enemy) {
+				enemies.add((Enemy)m);
+			}
+		}
+		return enemies;
+	}
 	static final ThreadGroup threadGroup = new ThreadGroup("Enemies");
 
 

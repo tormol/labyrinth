@@ -7,3 +7,4 @@
 ########!########
 
 .viewDistance =("disabled")
+.onDot =(:(last) if(last :end("You won!"););)

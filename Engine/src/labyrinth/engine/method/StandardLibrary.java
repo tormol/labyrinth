@@ -142,6 +142,23 @@ public class StandardLibrary extends VFunc.Method {
 		});
 
 
+		new StandardLibrary(">", array(VInt.class, VInt.class), param->{
+			return VBool.v(param[0].Int() > param[1].Int());
+		});
+
+		new StandardLibrary(">=", array(VInt.class, VInt.class), param->{
+			return VBool.v(param[0].Int() >= param[1].Int());
+		});
+
+		new StandardLibrary("<=", array(VInt.class, VInt.class), param->{
+			return VBool.v(param[0].Int() <= param[1].Int());
+		});
+
+		new StandardLibrary("<", array(VInt.class, VInt.class), param->{
+			return VBool.v(param[0].Int() < param[1].Int());
+		});
+
+
 		new StandardLibrary("p", array(VPoint.class), param->{
 			pa.start(param);
 			Point p = pa.get(VPoint.class).Point();
@@ -159,16 +176,42 @@ public class StandardLibrary extends VFunc.Method {
 			return VPoint.v(x, y);
 		});
 
+		new StandardLibrary("x", array(VPoint.class), param->{
+			return VInt.v(param[0].Point().x);
+		});
 
-		new StandardLibrary("cat", array(VString.class, VString.class, null), param->{
+		new StandardLibrary("y", array(VPoint.class), param->{
+			return VInt.v(param[0].Point().y);
+		});
+
+
+		new StandardLibrary("cat", array(VString.class, Value.class, null), param->{
 			StringBuilder str = new StringBuilder();
-			for (Value v : param)
-				str.append(v.String());
+			for (Value v : param) {
+				str.append(v.toString());
+			}
 			return VString.v(str.toString());
 		});
 
 		new StandardLibrary("[]", array(VString.class, VInt.class), param->{
 			return VChar.v( param[0].String().charAt( param[1].Int() ) );
+		});
+
+		new StandardLibrary("rand", array(VInt.class, null), param->{
+			switch (param.length) {
+				case 0:
+					// all values can be returned, as Math.random() returns a double,
+					// whose mantissa has more bits than an int
+					return VInt.v((int)(Math.random()*((double)Integer.MAX_VALUE)+1));
+				case 1:
+					return VInt.v((int)(Math.random()*param[0].Int()));
+				case 2:
+					int min = param[0].Int();
+					int max = param[1].Int();
+					return VInt.v((int)(Math.random()*(max-min))+min);
+				default:
+					throw Script.error("rand() does not accept more than two parameters.");
+			}
 		});
 
 		lib.put("length", new OneP(VString.v("st"), vstr->VInt.v(vstr.String().length())));

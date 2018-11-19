@@ -1,0 +1,55 @@
+          
+ *        
+          
+          
+          
+          
+          
+          
+          
+          
+
+.viewDistance =("disabled")
+
+.addFood =(:
+    .pos =(p(rand(10) rand(10)))
+    if(&(!(=(playerPos() pos)) =(get(pos) ' ))
+        :set(pos '.);
+        addFood
+    )
+;)
+.randEnemyPos =(:
+    .x =(rand(10))
+    .y =(rand(10))
+    if(&(=(null mobAt(x y)) |(>=(x 5) >=(y 5)))
+        :p(x y);
+        randEnemyPos
+    )
+;)
+.newEnemy =(:(level)
+    addEnemy(randEnemyPos() "res/enemy.png" "normal" -(1100 *(level 100)) 5 500)
+;)
+.moveEnemies =(:(level)
+    if(>=(level 0) :
+        .pos =(enemyPos(level 1))
+        if(&(<(x(pos) 5) <(y(pos) 5)) :move(randEnemyPos() level);)
+        moveEnemies(-(level 1))
+    ;)
+;)
+.level =(0)
+.next =(:
+    if(=(level 10) :end("You won!");)
+    level =(+(level 1))
+    text(cat("Level " level))
+    if(>(level 1) :moveEnemies(-(level 3));)
+    if(!(=(level 1)) :move(1 1);)
+    newEnemy(level)
+    addFood()
+    addFood()
+    addFood()
+    addFood()
+    addFood()
+;)
+.onDot =(:(last) if(last next text);)
+.start =(next)
+text("level 0" "tooltip")
