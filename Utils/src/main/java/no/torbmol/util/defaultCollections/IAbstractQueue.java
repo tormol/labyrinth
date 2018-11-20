@@ -33,7 +33,7 @@
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
 
-package no.torbmol.defaultCollections;
+package no.torbmol.util.defaultCollections;
 
 import java.util.Collection;
 import java.util.NoSuchElementException;

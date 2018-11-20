@@ -23,7 +23,7 @@
  * questions.
  */
 
-package no.torbmol.defaultCollections;
+package no.torbmol.util.defaultCollections;
 
 import java.util.Collection;
 import java.util.Iterator;

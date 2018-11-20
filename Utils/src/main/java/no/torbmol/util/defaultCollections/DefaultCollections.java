@@ -1,4 +1,4 @@
-package no.torbmol.defaultCollections;
+package no.torbmol.util.defaultCollections;
 
 import java.util.Arrays;
 import java.util.Collection;
