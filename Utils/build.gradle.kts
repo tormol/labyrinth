@@ -23,7 +23,7 @@ dependencies {
 }
 
 val jar by tasks.existing(Jar::class) {
-    archiveName = "tbm-utils.jar"
+    archiveName = "torbmol-utils.jar"
 }
 
 // Add examples as a new source type
