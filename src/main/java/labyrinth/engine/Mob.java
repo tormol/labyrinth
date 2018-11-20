@@ -37,7 +37,7 @@ public abstract class Mob {
 	protected Mob(String name, String imagePath) {
 		this.name = name;
 		try {
-			this.image = ImageIO.read(new File(imagePath));
+			this.image = ImageIO.read(new File("src/main/resources/images/"+imagePath));
 		} catch (IOException e) {
 			throw Window.error("Error loading image to %s: (%s)\n%s", name, imagePath, e.getMessage());
 		}

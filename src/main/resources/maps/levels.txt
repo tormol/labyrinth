@@ -27,7 +27,7 @@
     )
 ;)
 .newEnemy =(:(level)
-    addEnemy(randEnemyPos() "res/enemy.png" "normal" -(1100 *(level 100)) 5 500)
+    addEnemy(randEnemyPos() "enemy.png" "normal" -(1100 *(level 100)) 5 500)
 ;)
 .moveEnemies =(:(level)
     if(>=(level 0) :

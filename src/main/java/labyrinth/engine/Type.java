@@ -78,7 +78,7 @@ public class Type {
 		BufferedImage image = null;
 		if (imagePath != null) {
 			try {
-				image = ImageIO.read(new File(imagePath));
+				image = ImageIO.read(new File("src/main/resources/images/"+imagePath));
 			} catch (IOException e) {
 				throw Window.error(
 						"Could not load image \"%s\" for tile type %s:\n%s",
