@@ -178,18 +178,18 @@ public class DryOpts {
 		}
 
 		//unicode classes: regular-expressions.info/unicode.html
-		protected String shortOpt_regex = "\\p{Letter}";
+		protected String shortOpt_regex = "\\p{IsLetter}";
 		/**Only characters that match regex can be short options.
-		 * Default value is "\\p{Letter}"*/
+		 * Default value is "\\p{IsLetter}"*/
 		public Builder is_shortOpt(String shortOpt_regex) {
 			this.shortOpt_regex = Objects.requireNonNull(shortOpt_regex);
 			return this;
 		}
 		/**Digits can be options, this makes it impossible to enter negative numbers as positional arguments.
-		 * is equal to {@code is_shortOpt("[-\\d\\p{Letter}]")}
-		 * Default value is "\\p{Letter}"*/
+		 * is equal to {@code is_shortOpt("[-\\d\\p{IsLetter}]")}
+		 * Default value is "\\p{IsLetter}"*/
 		public Builder integer_shortOpts() {
-			return is_shortOpt("[-\\d\\p{Letter}]");//don't accept unicode digits until IntRange supports them  
+			return is_shortOpt("[-\\d\\p{IsLetter}]");//don't accept unicode digits until IntRange supports them
 		}
 
 		protected boolean uppercase_shortOpt_ends_list = false;
@@ -247,7 +247,6 @@ public class DryOpts {
 	protected final String name;
 
 	/**@param args the String[] passed to main().
-	 * @param b settings that affects argument parsing. @see Builder
 	 */
 	public DryOpts(String... args) {
 		this(new Builder(), args);

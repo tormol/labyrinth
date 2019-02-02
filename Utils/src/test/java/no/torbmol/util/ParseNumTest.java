@@ -35,10 +35,12 @@ public class ParseNumTest {
 
 
 
+/*
 	@Test
 	public void testFlagCombinations() {
 		fail("Not yet implemented");
 	}
+*/
 
 	@Test//the basics
 	public void testRadixDigits() {

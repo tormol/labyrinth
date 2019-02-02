@@ -125,8 +125,8 @@ public class DryOptsTest {
 
 	@Test
 	public void doubleDashStopsOptParsing() {
-		assert(parse("").optFlagN('f', null, null) == 1);
-		assertTrue(parse("-f -- -f").optFlagN('f', null, null) == 1);
+		assertEquals(parse("-f").optFlagN('f', null, null), 1);
+		assertEquals(parse("-f -- -f").optFlagN('f', null, null), 1);
 	}
 
 	@Test
