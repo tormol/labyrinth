@@ -3,7 +3,7 @@ import static no.torbmol.util.statics.*;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.function.Function;
-import labyrinth.engine.method.StandardLibrary;
+
 import no.torbmol.util.geom.Point;
 
 public class StandardLibrary extends VFunc.Method {

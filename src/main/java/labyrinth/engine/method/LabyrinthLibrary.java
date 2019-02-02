@@ -1,13 +1,11 @@
 package labyrinth.engine.method;
 import static no.torbmol.util.statics.*;
-import java.util.ArrayList;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.function.Function;
 import labyrinth.engine.*;
-import labyrinth.engine.method.LabyrinthLibrary;
 import labyrinth.engine.method.StandardLibrary.ParameterWalker;
 import no.torbmol.util.geom.Point;
 

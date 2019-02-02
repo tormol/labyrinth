@@ -4,12 +4,11 @@ import static java.awt.event.KeyEvent.*;
 import static no.torbmol.util.geom.Direction.*;
 import java.io.File;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.LinkedTransferQueue;
 import no.torbmol.util.awtKeyListen;
 import no.torbmol.util.geom.Direction;
+import java.util.LinkedList;
 import labyrinth.engine.*;
 import labyrinth.engine.method.*;
 
