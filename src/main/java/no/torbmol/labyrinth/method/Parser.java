@@ -1,5 +1,5 @@
-package labyrinth.method;
-import static labyrinth.method.Operation.GetLast;
+package no.torbmol.labyrinth.method;
+import static no.torbmol.labyrinth.method.Operation.GetLast;
 import static no.torbmol.util.statics.char_anyof;
 import static no.torbmol.util.statics.char_num;
 import static no.torbmol.util.statics.char_whitespace;
@@ -11,13 +11,13 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import labyrinth.method.Operation.Call;
-import labyrinth.method.Operation.Declare;
-import labyrinth.method.Operation.GetRef;
-import labyrinth.method.Operation.UnDeclare;
-import labyrinth.method.Value.VChar;
-import labyrinth.method.Value.VInt;
-import labyrinth.method.Value.VString;
+import no.torbmol.labyrinth.method.Operation.Call;
+import no.torbmol.labyrinth.method.Operation.Declare;
+import no.torbmol.labyrinth.method.Operation.GetRef;
+import no.torbmol.labyrinth.method.Operation.UnDeclare;
+import no.torbmol.labyrinth.method.Value.VChar;
+import no.torbmol.labyrinth.method.Value.VInt;
+import no.torbmol.labyrinth.method.Value.VString;
 import no.torbmol.util.ParseNum;
 
 public class Parser extends no.torbmol.util.Parser {

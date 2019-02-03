@@ -1,6 +1,6 @@
-package labyrinth.method;
+package no.torbmol.labyrinth.method;
 import java.util.ArrayList;
-import labyrinth.Action;
+import no.torbmol.labyrinth.Action;
 
 //interface action in code called from code void(TIle, Mob)
 /**interface operation in code called from compiled file Value(Tile, Mob) implements action*/

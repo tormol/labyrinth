@@ -10,5 +10,5 @@ dependencies {
 }
 
 application {
-    mainClassName = "labyrinth.Labyrinth"
+    mainClassName = "no.torbmol.labyrinth.Labyrinth"
 }

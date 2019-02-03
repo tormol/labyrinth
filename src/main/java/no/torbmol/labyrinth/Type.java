@@ -1,4 +1,4 @@
-package labyrinth;
+package no.torbmol.labyrinth;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

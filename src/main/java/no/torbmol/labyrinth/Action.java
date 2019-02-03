@@ -1,4 +1,4 @@
-package labyrinth;
+package no.torbmol.labyrinth;
 
 /**interface action in code called from code void(TIle, Mob)*/
 //interface operation in code called from compiled file Value(Tile, Mob) implements action

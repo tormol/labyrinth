@@ -1,4 +1,4 @@
-package labyrinth;
+package no.torbmol.labyrinth;
 import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;

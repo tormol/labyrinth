@@ -1,4 +1,4 @@
-package labyrinth.method;
+package no.torbmol.labyrinth.method;
 import java.util.List;
 //import static no.torbmol.util.statics.*;
 

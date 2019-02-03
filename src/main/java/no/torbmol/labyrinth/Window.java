@@ -1,4 +1,4 @@
-package labyrinth;
+package no.torbmol.labyrinth;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;

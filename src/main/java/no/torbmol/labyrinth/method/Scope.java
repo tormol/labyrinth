@@ -1,4 +1,4 @@
-package labyrinth.method;
+package no.torbmol.labyrinth.method;
 import static no.torbmol.util.statics.map_firstKey;
 import java.util.HashMap;
 import java.util.Map;

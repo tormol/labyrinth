@@ -1,4 +1,4 @@
-package labyrinth;
+package no.torbmol.labyrinth;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
