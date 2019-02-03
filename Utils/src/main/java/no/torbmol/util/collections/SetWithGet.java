@@ -42,10 +42,10 @@ public interface SetWithGet<E> extends Set<E>, CollectionWithToArrayType<E> {
 	 *A placeholder until i'm sure IndexedLeanHashSet is bug-free
 	 *Include this instead of java.util's*/
 	public static final class HashSet<E> extends java.util.HashSet<E> implements SetWithGet<E> {
-		public HashSet(int intialCapacity, float loadFactor)	{super(intialCapacity, loadFactor);}
-		public HashSet(int intialCapacity)                  	{super(intialCapacity);}
-		public HashSet(Collection<? extends E> c)           	{super(c);}
-		public HashSet()                                    	{super();}
+		public HashSet(int intialCapacity, float loadFactor)    {super(intialCapacity, loadFactor);}
+		public HashSet(int intialCapacity)                      {super(intialCapacity);}
+		public HashSet(Collection<? extends E> c)               {super(c);}
+		public HashSet()                                        {super();}
 		private static final long serialVersionUID = 1L;
 	}
 

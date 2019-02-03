@@ -8,8 +8,8 @@ public class arrayIterators {
 	/**An unmodifiable array-backed iterator*/
 	public static final class UnmodifiableArrayIterator<E> extends UnmodifiableOneWayListIterator<E> {
 		private final E[] array;
-		@Override protected int maxIndex()              	{return array.length;}
-		@Override protected   E getIndex(int index)     	{return array[index];}
+		@Override protected int maxIndex()                {return array.length;}
+		@Override protected   E getIndex(int index)       {return array[index];}
 
 		@SafeVarargs//never changed
 		public UnmodifiableArrayIterator(E... array) {
@@ -23,9 +23,9 @@ public class arrayIterators {
 	public static class UnmodifiableSkipEmptyArrayIterator<E> extends UnmodifiableSkipEmpty<E> {
 		private final E[] array;
 		private final Object empty;
-		@Override protected    int maxIndex()         	{return array.length;}
-		@Override protected      E getIndex(int index)	{return array[index];}
-		@Override protected Object emptyElement()     	{return empty;}
+		@Override protected    int maxIndex()             {return array.length;}
+		@Override protected      E getIndex(int index)    {return array[index];}
+		@Override protected Object emptyElement()         {return empty;}
 
 		@SafeVarargs//never changed
 		public UnmodifiableSkipEmptyArrayIterator(Object empty, E... array) {

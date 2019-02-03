@@ -10,7 +10,7 @@ public class LeanHashSet<E> extends LeanHash<E> implements SetWithGet<E> {
 		if (c instanceof LeanHashSet)
 			return ((LeanHashSet<E>)c).clone();
 		return new LeanHashSet<E>(c);
- 	}
+	}
 
 
 	public LeanHashSet(int initialCapacity, float ratio) {

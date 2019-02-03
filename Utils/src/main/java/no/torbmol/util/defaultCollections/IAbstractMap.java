@@ -315,10 +315,10 @@ public interface IAbstractMap<K,V> extends Map<K,V> {
         return new KeySet<K, V>(this);
     }
     public static class KeySet<K, V> extends AbstractSet<K> {
-    	final Map<K, V> map;
-    	public KeySet(Map<K, V> m) {
+        final Map<K, V> map;
+        public KeySet(Map<K, V> m) {
             map = m;
-    	}
+        }
         public Iterator<K> iterator() {
             return new Iterator<K>() {
                 private Iterator<Entry<K, V>> i = map.entrySet().iterator();
@@ -376,10 +376,10 @@ public interface IAbstractMap<K,V> extends Map<K,V> {
         return new ValueCollection<K, V>(this);
     }
     public static class ValueCollection<K, V> extends AbstractCollection<V> {
-    	final Map<K, V> map;
-    	public ValueCollection(Map<K, V> m) {
-    		map = m;
-    	}
+        final Map<K, V> map;
+        public ValueCollection(Map<K, V> m) {
+            map = m;
+        }
         public Iterator<V> iterator() {
             return new Iterator<V>() {
                 private Iterator<Entry<K, V>> i = map.entrySet().iterator();

@@ -260,9 +260,9 @@ public class DryOpts {
 
 		final boolean windows = System.getProperty("os.name").startsWith("Windows");
 		if (args.length==1
-	   	   &&(( windows && (args[0].equals("/help") || args[0].equals("/h") || args[0].equals("/?") ))
-	   	           ||      (args[0].equals("-help") || args[0].equals("-h") || args[0].equals("-?") )) )
-	   	   args[0] = "--help";
+		   &&(( windows && (args[0].equals("/help") || args[0].equals("/h") || args[0].equals("/?") ))
+		           ||      (args[0].equals("-help") || args[0].equals("-h") || args[0].equals("-?") )) )
+			args[0] = "--help";
 
 		if (b.name == null) {
 			b.name = System.getProperty("sun.java.command");

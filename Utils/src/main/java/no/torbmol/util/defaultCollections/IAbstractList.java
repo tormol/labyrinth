@@ -322,11 +322,11 @@ public interface IAbstractList<E> extends List<E>, IAbstractCollection<E> {
     }
 
     static class Itr<E> implements Iterator<E> {
-    	private Itr(IAbstractList<E> l) {
-    		list = l;
-    		expectedModCount = list.modCount();
-    	}
-    	final IAbstractList<E> list;
+        private Itr(IAbstractList<E> l) {
+            list = l;
+            expectedModCount = list.modCount();
+        }
+        final IAbstractList<E> list;
         /**
          * Index of element to be returned by subsequent call to next.
          */
@@ -388,7 +388,7 @@ public interface IAbstractList<E> extends List<E>, IAbstractCollection<E> {
 
     static class ListItr<E> extends Itr<E> implements ListIterator<E> {
         ListItr(IAbstractList<E> l, int index) {
-        	super(l);
+            super(l);
             cursor = index;
         }
 
@@ -540,7 +540,7 @@ public interface IAbstractList<E> extends List<E>, IAbstractCollection<E> {
     }
 
     default boolean removeAll(Collection<?> c) {
-    	return IAbstractCollection.super.removeAll(c);
+        return IAbstractCollection.super.removeAll(c);
     }
 
     default boolean containsAll(Collection<?> c) {
