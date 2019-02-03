@@ -1,4 +1,4 @@
-package labyrinth.engine;
+package labyrinth;
 //import static statics.*;
 import java.awt.FileDialog;
 import java.io.EOFException;
@@ -8,8 +8,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
 import no.torbmol.util.Parser.ParseException;
-import labyrinth.engine.TileMap.InvalidMapException;
-import labyrinth.engine.method.*;
+import labyrinth.TileMap.InvalidMapException;
+import labyrinth.method.*;
 
 public class MapFile {
 	public static File choose() {

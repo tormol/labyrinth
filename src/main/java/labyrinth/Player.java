@@ -1,4 +1,4 @@
-package labyrinth.engine;
+package labyrinth;
 import static java.awt.event.KeyEvent.*;
 import javax.swing.SwingUtilities;
 import no.torbmol.util.geom.Direction;
@@ -6,9 +6,9 @@ import no.torbmol.util.geom.Point;
 import no.torbmol.util.awtKeyListen;
 import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
-import labyrinth.engine.method.Script;
-import labyrinth.engine.method.Value;
-import labyrinth.engine.method.Value.*;
+import labyrinth.method.Script;
+import labyrinth.method.Value;
+import labyrinth.method.Value.*;
 
 public class Player extends Mob implements awtKeyListen.Pressed {
 	/**Get the (first) Player object from Mob.mobs

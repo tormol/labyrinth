@@ -1,8 +1,8 @@
-package labyrinth.engine;
+package labyrinth;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import labyrinth.engine.method.Script;
+import labyrinth.method.Script;
 import no.torbmol.util.geom.Point;
 
 

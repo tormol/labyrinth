@@ -1,4 +1,4 @@
-package labyrinth.engine;
+package labyrinth;
 import no.torbmol.util.geom.Point;
 import no.torbmol.util.geom.Direction;
 import java.util.ArrayList;

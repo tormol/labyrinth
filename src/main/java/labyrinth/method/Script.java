@@ -1,14 +1,14 @@
-package labyrinth.engine.method;
-import static labyrinth.engine.method.Value.*;
+package labyrinth.method;
+import static labyrinth.method.Value.*;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.Map;
 import no.torbmol.util.Parser.ParseException;
-import labyrinth.engine.Mob;
-import labyrinth.engine.Tile;
-import labyrinth.engine.Window;
+import labyrinth.Mob;
+import labyrinth.Tile;
+import labyrinth.Window;
 
 public class Script {
 	public static Script scr;

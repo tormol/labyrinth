@@ -1,9 +1,9 @@
-package labyrinth.engine.method;
+package labyrinth.method;
 import java.util.List;
 import java.util.function.Function;
 
-import labyrinth.engine.Window;
-import labyrinth.engine.Window.ErrorDialog;
+import labyrinth.Window;
+import labyrinth.Window.ErrorDialog;
 
 public interface VFunc extends Value {
 	@Override

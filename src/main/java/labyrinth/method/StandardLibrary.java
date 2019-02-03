@@ -1,4 +1,4 @@
-package labyrinth.engine.method;
+package labyrinth.method;
 import static no.torbmol.util.statics.*;
 import java.util.HashMap;
 import java.util.LinkedList;

@@ -9,8 +9,7 @@ import java.util.concurrent.LinkedTransferQueue;
 import no.torbmol.util.awtKeyListen;
 import no.torbmol.util.geom.Direction;
 import java.util.LinkedList;
-import labyrinth.engine.*;
-import labyrinth.engine.method.*;
+import labyrinth.method.*;
 
 public class Labyrinth {
 	public static void main(String[] args) {

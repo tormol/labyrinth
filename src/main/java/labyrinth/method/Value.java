@@ -1,4 +1,4 @@
-package labyrinth.engine.method;
+package labyrinth.method;
 import java.util.List;
 import java.util.Map;
 

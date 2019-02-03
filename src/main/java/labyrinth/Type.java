@@ -1,4 +1,4 @@
-package labyrinth.engine;
+package labyrinth;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

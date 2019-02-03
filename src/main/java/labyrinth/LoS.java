@@ -1,4 +1,4 @@
-package labyrinth.engine;
+package labyrinth;
 
 import java.util.ArrayDeque;
 import java.util.Queue;

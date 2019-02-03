@@ -1,12 +1,12 @@
-package labyrinth.engine.method;
+package labyrinth.method;
 import static no.torbmol.util.statics.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.function.Function;
-import labyrinth.engine.*;
-import labyrinth.engine.method.StandardLibrary.ParameterWalker;
+import labyrinth.*;
+import labyrinth.method.StandardLibrary.ParameterWalker;
 import no.torbmol.util.geom.Point;
 
 public class LabyrinthLibrary extends VFunc.Method {

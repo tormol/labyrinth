@@ -1,4 +1,4 @@
-package labyrinth.engine;
+package labyrinth;
 import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
