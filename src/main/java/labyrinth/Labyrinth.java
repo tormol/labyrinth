@@ -73,7 +73,7 @@ public class Labyrinth {
 
 	private static Tile findStart(Player player) {
 		LinkedList<Tile> start = new LinkedList<>();
-		TileMap.all("start", tile-> { 
+		TileMap.all("start", tile-> {
 			if (tile.mob()==null) {
 				start.add(tile);
 				tile.visible();

@@ -2,7 +2,7 @@ package no.torbmol.util;
 //http://nadeausoftware.com/articles/2008/04/java_tip_how_list_and_find_threads_and_thread_groups#Gettingathreadbyname
 public class threadFinder {
 	private static ThreadGroup rootThreadGroup = null;
-	 
+
 	public static ThreadGroup getRootThreadGroup( ) {
 	    if ( rootThreadGroup != null )
 	        return rootThreadGroup;
@@ -23,7 +23,7 @@ public class threadFinder {
 	        groups = new ThreadGroup[ nAlloc ];
 	        n = root.enumerate( groups, true );
 	    } while ( n == nAlloc );
-	 
+
 	    ThreadGroup[] allGroups = new ThreadGroup[n+1];
 	    allGroups[0] = root;
 	    System.arraycopy( groups, 0, allGroups, 1, n );

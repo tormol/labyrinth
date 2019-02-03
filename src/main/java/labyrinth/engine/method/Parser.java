@@ -111,7 +111,7 @@ public class Parser extends no.torbmol.util.Parser {
 	static void statement(char c, Parser p, Deque<Object> ops, Script scr) throws EOFException, IOException, ParseException {
 		switch (c) {
 		  case'.':
-			boolean _final = false; 
+			boolean _final = false;
 			if (p.peek() == '.') {
 				_final = true;
 				p.skip();

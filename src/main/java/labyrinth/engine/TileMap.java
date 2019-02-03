@@ -14,7 +14,7 @@ import no.torbmol.util.geom.Point;
 public class TileMap {
 	private static Tile[][] map;
 	/**Swing panel that displays the tiles*/
-	public static final JPanel panel = new JPanel(); 
+	public static final JPanel panel = new JPanel();
 	
 
 	/**Empty map

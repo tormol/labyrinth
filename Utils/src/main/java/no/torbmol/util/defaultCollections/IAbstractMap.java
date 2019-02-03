@@ -57,8 +57,8 @@ import java.util.Set;
  * map being implemented admits a more efficient implementation.
  *
  * This interface differs from AbstractMap in that <tt>values()</tt> and <tt>keySet()</tt>
- * returns a new instance on every invocation. 
- * The classes are public so you can override the methods and make them singletons 
+ * returns a new instance on every invocation.
+ * The classes are public so you can override the methods and make them singletons
  * <p>This interface is a member of the defaultCollections package.
  *
  * @param <K> the type of keys maintained by this map
@@ -312,7 +312,7 @@ public interface IAbstractMap<K,V> extends Map<K,V> {
      * <tt>containsKey</tt> method.
      */
     default Set<K> keySet() {
-        return new KeySet<K, V>(this); 
+        return new KeySet<K, V>(this);
     }
     public static class KeySet<K, V> extends AbstractSet<K> {
     	final Map<K, V> map;

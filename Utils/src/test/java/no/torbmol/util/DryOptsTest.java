@@ -136,7 +136,7 @@ public class DryOptsTest {
 		assertTrue("=false",  parse("aa -f", b).optFlagN('f', null, null) == 1);
 		b.nonopt_stops_opts = true;
 		assertTrue("=true",   parse("aa -f", b).optFlagN('f', null, null) == 0);
-		assertTrue("=true should handle a OptArg that is returned", 
+		assertTrue("=true should handle a OptArg that is returned",
 		                      parse("-f aa -f", b).optFlagN('f', null, null) == 1);
 	}
 

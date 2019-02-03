@@ -74,7 +74,7 @@ public class arrayIterators {
 			forward = true;
 			return e;
 		} catch (IndexOutOfBoundsException ioobe) {
-			throw new IllegalStateException(ioobe); 
+			throw new IllegalStateException(ioobe);
 		}}
 		@Override public E previous() {try {
 			E e = array[previousIndex()];
@@ -82,7 +82,7 @@ public class arrayIterators {
 			forward = false;
 			return e;
 		} catch (IndexOutOfBoundsException ioobe) {
-			throw new IllegalStateException(ioobe); 
+			throw new IllegalStateException(ioobe);
 		}}
 
 		@Override public void set(E e) {try {

@@ -49,7 +49,7 @@ public class DryOpts {
 	public interface ArgType<T> {
 		 /**Convert an argument to an option or positional argument to the desired type, for example an integer or IP address.
 		 *@param arg string to be converted
-		 *@return the converted type 
+		 *@return the converted type
 		 *@throws ArgException if the string cannot be converted.
 		 * the message will come after "must be ".
 		 */
@@ -196,7 +196,7 @@ public class DryOpts {
 		/**if set, uppercase shortOpts take the rest of the argument as its argument even if the next char isn't '=' but a valid shortOpt.
 		 * this means -fAfa is flag f and A has argument fa
 		 * Default value is {@code false}.
-		 * 
+		 *
 		 * While restrictive, this is predictable to users, and other approaches that wouldn't work:
 		 * * Builder regex of shortOpts that ends list:
 		 * * * Breaks DRY.
@@ -398,7 +398,7 @@ public class DryOpts {
 
 	/**Returns a Usage: string.
 	 * Ends with a newline.*/
-	public String getUsage() {//I could rename positionalUsage and add name in the constructor, but that might change. 
+	public String getUsage() {//I could rename positionalUsage and add name in the constructor, but that might change.
 		return "Usage " + name + " [ options ... ] " + positionalUsage.toString() + '\n';
 	}
 
@@ -459,7 +459,7 @@ public class DryOpts {
 		return help + '\n' + getUsage() + "Options:\n" + getOptionHelp();
 	}
 
-	//handle_help() would encourage not waiting for positional arguments to get added to usage. 
+	//handle_help() would encourage not waiting for positional arguments to get added to usage.
 
 
 
@@ -810,7 +810,7 @@ public class DryOpts {
 	/**argument must be one of the given values.*/
 	public static class Set<T> implements ArgType<T> {
 		/**Converts arguments to the desired type.*/
-		public final ArgType<T> converter; 
+		public final ArgType<T> converter;
 		/**An argument must be equal to one of theese.*/
 		protected final Object[] values;
 

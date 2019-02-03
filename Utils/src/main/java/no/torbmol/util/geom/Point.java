@@ -64,7 +64,7 @@ public class Point implements Serializable {
 	/**NORTH->-y SOUTH->y WEST->-x EAST->x NONE->0,but you shouldn't pass that*/
 	public int length(Direction d) {return p(d).x*x + p(d).y*y;}
 
-	/**The angle relative to positive x, 
+	/**The angle of the point, relative to positive x
 	 *@see Math.atan2(double, double)*/
 	public double arg() {return atan2(y, x);}
 	/**=this.arg()-angle, in (-pi, pi]*/
@@ -136,7 +136,7 @@ public class Point implements Serializable {
 	/**returns false if null or not instance of this class*/@Override
 	public boolean equals(Object p) {
 		//Cannot compare with awt.Point or Point2D, because equals(Object) should be symmetric;
-		//a.equals(b)==b.equals(a). And I cannot modify those to compare with my class. 
+		//a.equals(b)==b.equals(a). And I cannot modify those to compare with my class.
 		if (!(p instanceof Point))
 			return false;
 		return (((Point)p).x==x && ((Point)p).y==y);
@@ -160,7 +160,7 @@ public class Point implements Serializable {
 		} else if (y==0) switch (x) {
 			case -1: return west;
 			case +1: return east;
-		} 
+		}
 		return new Point(x, y);
 	}
 	/**@throws NullPointerException if null
@@ -185,7 +185,7 @@ public class Point implements Serializable {
 		str = str.replace("\t", "").replace(" ", "");
 		Bracket b = Bracket.get(str.charAt(0));
 		if (b != null)
-			if (str.indexOf(b.close) == -1) 
+			if (str.indexOf(b.close) == -1)
 				throw new PointFormatException("Point \""+str+"\": missing '"+b.close+"'.");
 			else
 				str = str.substring(1, str.indexOf(b.close)-1);

@@ -55,7 +55,7 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 		this(col.toArray(),  !(col instanceof Set<?>));
 	}
 
-	//Is not final so a implementation can use 2^n-1 sized arrays or store null element by setting a flag 
+	//Is not final so that a implementation can use 2^n-1 sized arrays or store null element by setting a flag
 	@Override public int size() {
 		return elements.length;
 	}

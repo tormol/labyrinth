@@ -68,7 +68,7 @@ import java.util.RandomAccess;
  * collection being implemented admits a more efficient implementation.
  *
  * This interface differs from AbstractList in that modCount is a method instead of a field,
- * and protected methods have been moved to <tt>DefaultCollections</tt> 
+ * and protected methods have been moved to <tt>DefaultCollections</tt>
  *
  * <p>This interface is a member of the defaultCollections package.
  *
@@ -326,7 +326,7 @@ public interface IAbstractList<E> extends List<E>, IAbstractCollection<E> {
     		list = l;
     		expectedModCount = list.modCount();
     	}
-    	final IAbstractList<E> list; 
+    	final IAbstractList<E> list;
         /**
          * Index of element to be returned by subsequent call to next.
          */

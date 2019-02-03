@@ -117,7 +117,7 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 
 		if (this.size() != map.size())
 			return false;
-		//The loop only checks that this is a submap of map, if there was more elements, sizes would be different 
+		//The loop only checks that this is a submap of map, if there was more elements, sizes would be different
 
 		for (long b_i = nextAfter_start();  index(b_i) != -1;  b_i = nextAfter(b_i))
 			if (! map.containsKey(elements[index(b_i)])  ||  !Objects.equals(map.get(elements[index(b_i)]), elements[index(b_i)+1]))
@@ -305,7 +305,7 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 		}
 
 		protected class MutableEntry extends SimpleEntry<K,V> {
-			protected int index;//might change by adding new keys or calling optimize 
+			protected int index;//might change by adding new keys or calling optimize
 			//hash becomes invalid if buckets[] is resized, and out of range if it's shrinked
 			protected MutableEntry(int index) {
 				super((K)elements[index], (V)elements[index+1]);
@@ -393,7 +393,7 @@ public class LeanHashMap<K,V> extends LeanHash<Object> implements IterableMap<K,
 	////////////
 
 	/**A more memory efficient alternative to entrySet().iterator().
-	 *Since this class doesn't use Entries internally, this iterator avoids creating a new Entry for each key/value. 
+	 *Since this class doesn't use Entries internally, this iterator avoids creating a new Entry for each key/value.
 	 * The Entrys returned by <tt>next()</tt> become invalid after the next next() call.
 	 *@returns an iterator that is also an Entry, so <tt>next()</tt> returns itself.*/
 	@Override public IterVolatileEntry iterator() {

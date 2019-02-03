@@ -18,7 +18,7 @@ import java.util.regex.Matcher;//String_findAll
 import java.util.regex.Pattern;//String_findAll
 
 //TODO: use Character statics to support more than ASCII
-/**static methods for simple things, 
+/**static methods for simple things,
  * char_ methods only work for ASCII characters*/
 public class statics {
 	/**A more visible !something*/

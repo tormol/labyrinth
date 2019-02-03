@@ -71,11 +71,11 @@ public class ParseNum {
 
 	//usage defaults
 	/**RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW*/
-	public static final int BITS_FLAGS = RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW; 
+	public static final int BITS_FLAGS = RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW;
 	/**RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW_OTHER*/
-	public static final int ANY_FLAGS = RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW_OTHER; 
+	public static final int ANY_FLAGS = RADIX(10) | OPT_HEX | OPT_DEC | OPT_OCT | OPT_BIN | MINUS_DEC | OVERFLOW_OTHER;
 	/**A good default: RADIX(10) MINUS*/
-	public static final int RANGE_FLAGS = RADIX(10) | MINUS; 
+	public static final int RANGE_FLAGS = RADIX(10) | MINUS;
 
 
 //static utility methods
@@ -88,7 +88,7 @@ public class ParseNum {
 		case  3: return "ternary";//why not?
 		case  2: return "binary";
 		case  1: return "unary";//why not?
-		default: return "base "+radix; 
+		default: return "base "+radix;
 	}}
 
 	/**16->'x' 10->'d' 8->'o' 2->'b' else -1*/

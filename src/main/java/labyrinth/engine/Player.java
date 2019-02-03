@@ -1,5 +1,5 @@
 package labyrinth.engine;
-import static java.awt.event.KeyEvent.*; 
+import static java.awt.event.KeyEvent.*;
 import javax.swing.SwingUtilities;
 import no.torbmol.util.geom.Direction;
 import no.torbmol.util.geom.Point;

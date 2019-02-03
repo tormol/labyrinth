@@ -6,7 +6,7 @@ import java.io.StringReader;
 import static no.torbmol.util.DryOpts.*;
 
 /**Argument types that depend on other classes and would make DryOpts not self-contained.
- * 
+ *
  * @author tbm
  * License Apache v3
  */

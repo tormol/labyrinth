@@ -267,7 +267,7 @@ public class Parser extends Reader implements Closeable, AutoCloseable, Cloneabl
 		return this;
 	}
 
-	/**Move to 
+	/**Move to (zero-indexed) column {@code col} of the current line.
 	 *@return {@code this}*/
 	public Parser setCol(int col) throws IndexOutOfBoundsException {
 		int length = source.get(line).length();

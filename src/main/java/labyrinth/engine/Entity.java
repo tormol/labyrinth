@@ -5,7 +5,7 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 public class Entity {
-	//private static ThreadGroup durationCounter; 
+	//private static ThreadGroup durationCounter;
 	public final String name;
 	public final BufferedImage image;
 	//public final long duration;

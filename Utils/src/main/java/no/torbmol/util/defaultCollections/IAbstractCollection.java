@@ -54,7 +54,7 @@ import java.util.Objects;
  * the collection being implemented admits a more efficient implementation.<p>
  *
  * This interface is a member of the defaultCollections package.
- * 
+ *
  * @author  Josh Bloch
  * @author  Neal Gafter
  * @author  Torbjørn Birch Moltu
@@ -184,7 +184,7 @@ public interface IAbstractCollection<E> extends Collection<E> {
         return it.hasNext() ? DefaultCollections.finishToArray(r, it) : r;
     }
 
-   
+
 
     // Modification Operations
 

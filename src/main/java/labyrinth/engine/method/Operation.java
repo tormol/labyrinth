@@ -27,7 +27,7 @@ public interface Operation extends Action {
 			//must do it in order
 			Value call = Value.get(toCall);
 			ArrayList<Value> p = new ArrayList<>();
-			param.forEach(e->p.add(Value.get(e))); 
+			param.forEach(e->p.add(Value.get(e)));
 			return call.call(p);
 		}
 	}

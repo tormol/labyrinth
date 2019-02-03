@@ -266,7 +266,7 @@ public class StandardLibrary extends VFunc.Method {
 
 		public void finish() {
 			if (param == null)
-				;//an extra call is harmless, allows early stop  
+				;//an extra call is harmless, allows early stop
 				//throw new RuntimeException("ParameterWalker: allready finished()");
 			else if (i < param.length)
 				throw Script.error("too many parameters");

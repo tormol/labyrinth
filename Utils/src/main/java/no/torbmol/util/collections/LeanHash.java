@@ -8,11 +8,11 @@ import no.torbmol.util.collections.randomAccessIterators.ModifiableOneWayListIte
 /**
  *A base class to create memory efficient hash structures
  *Uses one array with elements and another to store hash information.
- *Since multiple entries can have the same hash, a separate buckets array is 
+ *Since multiple entries can have the same hash, a separate buckets array is
  *used as lookup from a hash value, and store the first index to elements with
  *that hash, the number of those elements.
  *To avoid creating an object for each bucket, the two integers are stored as
- *one long, and extracted by bitwise operations, which I hope the JVM will optimize away 
+ *one long, and extracted by bitwise operations, which I hope the JVM will optimize away
  *
  *Doesn't implement Collection since Map doesn't.
  */
@@ -31,7 +31,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	 * and the otheer half store the number of elements with this hash*/
 	protected long[] buckets;//struct{int entries, first_index}
 	protected E[] elements;
-	//for small sets, my guess is all the bucket operations makes this slower than a linear search, which would also need even less memory 
+	//for small sets, my guess is all the bucket operations makes this slower than a linear search, which would also need even less memory
 	//TODO size, ew as a field and short modCount are probably worth it
 
 
@@ -127,7 +127,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	}
 
 	/**get the bucket index and index (if found) of the object
-	 * 
+	 *
 	 *@param o must be non-null*/
 	protected final long indexOf(Object o) {//TODO rename to something more accurate
 		requireNonNull(o, getClass().getName()+" cannot store null");
@@ -254,7 +254,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 
 	/**Multiply the size of arrays with grow_ratio,
 	 * and rehash since all buckets are split in two.
-	 *@param double_and_spread double size of elements along with buckets, and try spread out the elements. 
+	 *@param double_and_spread double size of elements along with buckets, and try spread out the elements.
 	 *@return a free slot if <tt>double_and_spread</tt> or <tt>elements.length</tt>.
 	 */
 	protected int grow_and_rehash(boolean double_and_spread) {
@@ -382,10 +382,10 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		boolean did_anything = false;
 		if (hashes*2 <= buckets.length) {
 			//did_anything = true;
-			//shrink buckets[] and rehash 
+			//shrink buckets[] and rehash
 		}
 		if (size > hashes*0.75f)
-			grow_and_rehash(false);//and then size < elements.length*0.85f, inefficient, but simple. 
+			grow_and_rehash(false);//and then size < elements.length*0.85f, inefficient, but simple.
 		if (size < elements.length*0.85f) {
 			did_anything = true;
 			E[] new_elements = newElements(size*ew());
@@ -459,7 +459,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	}
 
 
-	//Used by Iter.remove and remove_element 
+	//Used by Iter.remove and remove_element
 	protected void remove_index(int hash, int to_remove) {
 		if (elements(buckets[hash]) == 1)//only element in bucket, remove bucket
 			buckets[hash] = 0;
@@ -519,7 +519,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		int hashCode = 0;
 		for (long bucket : buckets)
 			if (elements(bucket) > 0)
-				hashCode += elements(bucket) * elements[index(bucket)].hashCode(); 
+				hashCode += elements(bucket) * elements[index(bucket)].hashCode();
 		return hashCode;
 	}
 

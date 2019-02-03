@@ -64,7 +64,7 @@ public final class randomAccessIterators {
 	}
 
 
-	/**An Iterator for arrays that doesn't support remove() but has every function from ListIterator except previous()	 *  
+	/**An Iterator for arrays that doesn't support remove() but has every function from ListIterator except previous()
 	 *  from ListIterator.*/
 	public static interface Unmodifiable<E> extends Iterator<E> {
 		/**@throws UnsupportedOperationException always

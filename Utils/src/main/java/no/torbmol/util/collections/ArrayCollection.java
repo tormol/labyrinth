@@ -208,7 +208,7 @@ public class ArrayCollection<E> extends AbstractCollection<E> implements Seriali
 
 		//use anEmpty
 		int from = 0;
-		if (anEmpty >= emptys) {//then emptys > 0 
+		if (anEmpty >= emptys) {//then emptys > 0
 			while (elements[from] == empty)
 				from++;
 			elements[anEmpty] = elements[from];

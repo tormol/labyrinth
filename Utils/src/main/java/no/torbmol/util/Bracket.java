@@ -40,7 +40,7 @@ public enum Bracket {
 		case'}': return CURLY;
 		case']': return SQUARE;
 		case'>': return ANGLE;
-		default: return null; 
+		default: return null;
 	}}
 
 	/***/

@@ -35,7 +35,6 @@ public class PrimitivePreProcessor {
 	"Copyright Torbjørn Birch Moltu\n" +
 	"GPL version 2";
 	public static void main(String[] args) {
-		//init types, create files, open javap 
 		DryOpts ap = new DryOpts(args);
 		clean = ap.optFlag('c', "clean", "Remove the files that would normally been created.");
 		append_new = ap.optFlag('n', "append_new", "Only print new files");
@@ -90,11 +89,11 @@ public class PrimitivePreProcessor {
 			else if (line==null)
 				System.err.println(f+": no body, skipping.");
 			else {
-				for (String cn : words.classNames) 
+				for (String cn : words.classNames)
 					to.add( new Writer( javaFile(f, cn) )
 						.writeln("//Generated from " + f.getName()) );
 
-				do {//the last lire read from  
+				do {//the last line read from
 					Replacer r = words.replacer(line);
 					for (int i=0; i<to.size(); i++)
 						to.get(i).writeln(r.replace(i));
@@ -140,7 +139,7 @@ public class PrimitivePreProcessor {
 					if (v.length == size)
 						for (int i=0; i<v.length; i++)
 							v[i] = v[i].trim().replaceAll("\\*", name);
-					else 
+					else
 						throw new AnError(false, "The variable %s does not have %d values.", name, size);
 				}
 				put(name, v);
