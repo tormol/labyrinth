@@ -3,6 +3,7 @@ plugins {
     // to not have to open a html file to view test results
     // from https://github.com/radarsh/gradle-test-logger-plugin
     id("com.adarshr.test-logger") version "1.5.0"
+    id("org.gradle.java.experimental-jigsaw") // version "0.1.1"
     // generates .classpath and .project files. Run `gw eclipse`
     `eclipse`
     // the successor of findbugs, but doesn't support java 11 either
@@ -21,6 +22,8 @@ dependencies {
     testImplementation("com.google.guava:guava-testlib:19.0") // what's in guava/
     //testImplementation("com.google.guava:guava-testlib:27.0-jre") // latest as of 2018-11-01
 }
+
+//javaModule.name = "no.torbmol.util"
 
 val jar by tasks.existing(Jar::class) {
     archiveName = "torbmol-utils.jar"
