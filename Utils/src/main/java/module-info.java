@@ -5,4 +5,7 @@ module no.torbmol.util {
 
     requires java.base;
     requires java.desktop; // awtKeyListen, Point, statics
+
+    // requires org.junit.junit4;
+    // requires com.guava.testlib;
 }

@@ -3,7 +3,8 @@ plugins {
     // to not have to open a html file to view test results
     // from https://github.com/radarsh/gradle-test-logger-plugin
     id("com.adarshr.test-logger") version "1.5.0"
-    id("com.zyxist.chainsaw")
+    // removes most of the boilerplate from using module
+    id("com.dua3.gradle.jpms") // version "0.5.1"
     // generates .classpath and .project files. Run `gw eclipse`
     `eclipse`
     // the successor of findbugs, but doesn't support java 11 either
@@ -23,8 +24,24 @@ dependencies {
     //testImplementation("com.google.guava:guava-testlib:27.0-jre") // latest as of 2018-11-01
 }
 
+ext.set("moduleName", "no.torbmol.util")
+
+val compileJava by tasks.existing(JavaCompile::class) {
+    inputs.property("moduleName", ext.get("moduleName"))
+    doFirst {
+        options.compilerArgs = listOf(
+            "--module-path", classpath.asPath
+        )
+        classpath = files()
+    }
+}
+
 val jar by tasks.existing(Jar::class) {
     archiveName = "torbmol-utils.jar"
+    inputs.property("moduleName", ext.get("moduleName"))
+    manifest {
+        attributes(Pair("Automatic-Module-Name", ext.get("moduleName")))
+    }
 }
 
 // Add examples as a new source type

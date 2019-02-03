@@ -1,8 +1,8 @@
 plugins {
     `java`
     application
-    id("com.zyxist.chainsaw") version "0.3.1"
-    // generates .classpath and .project files. Run `gw eclipse`
+    // removes most of the boilerplate from using module
+    id("com.dua3.gradle.jpms") version "0.5.1" // generates .classpath and .project files. Run `gw eclipse`
     `eclipse`
 }
 
@@ -13,3 +13,11 @@ dependencies {
 application {
     mainClassName = "no.torbmol.labyrinth.Labyrinth"
 }
+
+// val jlink by tasks.existing(JlinkTask::class) {
+// jlink {
+//     module = "no.torbmol.labyrinth"
+//     main = "no.torbmol.labyrinth.Labyrinth"
+//     application = "labyrinth"
+//     compress = 2
+// }
