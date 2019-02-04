@@ -9,6 +9,7 @@ import no.torbmol.labyrinth.*;
 import no.torbmol.labyrinth.method.StandardLibrary.ParameterWalker;
 import no.torbmol.util.geom.Point;
 
+/**Script methods that are only useful for Labyrinth. */
 public class LabyrinthLibrary extends VFunc.Method {
 	private static HashMap<String, Value> lib = new HashMap<>();
 	public static HashMap<String, Value> get() {

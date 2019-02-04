@@ -21,7 +21,7 @@ public class Script {
 	//the result of the last operation performed in a function
 	public Value last = Void;
 
-	//no idea if this is safe
+	@SafeVarargs//not modified or passed along.
 	public Script(Parser p, String name, Map<String, Value>... libraries) throws EOFException, IOException, ParseException {
 		if (Script.scr != null)
 			throw new RuntimeException("Script is a singleton");

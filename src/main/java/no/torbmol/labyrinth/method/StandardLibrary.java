@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import no.torbmol.util.geom.Point;
 
+/**General purpose script methods for conditionals, arithmetic, io*/
 public class StandardLibrary extends VFunc.Method {
 	private static HashMap<String, Value> lib = new HashMap<>();
 	public static HashMap<String, Value> get() {
@@ -121,7 +122,7 @@ public class StandardLibrary extends VFunc.Method {
 		});
 
 		//more than two parameters would be confusing because (a - (b - c)) != -((a - b) - c),
-		//altough the latter is most obivious. you can use +(a -b -c)anyway
+		//altough the latter is most obvious. you can use +(a -b -c)anyway
 		new StandardLibrary("-", array(VInt.class, null), param->{
 			if (param.length == 1)
 				return VInt.v(-param[0].Int());
@@ -159,6 +160,7 @@ public class StandardLibrary extends VFunc.Method {
 		});
 
 
+		// create point, ParameterWalker will read two ints as a point
 		new StandardLibrary("p", array(VPoint.class), param->{
 			pa.start(param);
 			Point p = pa.get(VPoint.class).Point();
@@ -166,6 +168,7 @@ public class StandardLibrary extends VFunc.Method {
 			return VPoint.v(p);
 		});
 
+		// point addition
 		new StandardLibrary("p+", array(VPoint.class, VPoint.class, null), param->{
 			int x=0, y=0;
 			for (Value v : param) {
@@ -185,6 +188,7 @@ public class StandardLibrary extends VFunc.Method {
 		});
 
 
+		// concatenate strings
 		new StandardLibrary("cat", array(VString.class, Value.class, null), param->{
 			StringBuilder str = new StringBuilder();
 			for (Value v : param) {
