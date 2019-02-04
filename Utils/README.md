@@ -1,5 +1,7 @@
 # no.torbmol.util
 
+A bunch of stuff that might be useful in other projects, but is currently only used by Labyrinth, if at all.
+
 ## License
 
 Licensed under either of
