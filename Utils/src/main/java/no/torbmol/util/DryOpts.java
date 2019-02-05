@@ -21,11 +21,39 @@ import java.util.LinkedList;
 import java.util.Objects;
 import java.util.List;
 import java.util.regex.Pattern;
-//see git commit message for TODOs and documentation.
+
 /**
- * If you get positional arguments before all flags, some arguments might be missing as they are still attached to flags.
+ *Dont repeat your (command line) options
+ *<p>
+ * Most option parsers I've seen requires you to mention options twice:
+ *<p><ul>
+ *<li>either you tell the parser about it before parsing and then check for it afterward,
+ *<li>or you declare a variable outside the gotopts loop, and then check for it inside the loop.
+ *</ul>
+ * DocOpt is nice, but point one still applies.
+ *<p>
+ * This one is different: it first parses the arguments, then you extract options and positional arguments.
+ * This has a few limitations:
+ *<p><ul>
+ *<li>Doesn't support long options with a single dash, like -version.
+ *<li>By default, short options cannot take the remaining chars as argument, like -Lpath (but -L=path works). This can be worked around by supplying a custom is_shortOpt(), but that breaks DRY
+ *</ul><p>
+ * Other features:
+ *<p><ul>
+ *<li>Can parse, and generate help and usage for, positional arguments.
+ *    arguments, positional or to an option can be validated or converted, with errors logged.
+ *<li>Extensible: new option or argument types can be added based on the presence of other options.
+ *</ul><p>
+ * Drawbacks:
+ *<p><ul>
+ * <li>If you get positional arguments before all flags, some arguments might be missing as they are still attached to flags.
+ * <li>To catch errors before performing an action, you need to assign the status of options to variables,
+ *     at which point it's no longer DRY. This means that DryOpts is proobably only suitable for internal
+ *     throwaway programs or prototyping.
+ *<ul>
  *
  *Example:
+ *<code>
  * DryOpts a = new DryOpts(args);
  * File file = a.optArg('f', "file", null/*hide from --help* /, null, str->new File(str);
  * boolean quiet = a.optFlag('-q', "quiet", "say less");
@@ -39,9 +67,8 @@ import java.util.regex.Pattern;
  *     System.exit(0);
  * }
  * a.handle_errors(-1);
- *
- *@author tbm
- * License: Apache v2
+ *</code>
+ *@author Torbjørn Birch Moltu
  */
 public class DryOpts {
 	/**Is used by ArgType.*/@SuppressWarnings("serial")
@@ -205,15 +232,21 @@ public class DryOpts {
 		 * this means -fAfa is flag f and A has argument fa
 		 * Default value is {@code false}.
 		 *
-		 * While restrictive, this is predictable to users, and other approaches that wouldn't work:
-		 * * Builder regex of shortOpts that ends list:
-		 * * * Breaks DRY.
-		 * * Take the rest is default, and OptTypes disown the rest in the same way they disown separete arguents.
-		 * * * (Requires flags be added before optArgs).
-		 * * * a and b are both flags, -ab and -ba is equivalent, but if a is added after b, -ba wouldn't work, and vice versa.
-		 * * Flags is default, and OptTypes can ask for the remaining:
-		 * * * (Requires flags be added after optArgs).
-		 * * * a and b are both optArgs, -ab is supposed to mean a with argument b, but what if b is added before a?
+		 * While restrictive, this is predictable to users, and the other approaches I considered had worse downsides:
+		 * <ul>
+		 *  <li>Builder regex of shortOpts that ends list:
+		 *    <ul><li>Breaks DRY.</ul>
+		 *  <li>Take the rest is default, and OptTypes disown the rest in the same way they disown separete arguents.
+		 *   <ul>
+		 *    <li>(Requires flags be added before optArgs).
+		 *    <li>a and b are both flags, -ab and -ba is equivalent, but if a is added after b, -ba wouldn't work, and vice versa.
+		 *   </ul>
+		 *  <li>Flags is default, and OptTypes can ask for the remaining:
+		 *   <ul>
+		 *    <li>(Requires flags be added after optArgs).
+		 *    <li>a and b are both optArgs, -ab is supposed to mean a with argument b, but what if b is added before a?
+		 *   </ul>
+		 * </ul>
 		 */
 		public Builder uppercase_shortOpt_ends_list(boolean b) {
 			uppercase_shortOpt_ends_list = b;
