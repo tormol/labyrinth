@@ -1,3 +1,11 @@
+/* Copyright 2019 Torbjørn Birch Moltu
+ *
+ * Licensed under the Apache License, Version 2.0, <LICENSE-APACHE or
+ * http://apache.org/licenses/LICENSE-2.0> or the MIT license <LICENSE-MIT or
+ * http://opensource.org/licenses/MIT>, at your option. This file may not be
+ * copied, modified, or distributed except according to those terms.
+ */
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -13,7 +21,6 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import no.torbmol.util.DryOpts;
-
 
 public class PrimitivePreProcessor {
 	//Modes
@@ -33,7 +40,7 @@ public class PrimitivePreProcessor {
 	static final String versionStr =
 	"PrimitivePreProcessor v1\n" +
 	"Copyright Torbjørn Birch Moltu\n" +
-	"GPL version 2";
+	"Licensed under the Apache version 2.0 license or MIT license";
 	public static void main(String[] args) {
 		DryOpts ap = new DryOpts(args);
 		clean = ap.optFlag('c', "clean", "Remove the files that would normally been created.");
