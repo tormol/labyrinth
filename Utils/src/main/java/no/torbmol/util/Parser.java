@@ -14,8 +14,11 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -64,7 +67,7 @@ public class Parser extends Reader implements Closeable, AutoCloseable, Cloneabl
 
 		@Override//Closeable
 		public void close() throws IOException {do_nothing();}
-		public String sourceName() {return "";}
+		public String sourceName() {return "line";}
 		/**get the number of lines read so far,*/
 		public int currentLines() {return lines.size();}
 		protected void addLine(String line) {lines.add(line);}
@@ -93,17 +96,28 @@ public class Parser extends Reader implements Closeable, AutoCloseable, Cloneabl
 				this.lines.add(line);
 		}
 	}
-	public static class SourceFile extends Source {
-		public final File file;
+	public static class SourceReader extends Source {
 		protected BufferedReader src;
-		public SourceFile(File file, int expectedLines, boolean newline_whitespace, boolean hash_comment) throws FileNotFoundException {
-			super(expectedLines, newline_whitespace, hash_comment);
-			this.file = Objects.requireNonNull(file);
-			this.src = new BufferedReader(new FileReader(file));
+		protected final String name;
+		public SourceReader(Reader file, String name,
+		                    boolean newline_whitespace, boolean hash_comment
+		) {
+			super(DEFAULT_EXPECTED_LINES, newline_whitespace, hash_comment);
+			this.src = new BufferedReader(file);
+			this.name = Objects.requireNonNull(name);
 		}
-		public SourceFile(File file, boolean newline_whitespace, boolean hash_comment) throws FileNotFoundException {
-			this(file, DEFAULT_EXPECTED_LINES, newline_whitespace, hash_comment);
+		public SourceReader(File file, boolean newline_whitespace, boolean hash_comment)
+		throws FileNotFoundException {
+			this(new FileReader(file), file.getPath(), newline_whitespace, hash_comment);
 		}
+		public SourceReader(InputStream in, String name,
+		                    boolean newline_whitespace, boolean hash_comment
+		) {
+			this(new InputStreamReader(in, StandardCharsets.UTF_8), name,
+			     newline_whitespace, hash_comment
+			);
+		}
+
 		public synchronized boolean read_line() throws IOException {
 			if (src == null)//closed
 				return false;
@@ -123,7 +137,7 @@ public class Parser extends Reader implements Closeable, AutoCloseable, Cloneabl
 			}
 		}
 		public String sourceName() {
-			return file.getPath();
+			return name;
 		}
 	}
 	public static class SourceSupplier extends Source {
@@ -159,11 +173,8 @@ public class Parser extends Reader implements Closeable, AutoCloseable, Cloneabl
 	public Parser(Supplier<String> get, boolean newline_whitespace, boolean hash_comment) {
 		this(new SourceSupplier(get, newline_whitespace, hash_comment));
 	}
-	public Parser(File file, int expectedLines, boolean newline_whitespace, boolean hash_comment) throws FileNotFoundException {
-		this(new SourceFile(file, expectedLines, newline_whitespace, hash_comment));
-	}
 	public Parser(File file, boolean newline_whitespace, boolean hash_comment) throws FileNotFoundException {
-		this(new SourceFile(file, newline_whitespace, hash_comment));
+		this(new SourceReader(file, newline_whitespace, hash_comment));
 	}
 
 

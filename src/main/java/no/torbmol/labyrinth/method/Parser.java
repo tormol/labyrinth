@@ -6,6 +6,7 @@ import static no.torbmol.util.statics.char_whitespace;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -23,8 +24,15 @@ import no.torbmol.util.ParseNum;
 public class Parser extends no.torbmol.util.Parser {
 	public Parser(File file) throws FileNotFoundException {
 		super(file,
-			  no.torbmol.util.Parser.Source.NEWLINE_IS_WHITESPACE,
-			  no.torbmol.util.Parser.Source.HASH_STARTS_COMMENT);
+			no.torbmol.util.Parser.Source.NEWLINE_IS_WHITESPACE,
+			no.torbmol.util.Parser.Source.HASH_STARTS_COMMENT
+		);
+	}
+	public Parser(InputStream in, String name) {
+		super(new no.torbmol.util.Parser.SourceReader(in, name,
+				no.torbmol.util.Parser.Source.NEWLINE_IS_WHITESPACE,
+				no.torbmol.util.Parser.Source.HASH_STARTS_COMMENT
+		));
 	}
 	public Parser(no.torbmol.util.Parser p) {
 		super(p.getSource());
