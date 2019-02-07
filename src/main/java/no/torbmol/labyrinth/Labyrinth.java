@@ -40,11 +40,20 @@ public class Labyrinth {
 		Type.add("enemy",  false, false, null,           WHITE,  "!");
 		Type.add("hammer", false, false, "hammer.png", WHITE,  "^");
 
-		if (args.length == 1) {
-			MapFile.read(new File(args[0]));
-		} else {//show a fileChooser
-			MapFile.read(MapFile.choose("src/main/resources/maps/"));
+		Parser parser = null;
+		if (args.length > 1) {
+			System.err.println("Too many arguments.");
+			System.exit(1);
+		} else if (args.length == 0) {// show a fileChooser
+			parser = MapFile.selectBundled();
+		} else if (args[0].indexOf('.') == -1 && args[0].indexOf('/') == -1
+			    && args[0].indexOf('\\') == -1) {// load from jar
+			parser = MapFile.openBundled(args[0]);
+		} else {// load from file system
+			parser = MapFile.fromFile(new File(args[0]));
 		}
+		MapFile.start(parser);
+
 		TileMap.all("enemy", tile -> {
 			tile.setType("floor");
 			new Enemy.Normal(tile, "enemy.png", 600, 0, 600);
