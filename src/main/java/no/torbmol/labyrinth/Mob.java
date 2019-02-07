@@ -5,7 +5,6 @@ import java.awt.Graphics;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,7 @@ public abstract class Mob {
 	protected Mob(String name, String imagePath) {
 		this.name = name;
 		try {
-			this.image = ImageIO.read(new File("src/main/resources/images/"+imagePath));
+			this.image = ImageIO.read(this.getClass().getResourceAsStream("/images/"+imagePath));
 		} catch (IOException e) {
 			throw Window.error("Error loading image to %s: (%s)\n%s", name, imagePath, e.getMessage());
 		}
