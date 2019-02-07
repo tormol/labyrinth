@@ -1,4 +1,5 @@
 package no.torbmol.labyrinth.method;
+
 import java.util.List;
 import java.util.function.Function;
 

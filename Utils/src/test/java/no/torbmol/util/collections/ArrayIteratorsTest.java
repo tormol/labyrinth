@@ -30,7 +30,7 @@ public class ArrayIteratorsTest {
 						}
 						@Override public Iterator<String> iterator() {
 							return new UnmodifiableArrayIterator<String>(elements);
-						}						
+						}
 					};}})
 				.named("UnmodifiableArrayIterator")
 				.withFeatures(

@@ -147,7 +147,7 @@ public class DryOptsTest {
 		b.integer_shortOpts();
 		assertTrue (parse("-6", b).optFlag('6', "ipv6", null));
 	}
-	
+
 	@Test
 	public void onlyFirstDoubleDashShouldBeHandled() {
 		DryOpts ap = parse("-- --");

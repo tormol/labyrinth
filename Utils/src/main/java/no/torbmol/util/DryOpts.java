@@ -315,7 +315,7 @@ public class DryOpts {
 			}
 		}
 		this.name = b.name;
-	
+
 		boolean stopopt = false;
 		FoundOpt opt = null;
 		for (int i=0; i<args.length; i++)
@@ -727,7 +727,7 @@ public class DryOpts {
 		}
 	}
 
-	
+
 	/**A shared object since flags are pretty reusable.*/
 	protected final Flag optFlag = new Flag();
 	public int optFlagN(char shortOpt, String longOpt, String description) {
@@ -920,7 +920,7 @@ public class DryOpts {
 			throw new ArgException(ioe.getMessage());
 		}
 	}};
-	
+
 
 
 	public static class OutputFile implements ArgType<OutputStream> {

@@ -1,10 +1,10 @@
 package no.torbmol.labyrinth;
+
+import no.torbmol.labyrinth.method.Script;
+import no.torbmol.util.geom.Point;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import no.torbmol.labyrinth.method.Script;
-import no.torbmol.util.geom.Point;
-
 
 public class Tile extends javax.swing.JPanel {
 	/**The color of unexplored tiles.*/
@@ -98,7 +98,7 @@ public class Tile extends javax.swing.JPanel {
 
 
 	public Point pos() {
-		if (pos==null) {
+		if (pos == null) {
 			return Point.p(0, 0);//TODO: Why?
 		}
 		return pos;

@@ -1,11 +1,10 @@
 package no.torbmol.labyrinth;
 
+import no.torbmol.util.geom.Direction;
+import no.torbmol.util.geom.Point;
 import java.util.ArrayDeque;
 import java.util.Queue;
 import java.util.function.Consumer;
-
-import no.torbmol.util.geom.Direction;
-import no.torbmol.util.geom.Point;
 
 public class LoS {
 	//how many tiles can one see straight forward?
@@ -18,9 +17,9 @@ public class LoS {
 			if (a != null) {
 				a.accept(t);
 			}
-			p=p.plus(d);
-		} while (!t.getType().solid && len<max);
-		return len-1;
+			p = p.plus(d);
+		} while (!t.getType().solid && len < max);
+		return len - 1;
 	}
 
 	//this is the entry point, is run in the AWT eventqueue, so .repaint() calls won't take effect until after return.
@@ -28,7 +27,7 @@ public class LoS {
 		int max = line(start, forward, Integer.MAX_VALUE, a);
 		Direction back = forward.opposite();
 		Queue<Line> lines = new ArrayDeque<>();
-		lines.add(new Line(start, forward.left() , max));
+		lines.add(new Line(start, forward.left(), max));
 		lines.add(new Line(start, forward.right(), max));
 		while (!lines.isEmpty()) {
 			Line l = lines.remove();
@@ -38,16 +37,16 @@ public class LoS {
 				Tile t = TileMap.get(p);
 				a.accept(t);
 				if (t.getType().solid) {
-					if (opening>1) {
+					if (opening > 1) {
 						lines.add(new Line(p.plus(back, opening-1), l.side, opening-1));
 					}
 					opening = 0;
 				} else {
 					opening++;
 				}
-				p=p.plus(forward);
+				p = p.plus(forward);
 			}
-			if (i==l.max) {
+			if (i == l.max) {
 				a.accept(TileMap.get(p));
 			}
 		}
@@ -59,15 +58,15 @@ public class LoS {
 	}
 
 
-
 	private static class Line {
 		final Point start;
 		final Direction side;
 		final int max;
+
 		Line(Point start, Direction side, int max) {
-			this.start=start;
-			this.side=side;
-			this.max=max;
+			this.start = start;
+			this.side = side;
+			this.max = max;
 		}
 	}
 }

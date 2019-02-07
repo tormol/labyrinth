@@ -57,7 +57,7 @@ public class ParseNumTest {
 				parse("010", Long.SIZE, OVERFLOW|OPT_DEC) );
 		assertEquals("without ZERO_OCT, leading zeroes are ignored",  10,  parse("010", Long.SIZE, OVERFLOW) );
 		assertEquals("with ZERO_OCT, leading zeroes causes octal",  10,  parse("012", Long.SIZE, OVERFLOW|ZERO_OCT) );
-		
+
 		assertEquals("OPT_HEX",  10,  parse("0xa",    Long.SIZE, OVERFLOW|OPT_HEX) );
 		assertEquals("OPT_DEC",  10,  parse("0d10",   Long.SIZE, OVERFLOW|OPT_DEC|RADIX(2)) );
 		assertEquals("OPT_OCT",  10,  parse("0o12",   Long.SIZE, OVERFLOW|OPT_OCT) );

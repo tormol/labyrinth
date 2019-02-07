@@ -97,7 +97,7 @@ public interface IterableMap<K,V> extends Map<K,V>, Iterable<Entry<K,V>> {
 			this.value = value;
 			return old_value;
 		}
-	
+
 		@Override public  String toString()       {return UnsafeEntryIterator.toString_of(this);}
 		@Override public     int hashCode()       {return UnsafeEntryIterator.hashCode_of(this);}
 		@Override public boolean equals(Object o) {return UnsafeEntryIterator.equals_of(this, o);}

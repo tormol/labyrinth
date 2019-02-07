@@ -14,17 +14,21 @@
  */
 
 package no.torbmol.labyrinth;
+
+import no.torbmol.labyrinth.method.Parser;
+import no.torbmol.labyrinth.method.Scope;
+import no.torbmol.labyrinth.method.Script;
+import no.torbmol.labyrinth.method.Value;
+import no.torbmol.util.awtKeyListen;
+import no.torbmol.util.geom.Direction;
+import java.awt.event.KeyEvent;
+import java.io.File;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.LinkedTransferQueue;
 import static java.awt.Color.*;
 import static java.awt.event.KeyEvent.*;
 import static no.torbmol.util.geom.Direction.*;
-import java.io.File;
-import java.awt.event.KeyEvent;
-import java.util.List;
-import java.util.concurrent.LinkedTransferQueue;
-import no.torbmol.util.awtKeyListen;
-import no.torbmol.util.geom.Direction;
-import java.util.LinkedList;
-import no.torbmol.labyrinth.method.*;
 
 public class Labyrinth {
 	public static void main(String[] args) {
@@ -37,7 +41,7 @@ public class Labyrinth {
 		Type.add("plate",  false, true , "plate.png", ORANGE,  "abcdefghijklmnopqrstuvwxyz");
 		Type.add("portal", false, true , "portal.png",  BLUE,  "0123456789");
 		Type.add("dot",    false, false, "dot.png",   YELLOW,  ".");
-		Type.add("enemy",  false, false, null,           WHITE,  "!");
+		Type.add("enemy",  false, false, null,         WHITE,  "!");
 		Type.add("hammer", false, false, "hammer.png", WHITE,  "^");
 
 		Parser parser = null;
@@ -58,33 +62,30 @@ public class Labyrinth {
 			tile.setType("floor");
 			new Enemy.Normal(tile, "enemy.png", 600, 0, 600);
 		});
+		TileMap.all("exit", t -> t.visible());
 
-		TileMap.all("exit", t->t.visible());
-
-		Player p = new Player("player.png", player->{
+		Player p = new Player("player.png", player -> {
 			if (player.tile().isType("exit")) {
 				player.tile().leave(true);
 				Window.won();
-			}
-			else if (player.tile().isType("hammer")) {
+			} else if (player.tile().isType("hammer")) {
 				player.tile().setType("floor");
 				player.hammer(5000);
-			}
-			else if (player.tile().isType("dot")) {
+			} else if (player.tile().isType("dot")) {
 				player.tile().setType("floor");
 				boolean last = !TileMap.anyTiles("dot");
 				Scope.Variable f = Script.scr.root.get_variable("onDot");
 				f.getRef().call(List.of(Value.VBool.v(last)));
 			}
 		});
+
 		Window.display();
-		Tile start = findStart(p);
-		p.moveTo( start );
+		p.moveTo(findStart(p));
 		var afterInit = Script.scr.root.get_variable("start");
 		if (afterInit != null) {
 			afterInit.getRef().call(List.of());
 		}
-		//see in all directions, except NONE
+		// look in all directions, except NONE
 		for (Direction d : new Direction[]{NORTH, SOUTH, EAST, WEST}) {
 			LoS.triangle(p.tile().pos(), d, t -> t.visible());
 		}
@@ -93,11 +94,10 @@ public class Labyrinth {
 	}
 
 
-
 	private static Tile findStart(Player player) {
 		LinkedList<Tile> start = new LinkedList<>();
-		TileMap.all("start", tile-> {
-			if (tile.mob()==null) {
+		TileMap.all("start", tile -> {
+			if (tile.mob() == null) {
 				start.add(tile);
 				tile.visible();
 			}
@@ -110,7 +110,7 @@ public class Labyrinth {
 		}
 
 		LinkedTransferQueue<KeyEvent> queue = new LinkedTransferQueue<>();
-		awtKeyListen.Pressed klp = event->queue.add(event);
+		awtKeyListen.Pressed klp = event -> queue.add(event);
 		Window.window.addKeyListener(klp);
 		start.get(0).enter(player, false);
 

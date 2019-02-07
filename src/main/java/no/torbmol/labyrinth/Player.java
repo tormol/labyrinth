@@ -1,14 +1,17 @@
 package no.torbmol.labyrinth;
-import static java.awt.event.KeyEvent.*;
-import javax.swing.SwingUtilities;
-import no.torbmol.util.geom.Direction;
-import no.torbmol.util.geom.Point;
-import no.torbmol.util.awtKeyListen;
-import java.awt.event.KeyEvent;
-import java.util.function.Consumer;
+
 import no.torbmol.labyrinth.method.Script;
 import no.torbmol.labyrinth.method.Value;
-import no.torbmol.labyrinth.method.Value.*;
+import no.torbmol.labyrinth.method.Value.VInt;
+import no.torbmol.labyrinth.method.Value.VRef;
+import no.torbmol.labyrinth.method.Value.VString;
+import no.torbmol.util.awtKeyListen;
+import no.torbmol.util.geom.Direction;
+import no.torbmol.util.geom.Point;
+import javax.swing.SwingUtilities;
+import java.awt.event.KeyEvent;
+import java.util.function.Consumer;
+import static java.awt.event.KeyEvent.*;
 
 public class Player extends Mob implements awtKeyListen.Pressed {
 	/**Get the (first) Player object from Mob.mobs
@@ -60,7 +63,7 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 		}
 		this.direction = direction;
 		final Point newPos = tile().pos().plus(direction);
-		
+
 		final Tile to = TileMap.get(newPos);
 		if (to.canEnter(this, true)) {
 			//is called from the eventqueue
@@ -83,7 +86,7 @@ public class Player extends Mob implements awtKeyListen.Pressed {
 	 *@param millis how long the hammer last*/
 	public synchronized void hammer(final int millis) {
 		if (hammer) {
-			throw Window.error("Player alreadyhas a hammer.");
+			throw Window.error("Player already has a hammer.");
 		}
 		hammer = true;
 		Thread t = new Thread(() -> {

@@ -1,4 +1,5 @@
 package no.torbmol.labyrinth.method;
+
 import static no.torbmol.labyrinth.method.Value.*;
 import java.io.EOFException;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class Script {
 		Script.run(ops);
 	}
 
-	
+
 	public static Value call(String name, Tile t, Mob m) {
 		scr.last = Void;
 		Value v = scr.current.value(name);
@@ -53,7 +54,7 @@ public class Script {
 
 
 	public static Window.ErrorDialog error(String f, Object... a) {
-		StringBuilder msg = new StringBuilder( String.format(f, a) );
+		StringBuilder msg = new StringBuilder(String.format(f, a));
 		if (scr.name != null)
 			msg.append("\n(Last variable: ").append(scr.name).append(')');
 		Scope scope = scr.current;

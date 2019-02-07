@@ -222,7 +222,7 @@ public class ParseNum {
 		long num = parse(max_digits, max_value);
 		if (num > max_signed  && !isset(DONT_SIGN_EXTEND))
 			num |= -1L << bits;
-				
+
 		if (negative  &&  num != 0) {
 			num = -num;
 			if (isset(DONT_SIGN_EXTEND))

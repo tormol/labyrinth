@@ -1,4 +1,5 @@
 package no.torbmol.labyrinth;
+
 import no.torbmol.util.geom.Point;
 import no.torbmol.util.geom.Direction;
 import java.util.ArrayList;
@@ -118,9 +119,9 @@ public abstract class Enemy extends Mob implements Runnable {
 
 		@Override//Enemy
 		protected Tile findTile() {
-			direction = Direction.find( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Tile to = TileMap.get( tile().pos().plus(direction) );
-			if (to.canEnter(this, false)  &&  !(to.mob() instanceof Enemy)) {
+			direction = Direction.find((int)(Math.random()*4), 0, 1, 2, 3);
+			final Tile to = TileMap.get(tile().pos().plus(direction));
+			if (to.canEnter(this, false) && !(to.mob() instanceof Enemy)) {
 				return to;
 			}
 			return null;
@@ -135,9 +136,9 @@ public abstract class Enemy extends Mob implements Runnable {
 
 		@Override//Enemy
 		protected Tile findTile() {
-			direction = Direction.find( (int)(Math.random()*4),  0, 1, 2, 3);
-			final Tile to = TileMap.get( tile().pos().plus(direction) );
-			if (!to.isType("outside")  &&  !(to.mob() instanceof Enemy)) {
+			direction = Direction.find((int)(Math.random()*4), 0, 1, 2, 3);
+			final Tile to = TileMap.get(tile().pos().plus(direction));
+			if (!to.isType("outside") && !(to.mob() instanceof Enemy)) {
 				return to;
 			}
 			return null;
@@ -167,11 +168,11 @@ public abstract class Enemy extends Mob implements Runnable {
 			//direction = direction with smallest distance
 			//TODO: use distance.directions() to simplify
 			if (Math.abs(distance.x) > Math.abs(distance.y)) {
-				direction = Direction.find( dir.x,  0, 0, -1, 1);
-				alt = new Point[]{ dir.withY(0), dir.withX(0)};
+				direction = Direction.find(dir.x, 0, 0, -1, 1);
+				alt = new Point[]{dir.withY(0), dir.withX(0)};
 			} else {
-				direction = Direction.find( dir.y,  -1, 1, 0, 0);
-				alt = new Point[]{ dir.withX(0), dir.withY(0)};
+				direction = Direction.find(dir.y, -1, 1, 0, 0);
+				alt = new Point[]{dir.withX(0), dir.withY(0)};
 			}
 
 			for (Point move : alt) {

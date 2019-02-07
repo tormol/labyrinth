@@ -1,5 +1,7 @@
 package no.torbmol.labyrinth.method;
+
 import java.util.ArrayList;
+
 import no.torbmol.labyrinth.Action;
 
 //interface action in code called from code void(TIle, Mob)
@@ -27,7 +29,7 @@ public interface Operation extends Action {
 			//must do it in order
 			Value call = Value.get(toCall);
 			ArrayList<Value> p = new ArrayList<>();
-			param.forEach(e->p.add(Value.get(e)));
+			param.forEach(e -> p.add(Value.get(e)));
 			return call.call(p);
 		}
 	}

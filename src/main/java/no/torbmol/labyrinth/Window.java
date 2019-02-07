@@ -1,4 +1,5 @@
 package no.torbmol.labyrinth;
+
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -7,6 +8,7 @@ import javax.swing.JOptionPane;
 public class Window {
 	public static JFrame window = null;
 	private static JLabel text = new JLabel();
+
 	public static void start(String windowTitle) {
 		window = new JFrame(windowTitle);
 	}
@@ -15,7 +17,7 @@ public class Window {
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.getContentPane().setLayout(new BoxLayout(
 				window.getContentPane(), BoxLayout.PAGE_AXIS
-			));
+		));
 		text.setEnabled(false);
 		window.getContentPane().add(text);
 		window.getContentPane().add(TileMap.panel);
@@ -52,7 +54,7 @@ public class Window {
 		}
 		JOptionPane.showMessageDialog(window,
 				text, window.getTitle(), JOptionPane.PLAIN_MESSAGE
-			);
+		);
 		window.dispose();
 	}
 
@@ -69,7 +71,7 @@ public class Window {
 		private ErrorDialog(String message) {
 			JOptionPane.showMessageDialog(window,
 					message, "Labyrinth - error", JOptionPane.ERROR_MESSAGE
-				);
+			);
 			//this exception won't stop other threads,
 			//Don't know whether this code does that, or I got stuck.
 			if (window != null) {

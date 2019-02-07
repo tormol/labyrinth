@@ -12,7 +12,7 @@ public abstract class UnmodifiableSet<E> extends AbstractSet<E> implements SetWi
 	private static <E> UnmodifiableSet<E> create(E[] elements, boolean fromSet, boolean canContainNull) {
 		if (elements.length > linear_max_size)
 			try {
-				return new UnmodifiableStartTableHashSet<E>(elements, fromSet);	
+				return new UnmodifiableStartTableHashSet<E>(elements, fromSet);
 			} catch (NullPointerException npe) {
 				if ( !canContainNull)
 					throw new IllegalArgumentException("null element");

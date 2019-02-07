@@ -248,7 +248,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 	}
 
 
-	
+
   /////////////////////
  //growing/shrinking//
 /////////////////////
@@ -275,7 +275,7 @@ abstract class LeanHash<E> implements Cloneable, Serializable {
 		} else
 			elements = newElements(old_elements.length);//when splitting buckets elements will be moved around without a buffer
 		double_and_spread = false;//debug
-		
+
 		long[] old_buckets = buckets;
 		buckets = new long[buckets.length * 2];//this way hash() works on the new array.
 		int next = 0;

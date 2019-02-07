@@ -189,7 +189,7 @@ public class Parser extends Reader implements Closeable, AutoCloseable, Cloneabl
 			throw new RuntimeException("CloneNotSupportedException: ".concat(cnse.getMessage()), cnse);
 		}
 	}
-	
+
 
 	/**If this Parser is backed by a file or stream, it is closed, if not nothing happens.
 	 * You can continue using this parser, but no more lines can be read.
@@ -377,7 +377,7 @@ public class Parser extends Reader implements Closeable, AutoCloseable, Cloneabl
 		col=0;
 		return str;
 	}
-	
+
 	/**escape a single character and skip or require a following '*/
 	public char escapeChar(boolean require_end) throws EOFException, IOException, ParseException {
 		char c = next();

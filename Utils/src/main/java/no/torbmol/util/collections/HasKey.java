@@ -27,12 +27,12 @@ public interface HasKey<K> {
 				return getKey().equals(o);
 			return false;
 		}
-	
+
 		/**@return {@code getKey().hashCode()}*/@Override//Object
 		public final int hashCode() {
 			return getKey().hashCode();
 		}
-	
+
 		/**@return {@code getKey().toString()}*/@Override//Object
 		public String toString() {
 			return getKey().toString();

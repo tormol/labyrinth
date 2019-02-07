@@ -1,4 +1,5 @@
 package no.torbmol.labyrinth.method;
+
 import static no.torbmol.util.statics.*;
 
 import java.util.Arrays;
@@ -27,7 +28,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 		ParameterWalker pa = new ParameterWalker(null);
 
 		/**change the type and method of a tile*/
-		new LabyrinthLibrary("set", array(VPoint.class, VChar.class), param->{
+		new LabyrinthLibrary("set", array(VPoint.class, VChar.class), param -> {
 			pa.start(param);
 			Point p = pa.get(VPoint.class).Point();
 			char symbol = pa.get().Char();
@@ -44,7 +45,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 			return Void;
 		});
 
-		new LabyrinthLibrary("get", array(VPoint.class), param->{
+		new LabyrinthLibrary("get", array(VPoint.class), param -> {
 			pa.start(param);
 			Point p = pa.get(VPoint.class).Point();
 			pa.finish();
@@ -56,7 +57,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 			return VChar.v(one);
 		});
 
-		new LabyrinthLibrary("mobAt", array(VPoint.class), param->{
+		new LabyrinthLibrary("mobAt", array(VPoint.class), param -> {
 			pa.start(param);
 			Point p = pa.get(VPoint.class).Point();
 			pa.finish();
@@ -68,7 +69,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 			return Void;
 		});
 
-		new LabyrinthLibrary("addEnemy", array(VPoint.class, VString.class, VString.class, VInt.class, VInt.class, VInt.class), param->{
+		new LabyrinthLibrary("addEnemy", array(VPoint.class, VString.class, VString.class, VInt.class, VInt.class, VInt.class), param -> {
 			pa.start(param);
 			Point pos = pa.get(VPoint.class).Point();
 			String path = pa.get(VString.class).String();
@@ -90,7 +91,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 			return Void;
 		});
 
-		new LabyrinthLibrary("enemyPos", array(VInt.class), param->{
+		new LabyrinthLibrary("enemyPos", array(VInt.class), param -> {
 			int want = param[0].Int();
 			try {
 				return VPoint.v(Enemy.getAll().get(want).tile().pos());
@@ -100,7 +101,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 		});
 
 		/**run the method of another tile*/
-		new LabyrinthLibrary("trigger", array(VPoint.class), param->{
+		new LabyrinthLibrary("trigger", array(VPoint.class), param -> {
 			pa.start(param);
 			Point pos = pa.get(VPoint.class).Point();
 			pa.finish();
@@ -115,7 +116,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 		});
 
 		/**teleport*/
-		new LabyrinthLibrary("move", array(VPoint.class, null), param-> {
+		new LabyrinthLibrary("move", array(VPoint.class, null), param -> {
 			pa.start(param);
 			Point pos = pa.get(VPoint.class).Point();
 			Value enemy = pa.get(VInt.class, false);
@@ -139,7 +140,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 			return Void;
 		});
 
-		new LabyrinthLibrary("playerPos", array(), param->{
+		new LabyrinthLibrary("playerPos", array(), param -> {
 			pa.start(param).finish();
 			for (Mob mob : Mob.mobs) {
 				if (mob instanceof Player) {
@@ -149,7 +150,7 @@ public class LabyrinthLibrary extends VFunc.Method {
 			throw Script.error("playerPos(): Player not found in Mob.mobs");
 		});
 
-		new LabyrinthLibrary("text", array(VString.class, null), param->{
+		new LabyrinthLibrary("text", array(VString.class, null), param -> {
 			switch (param.length) {
 				case 0:
 					Window.hideText();
@@ -166,12 +167,12 @@ public class LabyrinthLibrary extends VFunc.Method {
 			return Void;
 		});
 
-		new LabyrinthLibrary("end", array(VString.class), param->{
+		new LabyrinthLibrary("end", array(VString.class), param -> {
 			Window.end(param[0].String());
 			return Void;
 		});
 
-		new LabyrinthLibrary("error", array(Value.class, null), param->{
+		new LabyrinthLibrary("error", array(Value.class, null), param -> {
 			throw Script.error(Script.scr.root.value("cat").call(Arrays.asList(param)).toString());
 		});
 	}

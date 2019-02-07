@@ -1,4 +1,5 @@
 package no.torbmol.labyrinth.method;
+
 import static no.torbmol.labyrinth.method.Operation.GetLast;
 import static no.torbmol.util.statics.char_anyof;
 import static no.torbmol.util.statics.char_num;
@@ -82,7 +83,7 @@ public class Parser extends no.torbmol.util.Parser {
 
 	private static Deque<Object> parse_call(Parser p, Script scr) throws EOFException, IOException, ParseException {
 		ArrayDeque<Object> params = new ArrayDeque<>();
-		char c='\0';
+		char c = '\0';
 		while (c != ')') switch (c = p.sw().next()) {
 			case'.':
 				c = p.peek();
@@ -91,7 +92,7 @@ public class Parser extends no.torbmol.util.Parser {
 						params.add(GetLast);
 					else
 						p.error("Expected variable name");
-				String name = p.next(ch->isContVar(ch));
+				String name = p.next(ch -> isContVar(ch));
 				if (scr.current.get_variable(name) == null)
 					p.error("%s is not declared.", name);
 				params.add(new GetRef(name));

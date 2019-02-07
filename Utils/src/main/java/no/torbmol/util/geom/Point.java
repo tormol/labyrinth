@@ -151,7 +151,7 @@ public class Point implements Serializable {
 	}
 	/**@return y*/
 	public int hashCode() {return y;}
-	
+
 	/**=x+", "+y*/
 	public String toString() {return x+", "+y;}
 	/**=before+x+", "+y+after*/

@@ -171,7 +171,7 @@ public class statics {
 			i--;
 		return i+1;
 	}
-	
+
 
 	/**Remove the last character from a StringBuilder
 	 * Useful when you're creating a list and want to remove the last comma.

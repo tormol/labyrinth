@@ -1,4 +1,7 @@
 package no.torbmol.labyrinth;
+
+import no.torbmol.util.Reference;
+import no.torbmol.util.geom.Point;
 import javax.swing.JPanel;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -6,9 +9,6 @@ import java.awt.GridLayout;
 import java.util.Queue;
 import java.util.function.Consumer;
 import static no.torbmol.util.statics.*;
-import no.torbmol.util.Reference;
-import no.torbmol.util.geom.Point;
-
 
 /**Contains all the tiles of the map*/
 public class TileMap {
@@ -41,7 +41,7 @@ public class TileMap {
 		Type.add("outside", true, false, null, Color.CYAN, "");
 		int columns = symbol[0].length;
 		map = new Tile[symbol.length][columns];
-		panel.setLayout(new GridLayout( map.length, map[0].length));
+		panel.setLayout(new GridLayout(map.length, map[0].length));
 
 		// create tiles
 		for (int y=0;  y<map.length;  y++) {
@@ -72,7 +72,7 @@ public class TileMap {
 	 * If the coordinate is outside the map, a new tile which acts like a wall is returned,
 	 * this way I don't need to check for edge cases other places*/
 	public static Tile get(int x, int y) {
-		if (y < 0  ||  y >= map.length  ||  x < 0  ||  x >= map[0].length) {
+		if (y < 0 || y >= map.length || x < 0 || x >= map[0].length) {
 			return new Tile(Type.t("outside"), null);
 		}
 		return map[y][x];
@@ -89,14 +89,14 @@ public class TileMap {
 	/**Are there any tiles of this type?*/
 	public static boolean anyTiles(String type) {
 		Reference<Boolean> any = new Reference<>(false);
-		all(type, t->any.value=true);
+		all(type, t -> any.value = true);
 		return any.value;
 	}
 
 	/**@return all tiles on the map*/
 	public static Tile[] all() {
 		Tile[] all = new Tile[numberOfTiles()];
-		int pos=0;
+		int pos = 0;
 		for (Tile[] row : map) {
 			System.arraycopy(row, 0, all, pos, row.length);
 			pos += row.length;
